@@ -3,9 +3,10 @@ import {
   Plus, Search, Filter, BookOpen, Calendar, Users, Loader2,
   CheckCircle, AlertCircle, X, Eye, Edit2, FileText, ArrowRight,
   ChevronRight, ChevronDown, Star, ListChecks, Sparkles, TrendingUp, Clock,
+  Download,
 } from 'lucide-react';
-import type { Convocatoria, EstadoConvocatoria, Postulacion, Asignatura } from '../types';
-import { convocatoriasService, postulacionesService, seleccionService, reportesService, iaService, pdfService, downloadBlob } from '../services/api';
+import type { Convocatoria, EstadoConvocatoria, Postulacion, Asignatura, ArchivoAdjunto } from '../types';
+import { convocatoriasService, postulacionesService, seleccionService, reportesService, iaService, pdfService, archivosService, downloadBlob } from '../services/api';
 import { generarFO46 } from '../utils/pdfForms';
 import { useAuthContext } from '../context/AuthContext';
 import { useSystemContext } from '../context/SystemContext';
@@ -58,6 +59,12 @@ const TRANSICION_LABEL: Record<EstadoConvocatoria, string> = {
   cerrada: 'Iniciar evaluación',
   en_evaluacion: 'Finalizar',
   finalizada: '',
+};
+
+const TIPO_DOC_LABEL: Record<string, string> = {
+  cedula: 'Cédula',
+  rut: 'RUT',
+  certificado_bancario: 'Cert. Bancario',
 };
 
 // ─── tipos locales ──────────────────────────────────────────────────────────
@@ -521,6 +528,15 @@ function ModalDetalle({
     } finally { setEjecutandoSeleccion(false); }
   }
 
+  async function descargarArchivo(a: ArchivoAdjunto) {
+    try {
+      const r = await archivosService.descargar(a.id);
+      downloadBlob(r.data, a.nombre_original);
+    } catch {
+      setMsg({ tipo: 'err', texto: `No se pudo descargar "${a.nombre_original}".` });
+    }
+  }
+
   const estadoBadgePost: Record<string, string> = {
     pendiente: 'bg-gray-100 text-gray-600',
     en_revision: 'bg-blue-100 text-blue-700',
@@ -638,8 +654,8 @@ function ModalDetalle({
               ) : (
                 <div className="space-y-2 max-h-64 overflow-y-auto">
                   {postulantes.map(p => (
-                    <div key={p.id} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
-                      <div>
+                    <div key={p.id} className="flex items-center justify-between gap-3 bg-gray-50 rounded-lg px-3 py-2">
+                      <div className="min-w-0">
                         <p className="text-sm font-medium text-gray-800">
                           {p.estudiante ? `${p.estudiante.nombres} ${p.estudiante.apellidos}` : `#${p.estudiante_id}`}
                         </p>
@@ -648,8 +664,22 @@ function ModalDetalle({
                           {p.puntaje_final != null && ` · Puntaje: ${p.puntaje_final.toFixed(4)}`}
                           {p.puesto != null && ` · #${p.puesto}`}
                         </p>
+                        {p.archivos && p.archivos.length > 0 && (
+                          <div className="mt-1.5 flex flex-wrap gap-1.5">
+                            {p.archivos.map(a => (
+                              <button
+                                key={a.id}
+                                onClick={() => descargarArchivo(a)}
+                                title={a.nombre_original}
+                                className="flex items-center gap-1 text-[10px] font-semibold text-usco-vinotinto border border-usco-vinotinto/25 rounded-md px-2 py-1 hover:bg-usco-vinotinto/5 transition-colors"
+                              >
+                                <Download size={10} /> {TIPO_DOC_LABEL[a.tipo_documento] ?? a.tipo_documento}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${estadoBadgePost[p.estado] ?? 'bg-gray-100 text-gray-600'}`}>
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${estadoBadgePost[p.estado] ?? 'bg-gray-100 text-gray-600'}`}>
                         {p.estado.replace('_', ' ')}
                       </span>
                     </div>

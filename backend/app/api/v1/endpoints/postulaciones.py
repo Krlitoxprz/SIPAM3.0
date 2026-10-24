@@ -396,13 +396,26 @@ def descargar_documento(
     """
     Accesible por:
     - El estudiante dueño de la postulación
-    - Profesores y jefe de programa
+    - Profesores titulares de la convocatoria de la postulación
+    - admin, jefe de programa y decano
     """
     archivo = db.query(ArchivoAdjunto).filter(ArchivoAdjunto.id == archivo_id).first()
     if not archivo:
         raise HTTPException(status_code=404, detail="Documento no encontrado")
 
-    if current_user.rol == RolEnum.estudiante and archivo.usuario_id != current_user.id:
+    if archivo.usuario_id == current_user.id:
+        pass  # Propietario del archivo
+    elif current_user.rol in [RolEnum.admin, RolEnum.jefe_programa, RolEnum.decano]:
+        pass  # Roles con acceso especial
+    elif current_user.rol == RolEnum.profesor:
+        es_convocatoria_suya = (
+            archivo.postulacion
+            and archivo.postulacion.convocatoria
+            and archivo.postulacion.convocatoria.profesor_id == current_user.id
+        )
+        if not es_convocatoria_suya:
+            raise HTTPException(status_code=403, detail="No tienes permisos para acceder a este documento")
+    else:
         raise HTTPException(status_code=403, detail="No tienes permisos para acceder a este documento")
 
     full_path = os.path.join(settings.UPLOAD_DIR, archivo.ruta_archivo)

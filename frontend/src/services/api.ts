@@ -112,6 +112,11 @@ export const postulacionesService = {
     api.patch(`/postulaciones/${postId}/desistir`),
 };
 
+export const archivosService = {
+  descargar: (archivoId: number) =>
+    api.get(`/archivos/${archivoId}`, { responseType: 'blob' }),
+};
+
 export const seleccionService = {
   getResultados: (convId: number) =>
     api.get(`/seleccion/convocatorias/${convId}/resultados`),
