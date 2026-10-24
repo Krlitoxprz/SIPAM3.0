@@ -14,23 +14,25 @@ def parse_cors_origins() -> List[str]:
 
 class Settings(BaseSettings):
     APP_NAME: str = "SIPAM-USCO"
-    APP_VERSION: str = "1.0.0"
+    APP_VERSION: str = "3.0.0"
     DEBUG: bool = True   # Sobreescribir con DEBUG=False en .env de producción
+    ENVIRONMENT: str = "development"  # development | production
 
-    SECRET_KEY: str = "sipam-usco-super-secret-key-2024-change-in-production"
+    SECRET_KEY: str = ""  # MUST be set in .env for production
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 480
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30  # Reduced to 30 min for security
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
     # SQLite (desarrollo): sqlite:///./sipam_usco.db
     # PostgreSQL (producción): postgresql://user:pass@host:5432/sipam_db
     DATABASE_URL: str = "sqlite:///./sipam_usco.db"
     UPLOAD_DIR: str = "uploads"
-    MAX_FILE_SIZE_MB: int = 10
+    MAX_FILE_SIZE_MB: int = 5  # Reduced to 5 MB for security
 
     # CORS origins - se sobreescribe en producción via CORS_ORIGINS env var
     CORS_ORIGINS: List[str] = parse_cors_origins()
 
-    ADMIN_PASSWORD: str = "Sasuke24"  # Contraseña del superusuario admin — cambiar en .env
+    ADMIN_PASSWORD: str = ""  # MUST be set in .env for production
     ORS_API_KEY: str = ""  # OpenRouteService — gratuito en openrouteservice.org
 
     # SMTP — correo electrónico (SF-02, SF-10). Configura en .env para habilitar.
@@ -43,6 +45,11 @@ class Settings(BaseSettings):
 
     # URL pública del frontend para links en emails
     FRONTEND_URL: str = "http://localhost:5173"
+
+    # Cookie settings for JWT
+    COOKIE_DOMAIN: str = ""
+    COOKIE_SECURE: bool = False  # Set to True in production (HTTPS)
+    COOKIE_SAMESITE: str = "lax"
 
     model_config = ConfigDict(env_file=".env", case_sensitive=True)
 

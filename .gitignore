@@ -12,17 +12,17 @@ build/
 *.pyo
 
 # ── Entornos virtuales ────────────────────────────────────────────────────────
-venv/
-.venv/
-env/
-.env/
-ENV/
+**/venv/
+**/.venv/
+**/env/
+**/.env/
+**/ENV/
 
 # ── Variables de entorno (¡NUNCA subir archivos con credenciales!) ────────────
-.env
-.env.local
-.env.*.local
-.env.production
+**/.env
+**/.env.local
+**/.env.*.local
+**/.env.production
 !.env.production.example
 
 # ── Base de datos SQLite ──────────────────────────────────────────────────────

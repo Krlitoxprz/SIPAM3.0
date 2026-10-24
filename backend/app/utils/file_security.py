@@ -2,6 +2,8 @@
 import os
 import uuid
 from fastapi import HTTPException, UploadFile
+from sqlalchemy.orm import Session
+from app.models.postulacion import ArchivoAdjunto
 
 # Tipos MIME permitidos por extensión visible
 ALLOWED_TYPES: dict[str, bytes] = {
@@ -14,19 +16,24 @@ ALLOWED_TYPES: dict[str, bytes] = {
     ".xlsx": b"PK\x03\x04",
 }
 
-MAX_BYTES = int(os.environ.get("MAX_FILE_SIZE_MB", "10")) * 1024 * 1024
+MAX_BYTES = int(os.environ.get("MAX_FILE_SIZE_MB", "5")) * 1024 * 1024
 
 
 async def validate_and_save(
     file: UploadFile,
     subfolder: str,
     allowed_extensions: list[str],
+    usuario_id: int,
+    tipo_documento: str,
+    postulacion_id: int = None,
     upload_dir: str = "uploads",
     max_bytes: int = MAX_BYTES,
-) -> tuple[str, str]:
+    db: Session = None,
+) -> ArchivoAdjunto:
     """
     Valida extensión, magic bytes y tamaño. Guarda con nombre UUID seguro.
-    Retorna (nombre_almacenado, ruta_completa).
+    Crea registro en base de datos con metadatos.
+    Retorna objeto ArchivoAdjunto.
     """
     if not file.filename:
         raise HTTPException(status_code=400, detail="Nombre de archivo requerido")
@@ -65,4 +72,23 @@ async def validate_and_save(
     with open(full_path, "wb") as f:
         f.write(content)
 
-    return safe_name, full_path
+    # Crear registro en base de datos
+    archivo = ArchivoAdjunto(
+        usuario_id=usuario_id,
+        postulacion_id=postulacion_id,
+        tipo_documento=tipo_documento,
+        nombre_original=file.filename,
+        nombre_almacenado=safe_name,
+        ruta_archivo=subfolder + "/" + safe_name,
+        ruta_completa=full_path,
+        tipo_mime=file.content_type,
+        tamanio_bytes=len(content),
+        categoria=tipo_documento
+    )
+
+    if db:
+        db.add(archivo)
+        db.commit()
+        db.refresh(archivo)
+
+    return archivo

@@ -1,0 +1,103 @@
+version: "3.9"
+
+# ── SIPAM-USCO — Docker Compose para Desarrollo ─────────────────────────────────
+# Este archivo usa PostgreSQL en Docker para desarrollo local (evita SQLite)
+# Uso: docker compose -f docker-compose.dev.yml up -d
+
+services:
+
+  # ── Base de datos PostgreSQL para desarrollo ────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       sipam_db_dev
+      POSTGRES_USER:     postgres
+      POSTGRES_PASSWORD: postgres_dev_password
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    networks:
+      - sipam_dev_net
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d sipam_db_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── FastAPI Backend (desarrollo) ──────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      DATABASE_URL:    postgresql://postgres:postgres_dev_password@db:5432/sipam_db_dev
+      AI_SERVICE_URL:  http://ai_service:5001
+      ENVIRONMENT:     development
+      DEBUG:           "true"
+    volumes:
+      - uploads_dev_data:/app/uploads
+      - ./backend:/app  # Hot reload para desarrollo
+    networks:
+      - sipam_dev_net
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # ── Flask AI Microservice (desarrollo) ─────────────────────────────────────────
+  ai_service:
+    build:
+      context: ./ai_service
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      DB_URL:     postgresql://postgres:postgres_dev_password@db:5432/sipam_db_dev
+      AI_PORT:    "5001"
+      PGCLIENTENCODING: utf8
+    volumes:
+      - ai_models_dev:/app/models/saved
+      - ./ai_service:/app  # Hot reload para desarrollo
+    networks:
+      - sipam_dev_net
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "5001:5001"
+    command: python app.py
+
+  # ── React Frontend (desarrollo con Vite) ─────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    restart: unless-stopped
+    environment:
+      VITE_API_URL: http://localhost:8000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - sipam_dev_net
+    depends_on:
+      - backend
+    ports:
+      - "5173:5173"
+    command: npm run dev -- --host 0.0.0.0
+
+# ── Volumes para desarrollo ────────────────────────────────────────────────────
+volumes:
+  postgres_dev_data:
+  uploads_dev_data:
+  ai_models_dev:
+
+# ── Network para desarrollo ───────────────────────────────────────────────────
+networks:
+  sipam_dev_net:
+    driver: bridge

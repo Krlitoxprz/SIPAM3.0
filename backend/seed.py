@@ -293,6 +293,14 @@ def run(reset: bool = False):
     Sin flags  → inserta solo lo que NO existe todavía.
     --reset    → limpia la BD y vuelve a poblar todo desde cero.
     """
+    from app.core.config import settings
+
+    # Security check: seeder should only run in development
+    if settings.ENVIRONMENT == "production":
+        print("❌ ERROR: Seeder cannot run in production environment!")
+        print("   Set ENVIRONMENT=development to run seed data.")
+        return
+
     print("=" * 70)
     print("  SIPAM-USCO — Seeder v4 · Idempotente")
     print("=" * 70)

@@ -90,10 +90,14 @@ services:
       retries: 3
 
 # ── Volumes ──────────────────────────────────────────────────────────────────
+# Volumes persistentes con nombre para producción
 volumes:
   postgres_data:
+    driver: local
   uploads_data:
+    driver: local
   ai_models:
+    driver: local
 
 # ── Network ──────────────────────────────────────────────────────────────────
 networks:

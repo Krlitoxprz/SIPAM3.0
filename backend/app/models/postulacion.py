@@ -73,7 +73,10 @@ class ArchivoAdjunto(Base):
     nombre_original = Column(String(255), nullable=False)
     nombre_almacenado = Column(String(255), nullable=False, unique=True)
     ruta_archivo = Column(String(500), nullable=False)
+    ruta_completa = Column(Text, nullable=False)
+    tipo_mime = Column(String(100), nullable=True)
     tamanio_bytes = Column(Integer, nullable=True)
+    categoria = Column(String(50), nullable=True)  # 'cedula', 'rut', 'constancia', etc.
     uploaded_at = Column(DateTime(timezone=True), server_default=func.now())
 
     __table_args__ = (
