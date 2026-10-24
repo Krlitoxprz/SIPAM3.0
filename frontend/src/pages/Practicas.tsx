@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { MapPin, Plus, Trash2, Send, CheckCircle, AlertTriangle, DollarSign, Users, X, AlertCircle, Loader2 as Spin, Search, FileText, Truck, Clock, Edit2 } from 'lucide-react';
 import type { Practica, EstadoPractica, Asignatura } from '../types';
-import { practicasService, convocatoriasService, configuracionService, reportesService, transporteService, pagoViaticosService, geoService, pdfService, downloadBlob } from '../services/api';
-import { generarConsentimientoPDF, generarFO05, generarFO15Consolidado } from '../utils/pdfForms';
+import { practicasService, convocatoriasService, configuracionService, transporteService, pagoViaticosService, geoService, pdfService, downloadBlob } from '../services/api';
 import { useAuthContext } from '../hooks/useAuthContext';
 import { MapaRuta } from '../components/maps/MapaRuta';
 
@@ -1556,36 +1555,9 @@ export function Practicas() {
             <button
               onClick={async () => {
                 try {
-                  const r = await reportesService.getFO15Programa();
-                  const lista = r.data as Array<{
-                    nombre: string; asignatura: string; asignatura_codigo: string;
-                    docente: string; fecha_inicio: string | null; hora_salida: string | null;
-                    fecha_fin: string | null; hora_llegada: string | null;
-                    ruta: string | null; duracion_dias: number; num_alumnos: number;
-                    facultad: string; programa: string; periodo_academico: string;
-                  }>;
-                  const facultad = lista[0]?.facultad ?? user?.programa ?? '—';
-                  const programa = user?.programa ?? lista[0]?.programa ?? '—';
-                  const periodos = [...new Set(lista.map(p => p.periodo_academico))].join(' / ');
-                  generarFO15Consolidado({
-                    facultad,
-                    programa,
-                    periodo_academico: periodos || '—',
-                    jefe_nombre: `${user?.nombres ?? ''} ${user?.apellidos ?? ''}`.trim() || undefined,
-                    practicas: lista.map(p => ({
-                      nombre: p.nombre,
-                      asignatura: p.asignatura,
-                      asignatura_codigo: p.asignatura_codigo,
-                      docente: p.docente,
-                      fecha_inicio: p.fecha_inicio,
-                      hora_salida: p.hora_salida,
-                      fecha_fin: p.fecha_fin,
-                      hora_llegada: p.hora_llegada,
-                      ruta: p.ruta,
-                      duracion_dias: p.duracion_dias,
-                      num_alumnos: p.num_alumnos,
-                    })),
-                  });
+                  const r = await pdfService.fo15Consolidado();
+                  downloadBlob(new Blob([r.data], { type: 'application/pdf' }),
+                    `FO-15_Consolidado_${user?.programa ?? 'Programa'}.pdf`);
                 } catch { /* silent */ }
               }}
               className="flex items-center gap-2 bg-usco-vinotinto/10 hover:bg-usco-vinotinto/20 text-usco-vinotinto border border-usco-vinotinto/30 font-semibold px-4 py-2.5 rounded-lg transition-colors text-sm">
@@ -1888,8 +1860,9 @@ export function Practicas() {
                     <button
                       onClick={async () => {
                         try {
-                          const r = await reportesService.getConsentimiento(p.id);
-                          generarConsentimientoPDF(r.data);
+                          const r = await pdfService.consentimiento(p.id);
+                          downloadBlob(new Blob([r.data], { type: 'application/pdf' }),
+                            `Consentimiento_${p.id}.pdf`);
                         } catch { /* silent */ }
                       }}
                       className="flex items-center gap-1.5 text-xs font-semibold text-usco-vinotinto border border-usco-vinotinto/30 hover:bg-usco-vinotinto/5 px-3 py-1.5 rounded-lg transition-colors">
@@ -1964,8 +1937,9 @@ export function Practicas() {
                     <button
                       onClick={async () => {
                         try {
-                          const r = await reportesService.getFO05(p.id);
-                          generarFO05(r.data);
+                          const r = await pdfService.fo05(p.id);
+                          downloadBlob(new Blob([r.data], { type: 'application/pdf' }),
+                            `FO-05_Desplazamiento_Practica${p.id}.pdf`);
                         } catch { /* silent */ }
                       }}
                       className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 border border-emerald-200 hover:bg-emerald-50 px-3 py-1.5 rounded-lg transition-colors">

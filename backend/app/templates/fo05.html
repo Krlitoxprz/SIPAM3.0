@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<style>
+  @page { size: A4 portrait; margin: 10mm 10mm 14mm 10mm; }
+  @page listado { size: A4 landscape; margin: 10mm 10mm 14mm 10mm; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; font-size: 8.5pt; color: #1a1a1a; }
+  .page-break { page-break-before: always; }
+  .landscape { page: listado; page-break-before: always; }
+
+  /* ── Header FO-05 (3 bloques) ── */
+  .fo05-header { display: flex; margin-bottom: 8pt; }
+  .h-usco {
+    width: 42mm; border: 1.2px solid #8D191D; padding: 4pt 5pt;
+    font-size: 7pt; color: #4E6470;
+  }
+  .h-usco .univ { font-size: 7.5pt; font-weight: bold; color: #8D191D; line-height: 1.4; }
+  .h-mid { flex: 1; margin: 0 4pt; }
+  .h-mid .proc {
+    background: #F0F0F0; border: 1px solid #CCC; text-align: center;
+    font-size: 6.5pt; font-weight: bold; color: #505050; padding: 2.5pt;
+  }
+  .h-mid .title {
+    background: #F5F2EA; border: 1px solid #8D191D; margin-top: 3pt;
+    font-size: 8pt; font-weight: bold; color: #8D191D; text-align: center;
+    padding: 5pt 8pt; min-height: 34pt;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .h-meta { width: 50mm; border: 1.2px solid #8D191D; font-size: 6pt; }
+  .h-meta .row { display: flex; border-bottom: 1px solid #8D191D; }
+  .h-meta .row:last-child { border-bottom: none; }
+  .h-meta .k { width: 44%; font-weight: bold; padding: 2pt 3pt; color: #282828; }
+  .h-meta .v { flex: 1; padding: 2pt 3pt; }
+  .h-rule { border-top: 1.5px solid #8D191D; margin: 0 0 8pt; }
+
+  .fecha-band {
+    background: #F5F5F5; border: 1px solid #CCC; padding: 4pt 6pt;
+    font-size: 7.5pt; margin-bottom: 6pt;
+  }
+  .fecha-band .b {
+    display: inline-block; border: 1px solid #BBB; padding: 1pt 6pt;
+    margin: 0 2pt; text-align: center; min-width: 14mm;
+  }
+  .fecha-band .b small { display: block; font-size: 5pt; color: #777; }
+
+  .band-title {
+    background: #8D191D; color: #fff; font-size: 7pt; font-weight: bold;
+    padding: 2.5pt 6pt; margin: 6pt 0 2pt; text-transform: uppercase;
+  }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 4pt; }
+  td, th { border: 1px solid #CCC; padding: 3pt 4pt; font-size: 8pt; vertical-align: top; }
+  th { background: #8D191D; color: #fff; font-weight: bold; text-align: center; font-size: 6.5pt; }
+  td.lbl { background: #F5F2EA; font-weight: bold; color: #3C3C3C; }
+  tr.alt td { background: #F9F9F9; }
+  .text-block {
+    border: 1px solid #C8B99B; background: #FCFAF5; padding: 5pt 7pt;
+    font-size: 7.5pt; margin-bottom: 5pt; white-space: pre-wrap; line-height: 1.5;
+  }
+  .blank-block {
+    border: 1px solid #C8B99B; background: #FCFAF8; min-height: 16pt;
+    padding: 5pt 7pt; font-size: 8pt; margin-bottom: 5pt; white-space: pre-wrap;
+  }
+  .nota { font-size: 5.5pt; font-style: italic; color: #999; margin-top: 8pt; }
+  .firmas { display: flex; gap: 6pt; margin-top: 14pt; }
+  .firma-box { flex: 1; border: 1px solid #BBB; text-align: center; page-break-inside: avoid; }
+  .firma-box .ft { background: #F5F2EA; font-weight: bold; font-size: 6.5pt; color: #8D191D; padding: 2.5pt; text-transform: uppercase; }
+  .firma-box .fm { height: 20pt; }
+  .firma-box .linea { border-top: 1px solid #999; margin: 0 8pt; }
+  .firma-box .fn { font-size: 7pt; font-weight: bold; padding: 2pt; }
+  .firma-box .fd { font-size: 6.5pt; color: #777; padding-bottom: 3pt; }
+  .consent-text { border: 1px solid #CCC; background: #FCFCFC; padding: 6pt 8pt; font-size: 7pt; line-height: 1.6; }
+  .consent-text p { margin-bottom: 5pt; }
+  .nota-menor { font-size: 6.5pt; font-weight: bold; color: #8D191D; margin: 6pt 0; }
+  .legend { font-size: 6pt; color: #555; margin-top: 5pt; }
+</style>
+</head>
+<body>
+
+{# ═══════════ HEADER compartido por bloque ═══════════ #}
+{% macro fo05_header(pagina) %}
+<div class="fo05-header">
+  <div class="h-usco">
+    <div class="univ">UNIVERSIDAD<br/>SURCOLOMBIANA</div>
+    <div style="margin-top:3pt;">Neiva - Huila - Colombia<br/>www.usco.edu.co</div>
+  </div>
+  <div class="h-mid">
+    <div class="proc">GESTIÓN DE INFRAESTRUCTURA</div>
+    <div class="title">SOLICITUD DESPLAZAMIENTO VIAL PARA PRÁCTICAS ACADÉMICAS Y OTRAS ACTIVIDADES RELACIONADAS</div>
+  </div>
+  <div class="h-meta">
+    <div class="row"><span class="k">CÓDIGO:</span><span class="v">AP-INF-FO-05</span></div>
+    <div class="row"><span class="k">VERSIÓN:</span><span class="v">7</span></div>
+    <div class="row"><span class="k">VIGENCIA:</span><span class="v">2026</span></div>
+    <div class="row"><span class="k">PÁGINA:</span><span class="v">{{ pagina }}</span></div>
+  </div>
+</div>
+<div class="h-rule"></div>
+{% endmacro %}
+
+{# ══════════════════ PÁGINA 1 — DATOS GENERALES ══════════════════ #}
+{{ fo05_header('1') }}
+
+<div class="fecha-band">
+  <b>FECHA:</b>
+  <span class="b"><small>DÍA</small>{{ dd }}</span>
+  <span class="b"><small>MES</small>{{ mm }}</span>
+  <span class="b"><small>AÑO</small>{{ yyyy }}</span>
+</div>
+
+<div class="band-title">DATOS GENERALES</div>
+<table>
+  <tr>
+    <td class="lbl" style="width:34%">NOMBRE DEL COORDINADOR DE LA ACTIVIDAD Y/O ADMINISTRADOR DEL RIESGO</td>
+    <td>{{ docente.nombres }}</td>
+    <td class="lbl" style="width:18%">No. TELÉFONO / CELULAR</td>
+    <td>{{ docente.email }}</td>
+  </tr>
+  <tr>
+    <td class="lbl">NOMBRE DE LA ACTIVIDAD Y/O PRÁCTICA A DESARROLLAR (Si es Práctica Académica, indique asignatura y código)</td>
+    <td style="font-weight:bold;">{{ practica.nombre }}</td>
+    <td class="lbl">ASIGNATURA / CÓDIGO</td>
+    <td>{{ asignatura.nombre }} / {{ asignatura.codigo }}</td>
+  </tr>
+  <tr>
+    <td class="lbl">FACULTAD</td>
+    <td>{{ asignatura.facultad or '—' }}</td>
+    <td class="lbl">PROGRAMA ACADÉMICO</td>
+    <td>{{ asignatura.programa }}</td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <td class="lbl" rowspan="2" style="width:14%; vertical-align:middle;">LUGAR DE ORIGEN</td>
+    <td class="lbl" style="width:10%; text-align:center;">SALIDA</td>
+    <td style="width:15%">{{ practica.fecha_inicio_fmt }} {{ practica.hora_salida or '' }}</td>
+    <td class="lbl" style="width:8%">SEDE</td>
+    <td style="width:10%">{{ origen_sede }}</td>
+    <td class="lbl" rowspan="2" style="width:14%; vertical-align:middle;">LUGAR DE DESTINO</td>
+    <td class="lbl" style="width:10%; text-align:center;">LLEGADA</td>
+    <td>{{ practica.fecha_inicio_fmt }} {{ practica.hora_salida or '' }}</td>
+  </tr>
+  <tr>
+    <td class="lbl" style="text-align:center;">LLEGADA</td>
+    <td>{{ practica.fecha_fin_fmt }} {{ practica.hora_llegada or '' }}</td>
+    <td class="lbl">SEDE</td>
+    <td>{{ origen_sede }}</td>
+    <td class="lbl" style="text-align:center;">SALIDA</td>
+    <td>{{ practica.fecha_fin_fmt }} {{ practica.hora_llegada or '' }}</td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <td class="lbl" style="width:34%">NOMBRE DEL CONDUCTOR PRINCIPAL</td>
+    <td style="width:16%; font-weight:bold;">{{ practica.conductor_nombre or '—' }}</td>
+    <td class="lbl" style="width:34%">NOMBRE DEL CONDUCTOR AUXILIAR (SI APLICA)</td>
+    <td>—</td>
+  </tr>
+  <tr>
+    <td class="lbl">RUTAS AUTORIZADAS</td>
+    <td colspan="3">{{ ruta_ida }}</td>
+  </tr>
+</table>
+
+<div class="nota">Vigilada Mineducación · La versión vigente y controlada de este documento, solo podrá ser consultada a través del sitio web Institucional www.usco.edu.co, link Sistema Gestión de Calidad.</div>
+
+{# ══════════════════ PÁGINA 2 — PLAN VIAL + REQUISITOS ══════════════════ #}
+<div class="page-break"></div>
+{{ fo05_header('2') }}
+
+<table>
+  <tr>
+    <td class="lbl" style="width:35%">RUTA PRINCIPAL A SEGUIR (IDA):</td>
+    <td colspan="3">{{ ruta_ida }}</td>
+  </tr>
+  <tr>
+    <td class="lbl">TIEMPO DE VIAJE:</td>
+    <td>{{ tiempo_viaje }}</td>
+    <td class="lbl" style="width:14%">HORA SALIDA:</td>
+    <td>{{ practica.hora_salida or '—' }}</td>
+  </tr>
+  <tr>
+    <td class="lbl">SITIO DE REPORTE Y DESCANSO 1:</td>
+    <td>{{ sitio_descanso }}</td>
+    <td class="lbl">HORA:</td>
+    <td>—</td>
+  </tr>
+  <tr>
+    <td class="lbl">SITIO PARA PERNOCTAR (SI APLICA):</td>
+    <td colspan="3">{{ sitio_pernoctar }}</td>
+  </tr>
+  <tr>
+    <td class="lbl">RUTA PRINCIPAL A SEGUIR (RETORNO):</td>
+    <td colspan="3">{{ ruta_retorno }}</td>
+  </tr>
+  <tr>
+    <td class="lbl">TIEMPO DE VIAJE RETORNO:</td>
+    <td>—</td>
+    <td class="lbl">HORA LLEGADA:</td>
+    <td>{{ practica.hora_llegada or '—' }}</td>
+  </tr>
+  <tr>
+    <td class="lbl">RUTA ALTERNA:</td>
+    <td colspan="3" style="font-style:italic; color:#666;">(En caso de usarla, el conductor deberá reportar y justificar antes de tomar dicha ruta)</td>
+  </tr>
+  <tr>
+    <td class="lbl">MEDIO DE TRANSPORTE:</td>
+    <td>{{ practica.tipo_vehiculo or '—' }}</td>
+    <td class="lbl">EMPRESA / PLACA:</td>
+    <td>{{ practica.empresa_transporte or '—' }} / {{ practica.placa_vehiculo or '—' }}</td>
+  </tr>
+</table>
+
+<div class="band-title">REQUISITOS</div>
+<div class="text-block">El Coordinador de la actividad debe anexar:
+▪ PLAN VIAL PARA PRÁCTICAS ACADÉMICAS Y OTRAS ACTIVIDADES RELACIONADAS (Anexo 1) debidamente diligenciado por la totalidad de los participantes incluyendo el Coordinador de la actividad y el Conductor.
+▪ El ACTA DE CONSENTIMIENTO INFORMADO (Anexo 2) debidamente diligenciada por cada uno de los participantes; para el caso de los menores de edad también se debe diligenciar la Autorización de los padres o acudientes.
+▪ El Mapa donde figure la ruta a seguir.
+▪ Listado de los estudiantes matriculados en la Asignatura y/o Curso.
+Todos los documentos deben ser entregados 2 semanas antes de la fecha de salida, de lo contrario su práctica será cancelada (Acuerdo 003 de 2012 – Artículo 6ª numeral 9).</div>
+
+<div class="band-title">OBSERVACIONES</div>
+<div class="blank-block">{{ practica.observaciones or '' }}</div>
+
+<div class="nota">NOTA: Participante que no firme el LISTADO DE PERSONAL PARA DESPLAZAMIENTO VIAL o no anexe el ACTA DE CONSENTIMIENTO INFORMADO debidamente diligenciada, no podrá hacer parte del desplazamiento en el vehículo oficial o contratado por la Universidad (Acuerdo 003/2012 – Plan Estratégico de Seguridad Vial USCO).<br/>Vigilada Mineducación</div>
+
+{# ══════════════════ PÁGINA 3 — REGLAMENTO + FIRMAS ══════════════════ #}
+<div class="page-break"></div>
+{{ fo05_header('3') }}
+
+<div class="text-block" style="background:#FCFCFC; border-color:#CCC;">▪ El conductor deberá reportar y descansar cada cuatro (4) horas continuas de conducción y deberá cumplir con el programa de pausas activas (estiramientos).
+▪ El Coordinador de Transporte podrá establecer horarios flexibles de entrada o salida a la jornada laboral de los conductores, y deberán ser acatados por parte de los conductores y el Coordinador de la actividad y/o Administrador del riesgo.
+▪ La jornada laboral de los conductores de la Universidad Surcolombiana, no podrá exceder las ocho (08) horas diarias de trabajo.
+▪ En caso de desplazamientos con un tiempo de viaje mayor a siete (7) horas, se deberá designar un conductor adicional quien deberá realizar el respectivo relevo.
+
+Bajo la gravedad de juramento doy fe que los datos y documentos suministrados son ciertos y me responsabilizo de que cualquier omisión o falsedad podría provocar atrasos, rechazos o inconvenientes en el trámite que estoy solicitando.</div>
+
+<div class="firmas">
+  <div class="firma-box">
+    <div class="ft">Coordinador de la Actividad / Administrador del Riesgo</div>
+    <div class="fm"></div>
+    <div class="linea"></div>
+    <div class="fn">{{ docente.nombres }}</div>
+    <div class="fd">C.C. {{ docente.cedula }}</div>
+  </div>
+  <div class="firma-box">
+    <div class="ft">Coordinador de Transporte</div>
+    <div class="fm"></div>
+    <div class="linea"></div>
+    <div class="fn">___________________________________</div>
+    <div class="fd">NOMBRE / FIRMA / FECHA</div>
+  </div>
+</div>
+
+<div class="nota">Vigilada Mineducación · www.usco.edu.co</div>
+
+{# ══════════════════ PÁGINA 4+ (LANDSCAPE) — LISTADO DE PERSONAL ══════════════════ #}
+<div class="landscape">
+{{ fo05_header('4') }}
+
+<div class="band-title">ESTAMENTO — DATOS DE CONTACTO</div>
+<table>
+  <thead>
+  <tr>
+    <th style="width:2.6%">No</th>
+    <th style="width:14.5%">NOMBRE</th>
+    <th style="width:8%">No. DOCUMENTO DE IDENTIDAD</th>
+    <th style="width:6.5%">CÓDIGO</th>
+    <th style="width:6%">EPS</th>
+    <th style="width:6%">ARL</th>
+    <th style="width:4.8%">F.P.</th>
+    <th style="width:2.6%">D</th>
+    <th style="width:2.6%">A</th>
+    <th style="width:2.6%">TO</th>
+    <th style="width:3.4%">EST. PRE.</th>
+    <th style="width:3.4%">EST. POS.</th>
+    <th style="width:2.6%">CO</th>
+    <th style="width:2.6%">P</th>
+    <th style="width:12%">NOMBRE CONTACTO</th>
+    <th style="width:8%">TELÉFONO</th>
+    <th style="width:8%">FIRMA</th>
+  </tr>
+  </thead>
+  <tbody>
+  {% for p in participantes %}
+  <tr {% if loop.index is even %}class="alt"{% endif %}>
+    <td style="text-align:center;">{{ loop.index }}</td>
+    <td>{{ p.nombres }}</td>
+    <td>{{ p.cedula }}</td>
+    <td>{{ p.codigo }}</td>
+    <td>{{ p.eps or '' }}</td>
+    <td>{{ p.arl or '' }}</td>
+    <td>{{ p.fondo_pensiones or '' }}</td>
+    <td></td><td></td><td></td>
+    <td style="text-align:center; font-weight:bold;">X</td>
+    <td></td><td></td><td></td>
+    <td></td><td></td><td></td>
+  </tr>
+  {% else %}
+  <tr><td colspan="17" style="text-align:center; font-style:italic; color:#999;">Sin participantes registrados.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<div class="nota">D= Docente  A= Administrativo  TO= Trabajador Oficial  CO= Contratista  EST.PRE= Estudiante Pregrado  EST.POS= Estudiante Posgrado  P= Particular  |  Vigilada Mineducación</div>
+</div>
+
+{# ══════════════════ ÚLTIMA PÁGINA — ACTA DE CONSENTIMIENTO ══════════════════ #}
+<div class="page-break"></div>
+{{ fo05_header(total_pag) }}
+
+<div class="band-title" style="text-align:center;">ACTA DE CONSENTIMIENTO INFORMADO</div>
+
+<table>
+  <tr>
+    <td class="lbl" style="width:34%">TIPO DE VINCULACIÓN CON LA USCO<br/>(Seleccione con una X)</td>
+    <td style="width:11%; text-align:center; font-weight:bold;">D</td>
+    <td style="width:11%; text-align:center;">A</td>
+    <td style="width:11%; text-align:center;">TO.</td>
+    <td style="width:11%; text-align:center;">CO.</td>
+    <td style="width:11%; text-align:center; font-weight:bold;">EST.</td>
+    <td style="width:11%; text-align:center;">P.</td>
+  </tr>
+</table>
+
+<div class="consent-text">
+<p>El suscrito ______________________________________________ identificado con el documento de identidad: CC____ TI____ No. __________________, conforme al número que aparece al pie de mi firma, manifiesto que estoy suficientemente enterado de los procedimientos administrativos que realiza la Institución para la realización de las prácticas extramuros y académicas y/o evento institucional establecido en la programación de actividades curriculares y no curriculares correspondientes al presente período académico. (Si es estudiante, escriba el nombre del programa al que pertenece y su código estudiantil) Programa_______________________________ Código_______________.</p>
+<p>La Universidad me ha comunicado de los trámites básicos de la práctica y/o evento institucional, sus ventajas, desventajas, riesgos y posibles complicaciones que puedan ocurrir durante el desplazamiento y realización de la misma, teniendo en cuenta la difícil situación de orden público que actualmente afecta a la región Surcolombiana y al país en general.</p>
+<p>Declaro que comprendo los siguientes aspectos:<br/>
+• La Universidad cumplirá a cabalidad los procedimientos fijados en la normatividad de la Institución sobre las prácticas y/o evento institucional en procura de garantizar el éxito de la gestión y obtener las mayores medidas de seguridad previas a cada desplazamiento.<br/>
+• La Universidad verificará previamente la situación de orden público en el lugar donde se realizará la práctica y/o evento institucional.<br/>
+• El Coordinador responsable de la práctica y/o evento institucional portará un listado oficial de los participantes.<br/>
+• Mis únicos documentos que debo portar son la cédula de ciudadanía o tarjeta de identidad, carné estudiantil y libreta militar.<br/>
+• En calidad de participante de la actividad me acojo a mis obligaciones establecidas en el Manual de Convivencia tales como el NO consumo y/o transporte de sustancias alcohólicas, estupefacientes y toda clase de armas en el transcurso de la actividad.</p>
+<p>Conforme lo expuesto voluntariamente consiento la realización de la práctica extramuros o académica y/o evento institucional que se llevará a cabo en _____________________ (lugar) el Día____ Mes____ Año______ correspondiente al programa u actividad _______________________________________________.</p>
+<p>FIRMA _____________________________ C.C. o T.I. ______________ FECHA __________________</p>
+</div>
+
+<div class="nota-menor">Nota: Si el participante es menor de edad, el padre, madre o su responsable debe autorizar la salida diligenciando el cuadro que está al final del documento.</div>
+
+<div class="band-title">ESPACIO RESERVADO PARA LA AUTORIZACIÓN DEL PADRE, MADRE O RESPONSABLE DEL MENOR DE EDAD</div>
+<table>
+  <tr>
+    <th style="text-align:left;">NOMBRE COMPLETO</th>
+    <th style="width:18%; text-align:left;">CÉDULA</th>
+    <th style="width:16%; text-align:left;">PARENTESCO</th>
+    <th style="width:22%; text-align:left;">TELÉFONO FIJO Y/O CELULAR</th>
+    <th style="width:16%; text-align:left;">FIRMA</th>
+  </tr>
+  <tr><td style="height:14pt;"></td><td></td><td></td><td></td><td></td></tr>
+  <tr><td style="height:14pt;"></td><td></td><td></td><td></td><td></td></tr>
+</table>
+
+<div class="legend">D= Docente  A= Administrativo  TO= Trabajador Oficial  CO= Contratista  EST.= Estudiante  P= Particular</div>
+
+{% include "_verification.html" %}
+
+</body>
+</html>

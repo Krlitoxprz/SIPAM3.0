@@ -1,17 +1,26 @@
 """
 PDF Generator — server-side usando WeasyPrint + Jinja2.
-Endpoints: /pdf/fo14/{conv_id}, /pdf/fo16/{practica_id}, /pdf/fo15/{practica_id}
+Endpoints: /pdf/fo14/{conv_id}, /pdf/fo16/{practica_id}, /pdf/fo15/{practica_id},
+/pdf/fo46/{conv_id}, /pdf/fo05/{practica_id}, /pdf/consentimiento/{practica_id},
+/pdf/fo15-consolidado
+Cada PDF incluye pie de verificación con código QR y hash SHA-256 del contenido.
 """
+import base64
+import hashlib
+import io
+import json
 import os
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response
 from sqlalchemy.orm import Session, joinedload
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from app.db.database import get_db
+from app.core.config import settings
 from app.models.user import User, RolEnum
 from app.models.convocatoria import Convocatoria, Asignatura
 from app.models.postulacion import Postulacion, EstadoPostulacionEnum
@@ -20,7 +29,7 @@ from app.api.deps import get_current_user, require_roles
 
 router = APIRouter()
 
-TEMPLATES_DIR = Path(__file__).parent.parent.parent / "templates"
+TEMPLATES_DIR = Path(__file__).parent.parent.parent.parent / "templates"
 
 _jinja = Environment(
     loader=FileSystemLoader(str(TEMPLATES_DIR)),
@@ -79,6 +88,45 @@ def _render_pdf(template_name: str, context: dict) -> bytes:
         )
     html_str = _jinja.get_template(template_name).render(**context)
     return HTML(string=html_str, base_url=str(TEMPLATES_DIR)).write_pdf()
+
+
+def _verification_ctx(doc_label: str, ref_id: str, context: dict) -> dict:
+    """Genera el bloque de verificación documental para el pie del PDF.
+
+    El QR codifica `SIPAM-USCO|<doc>|<ref>|sha256:<digest>` y el hash SHA-256
+    se calcula sobre el contexto del documento serializado (contenido canónico),
+    de modo que cualquier alteración del documento invalida el hash.
+    """
+    import qrcode
+
+    canonical = json.dumps(context, sort_keys=True, default=str, ensure_ascii=False)
+    digest = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+    payload = f"SIPAM-USCO|{doc_label}|{ref_id}|sha256:{digest}"
+
+    img = qrcode.make(payload)
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    qr_b64 = base64.b64encode(buf.getvalue()).decode("ascii")
+
+    return {
+        "qr_b64": qr_b64,
+        "doc_hash": digest,
+        "doc_ref": f"{doc_label}-{ref_id}",
+    }
+
+
+def _render_pdf_verified(template_name: str, context: dict, doc_label: str, ref_id: str) -> bytes:
+    """Renderiza un template añadiendo el pie de verificación QR + SHA-256."""
+    context = dict(context)
+    context.update(_verification_ctx(doc_label, ref_id, context))
+    return _render_pdf(template_name, context)
+
+
+def _ascii_filename(name: str) -> str:
+    """Filename seguro para el header Content-Disposition (solo ASCII)."""
+    import unicodedata
+    normalized = unicodedata.normalize("NFKD", name)
+    return "".join(c for c in normalized if ord(c) < 128).replace('"', "")
 
 
 # ── FO-14 ─────────────────────────────────────────────────────────────────────
@@ -160,12 +208,12 @@ def pdf_fo14(
         "tipo_monitoria_label": TIPO_MONITORIA_LABEL.get(conv.tipo_monitoria.value, conv.tipo_monitoria.value),
     }
 
-    pdf_bytes = _render_pdf("fo14.html", ctx)
+    pdf_bytes = _render_pdf_verified("fo14.html", ctx, "FO-14", str(convocatoria_id))
     filename = f"FO-14_Monitor_{conv.asignatura.codigo if conv.asignatura else conv.id}_{conv.periodo_academico}.pdf"
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        headers={"Content-Disposition": f'attachment; filename="{_ascii_filename(filename)}"'},
     )
 
 
@@ -256,12 +304,12 @@ def pdf_fo16(
         "dias": dias,
     }
 
-    pdf_bytes = _render_pdf("fo16.html", ctx)
+    pdf_bytes = _render_pdf_verified("fo16.html", ctx, "FO-16", str(practica_id))
     filename = f"FO-16_Practica{pr.id}_{pr.periodo_academico}.pdf"
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        headers={"Content-Disposition": f'attachment; filename="{_ascii_filename(filename)}"'},
     )
 
 
@@ -347,10 +395,247 @@ def pdf_fo15(
         "total_viaticos_fmt": _fmt_cop(total_v),
     }
 
-    pdf_bytes = _render_pdf("fo15.html", ctx)
+    pdf_bytes = _render_pdf_verified("fo15.html", ctx, "FO-15", str(practica_id))
     filename = f"FO-15_Participantes_Practica{pr.id}_{pr.periodo_academico}.pdf"
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        headers={"Content-Disposition": f'attachment; filename="{_ascii_filename(filename)}"'},
+    )
+
+
+# ── FO-46 — Cartel público de convocatoria ────────────────────────────────────
+
+@router.get(
+    "/fo46/{convocatoria_id}",
+    summary="Generar PDF MI-FOR-FO-46 — Convocatoria para Monitores",
+    response_class=Response,
+)
+def pdf_fo46(
+    convocatoria_id: int,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_roles(RolEnum.jefe_programa, RolEnum.decano, RolEnum.admin, RolEnum.profesor)),
+):
+    from app.api.v1.endpoints.reportes import datos_fo46
+    d = datos_fo46(convocatoria_id, db, _)
+    conv = d["convocatoria"]
+
+    ctx = {
+        "fecha_hoy": datetime.now().strftime("%d de %B de %Y"),
+        "convocatoria": {
+            "titulo": conv["titulo"],
+            "periodo_academico": conv["periodo_academico"],
+            "horas_semana": conv["horas_semana"],
+            "horas_semestre": conv["horas_semestre"],
+            "descripcion_actividades": conv["descripcion_actividades"],
+            "promedio_minimo": conv["promedio_minimo"],
+            "creditos_minimo_pct": conv["creditos_minimo_pct"],
+            "num_monitores_requeridos": conv["num_monitores_requeridos"],
+            "sede": conv["sede"],
+            "fecha_inicio_fmt": _fmt_date(conv["fecha_inicio_postulacion"]),
+            "fecha_fin_fmt": _fmt_date(conv["fecha_fin_postulacion"]),
+        },
+        "asignatura": d["asignatura"],
+        "docente": d["docente"],
+        "tipo_monitoria_label": TIPO_MONITORIA_LABEL.get(conv["tipo_monitoria"], conv["tipo_monitoria"]),
+    }
+
+    pdf_bytes = _render_pdf_verified("fo46.html", ctx, "FO-46", str(convocatoria_id))
+    filename = f"FO-46_Convocatoria_{convocatoria_id}_{conv['periodo_academico']}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{_ascii_filename(filename)}"'},
+    )
+
+
+# ── FO-05 — Solicitud de Desplazamiento Vial ──────────────────────────────────
+
+@router.get(
+    "/fo05/{practica_id}",
+    summary="Generar PDF AP-INF-FO-05 — Solicitud de Desplazamiento Vial",
+    response_class=Response,
+)
+def pdf_fo05(
+    practica_id: int,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_roles(RolEnum.jefe_programa, RolEnum.decano, RolEnum.admin, RolEnum.profesor)),
+):
+    from app.api.v1.endpoints.reportes import datos_fo05
+    d = datos_fo05(practica_id, db, _)
+    pr = d["practica"]
+    rutas = d["rutas"]
+    participantes = d["participantes"]
+
+    origen = next((r for r in rutas if r["tipo_punto"] == "origen"), rutas[0] if rutas else None)
+    destino = next(
+        (r for r in reversed(rutas) if r["tipo_punto"] == "destino"),
+        rutas[-1] if rutas else None,
+    )
+    ruta_ida = " → ".join(
+        f"{r['lugar']}{' – ' + r['municipio'] if r['municipio'] else ''}" for r in rutas
+    ) or "—"
+    ruta_retorno = " → ".join(
+        f"{r['lugar']}{' – ' + r['municipio'] if r['municipio'] else ''}" for r in reversed(rutas)
+    ) or "—"
+
+    import math
+    n_part = len(participantes)
+    part_pages = max(1, math.ceil(n_part / 16)) if n_part else 1
+    total_pag = 4 + part_pages
+    now = datetime.now()
+    duracion = pr["duracion_dias"] or 0
+
+    ctx = {
+        "dd": f"{now.day:02d}",
+        "mm": f"{now.month:02d}",
+        "yyyy": str(now.year),
+        "practica": {
+            "nombre": pr["nombre"],
+            "fecha_inicio_fmt": _fmt_date(pr["fecha_inicio"]),
+            "fecha_fin_fmt": _fmt_date(pr["fecha_fin"]),
+            "hora_salida": pr["hora_salida"],
+            "hora_llegada": pr["hora_llegada"],
+            "conductor_nombre": pr["conductor_nombre"],
+            "tipo_vehiculo": pr["tipo_vehiculo"],
+            "empresa_transporte": pr["empresa_transporte"],
+            "placa_vehiculo": pr["placa_vehiculo"],
+            "observaciones": pr["observaciones"],
+        },
+        "asignatura": d["asignatura"],
+        "docente": d["docente"],
+        "origen_sede": (origen["municipio"] or origen["lugar"]) if origen else "Neiva",
+        "ruta_ida": ruta_ida,
+        "ruta_retorno": ruta_retorno,
+        "tiempo_viaje": f"{duracion} día(s)" if duracion > 0 else "—",
+        "sitio_descanso": f"{destino['lugar']}{' – ' + destino['municipio'] if destino['municipio'] else ''}" if destino else "—",
+        "sitio_pernoctar": (destino["lugar"] if destino else "—") if duracion > 1 else "No aplica",
+        "participantes": participantes,
+        "total_pag": str(total_pag),
+    }
+
+    pdf_bytes = _render_pdf_verified("fo05.html", ctx, "FO-05", str(practica_id))
+    filename = f"FO-05_Desplazamiento_Practica{practica_id}_{pr['periodo_academico']}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{_ascii_filename(filename)}"'},
+    )
+
+
+# ── Consentimiento informado por estudiante ───────────────────────────────────
+
+@router.get(
+    "/consentimiento/{practica_id}",
+    summary="Generar PDF Acta de Consentimiento Informado del estudiante",
+    response_class=Response,
+)
+def pdf_consentimiento(
+    practica_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """PDF del consentimiento del usuario autenticado.
+
+    El estudiante solo puede descargar su propio acta (debe haberla firmado);
+    profesor/jefe/decano/admin pueden generar la suya para cualquier práctica.
+    """
+    from app.api.v1.endpoints.reportes import datos_consentimiento
+    d = datos_consentimiento(practica_id, db, current_user)
+
+    TIPO_LABEL = {"origen": "Origen", "destino": "Destino", "intermedio": "Intermedio"}
+    rutas = [
+        {
+            "orden": r["orden"],
+            "tipo_label": TIPO_LABEL.get(r["tipo_punto"], r["tipo_punto"]),
+            "lugar": r["lugar"],
+            "municipio": r["municipio"],
+            "distancia_fmt": f"{r['distancia_km']:.1f} km" if r["distancia_km"] is not None else "—",
+        }
+        for r in d["rutas"]
+    ]
+
+    est = d["estudiante"]
+    anio = datetime.now().year
+    ctx = {
+        "fecha_hoy": datetime.now().strftime("%d de %B de %Y"),
+        "doc_ref_corto": f"NR-CI-{est['codigo']}-{practica_id}-{anio}",
+        "estudiante": {
+            "nombres": est["nombres"],
+            "codigo": est["codigo"],
+            "cedula": est["cedula"],
+            "programa": est["programa"] or d["asignatura"]["programa"],
+        },
+        "practica": {
+            "nombre": d["practica"]["nombre"],
+            "periodo_academico": d["practica"]["periodo_academico"],
+            "fecha_inicio_fmt": _fmt_date(d["practica"]["fecha_inicio"]),
+            "fecha_fin_fmt": _fmt_date(d["practica"]["fecha_fin"]),
+            "duracion_dias": d["practica"]["duracion_dias"],
+            "num_alumnos": d["practica"]["num_alumnos"],
+        },
+        "asignatura": d["asignatura"],
+        "docente": d["docente"],
+        "origen_str": f"{d['origen']}{' — ' + d['origen_municipio'] if d['origen_municipio'] else ''}",
+        "destino_str": f"{d['destino']}{' — ' + d['destino_municipio'] if d['destino_municipio'] else ''}",
+        "rutas": rutas,
+        "fecha_firma": d["fecha_firma"],
+        "ip_firma": d["ip_firma"],
+    }
+
+    pdf_bytes = _render_pdf_verified(
+        "consentimiento.html", ctx, "CONSENTIMIENTO", f"{practica_id}-{est['codigo']}"
+    )
+    filename = f"Consentimiento_{est['codigo']}_Practica{practica_id}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{_ascii_filename(filename)}"'},
+    )
+
+
+# ── FO-15 consolidado por programa ────────────────────────────────────────────
+
+@router.get(
+    "/fo15-consolidado",
+    summary="Generar PDF MI-FOR-FO-15 consolidado de prácticas por programa",
+    response_class=Response,
+)
+def pdf_fo15_consolidado(
+    programa: Optional[str] = Query(None),
+    periodo: Optional[str] = Query(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles(RolEnum.jefe_programa, RolEnum.decano, RolEnum.admin)),
+):
+    from app.api.v1.endpoints.reportes import practicas_por_programa
+    practicas = practicas_por_programa(programa, periodo, db, current_user)
+
+    facultad = practicas[0]["facultad"] if practicas and practicas[0].get("facultad") else "—"
+    programa_out = (
+        current_user.programa
+        if current_user.rol == RolEnum.jefe_programa and current_user.programa
+        else programa or (practicas[0]["programa"] if practicas else "—")
+    )
+    periodos = sorted({p["periodo_academico"] for p in practicas if p.get("periodo_academico")})
+    now = datetime.now()
+
+    ctx = {
+        "facultad": facultad,
+        "programa": programa_out or "—",
+        "periodo_academico": " / ".join(periodos) or (periodo or "—"),
+        "sede": "Neiva",
+        "jefe_nombre": f"{current_user.nombres} {current_user.apellidos}" if current_user.rol == RolEnum.jefe_programa else None,
+        "fecha_hoy": now.strftime("%d de %B de %Y"),
+        "anio": str(now.year),
+        "practicas": practicas,
+    }
+
+    pdf_bytes = _render_pdf_verified(
+        "fo15_consolidado.html", ctx, "FO-15-CONS", (programa_out or "ALL").replace(" ", "_")
+    )
+    filename = f"FO-15_Consolidado_{(programa_out or 'Programa').replace(' ', '_')}_{ctx['periodo_academico']}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{_ascii_filename(filename)}"'},
     )
