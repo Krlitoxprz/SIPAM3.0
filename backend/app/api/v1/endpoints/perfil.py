@@ -6,9 +6,11 @@ Endpoints:
   POST   /perfil/me/foto     → subir o reemplazar foto de perfil
   DELETE /perfil/me/foto     → eliminar foto de perfil
 """
+import io
 import os
 import uuid
 import shutil
+from PIL import Image
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
@@ -100,6 +102,18 @@ async def upload_foto(
     if len(contents) > MAX_FOTO_BYTES:
         raise HTTPException(status_code=413, detail="La imagen no puede superar los 5 MB.")
 
+    # Validación de magic bytes: el formato real decide la extensión, nunca el nombre
+    # del archivo ni el Content-Type (ambos falsificables → Stored XSS vía .html/.svg).
+    try:
+        img = Image.open(io.BytesIO(contents))
+        img.verify()
+    except Exception:
+        raise HTTPException(status_code=400, detail="El contenido no es una imagen válida.")
+    formato_a_ext = {"JPEG": "jpg", "PNG": "png", "WEBP": "webp", "GIF": "gif"}
+    ext = formato_a_ext.get(img.format)
+    if not ext:
+        raise HTTPException(status_code=415, detail=f"Formato de imagen no soportado: {img.format}. Use JPEG, PNG, WEBP o GIF.")
+
     foto_dir = _foto_dir()
 
     # Eliminar foto anterior si existe
@@ -109,7 +123,6 @@ async def upload_foto(
         if os.path.exists(old_path):
             os.remove(old_path)
 
-    ext = file.filename.rsplit(".", 1)[-1].lower() if file.filename and "." in file.filename else "jpg"
     filename = f"user_{current_user.id}_{uuid.uuid4().hex[:8]}.{ext}"
     filepath = os.path.join(foto_dir, filename)
 

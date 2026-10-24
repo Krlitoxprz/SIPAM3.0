@@ -8,3 +8,5 @@ from app.models.evaluacion_monitor import EvaluacionMonitor
 from app.models.notificacion import Notificacion
 from app.models.documento_presupuesto import DocumentoPresupuesto
 from app.models.historial_estado import HistorialEstado
+from app.models.refresh_token import RefreshToken
+from app.models.iot_tracking import IoTTrackingPoint

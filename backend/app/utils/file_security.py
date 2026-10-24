@@ -2,8 +2,6 @@
 import os
 import uuid
 from fastapi import HTTPException, UploadFile
-from sqlalchemy.orm import Session
-from app.models.postulacion import ArchivoAdjunto
 
 # Tipos MIME permitidos por extensión visible
 ALLOWED_TYPES: dict[str, bytes] = {
@@ -23,17 +21,12 @@ async def validate_and_save(
     file: UploadFile,
     subfolder: str,
     allowed_extensions: list[str],
-    usuario_id: int,
-    tipo_documento: str,
-    postulacion_id: int = None,
     upload_dir: str = "uploads",
     max_bytes: int = MAX_BYTES,
-    db: Session = None,
-) -> ArchivoAdjunto:
+) -> tuple[str, str]:
     """
     Valida extensión, magic bytes y tamaño. Guarda con nombre UUID seguro.
-    Crea registro en base de datos con metadatos.
-    Retorna objeto ArchivoAdjunto.
+    Retorna (nombre_almacenado, ruta_completa). El registro ORM lo crea cada endpoint.
     """
     if not file.filename:
         raise HTTPException(status_code=400, detail="Nombre de archivo requerido")
@@ -72,23 +65,4 @@ async def validate_and_save(
     with open(full_path, "wb") as f:
         f.write(content)
 
-    # Crear registro en base de datos
-    archivo = ArchivoAdjunto(
-        usuario_id=usuario_id,
-        postulacion_id=postulacion_id,
-        tipo_documento=tipo_documento,
-        nombre_original=file.filename,
-        nombre_almacenado=safe_name,
-        ruta_archivo=subfolder + "/" + safe_name,
-        ruta_completa=full_path,
-        tipo_mime=file.content_type,
-        tamanio_bytes=len(content),
-        categoria=tipo_documento
-    )
-
-    if db:
-        db.add(archivo)
-        db.commit()
-        db.refresh(archivo)
-
-    return archivo
+    return safe_name, full_path

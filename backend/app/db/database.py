@@ -50,6 +50,7 @@ def get_db():
 def init_db():
     from app.models import user, convocatoria, postulacion, practica, presupuesto, notificacion, monitor, transporte  # noqa
     from app.models import documento_presupuesto, historial_estado, evaluacion_monitor, pago_viatico, password_reset  # noqa
+    from app.models import refresh_token, iot_tracking  # noqa
     Base.metadata.create_all(bind=engine)
     _run_cross_migrations()   # ALTER TABLE — funciona en SQLite Y PostgreSQL
     if _IS_SQLITE:

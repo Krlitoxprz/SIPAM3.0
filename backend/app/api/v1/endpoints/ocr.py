@@ -2,18 +2,26 @@
 OCR-API-01 - OCR endpoint using CNN
 Extracts text from uploaded documents using CNN.
 """
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 from typing import Optional
 import httpx
 
+from app.api.deps import get_current_user
+from app.models.user import User
+from app.core.config import settings
+
 router = APIRouter()
 
-AI_SERVICE_URL = "http://ai_service:5001"
+AI_SERVICE_URL = settings.AI_SERVICE_URL
+
+_MAX_OCR_BYTES = 5 * 1024 * 1024  # 5 MB — el OCR corre en TensorFlow; limitar evita DoS
+
 
 @router.post("/extract")
 async def extract_text_from_document(
     file: UploadFile = File(...),
-    document_type: Optional[str] = "cedula"
+    document_type: Optional[str] = "cedula",
+    current_user: User = Depends(get_current_user),
 ):
     """
     Extract text from uploaded document image using CNN.
@@ -29,6 +37,8 @@ async def extract_text_from_document(
     
     # Read file content
     contents = await file.read()
+    if len(contents) > _MAX_OCR_BYTES:
+        raise HTTPException(413, "La imagen no puede superar los 5 MB")
     
     # Forward to AI service with CNN
     async with httpx.AsyncClient() as client:

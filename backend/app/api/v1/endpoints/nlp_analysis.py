@@ -8,10 +8,11 @@ from typing import Optional, List
 import httpx
 from app.api.deps import get_current_user, require_roles
 from app.models.user import User, RolEnum
+from app.core.config import settings
 
 router = APIRouter()
 
-AI_SERVICE_URL = "http://ai_service:5001"
+AI_SERVICE_URL = settings.AI_SERVICE_URL
 
 class TextAnalysisRequest(BaseModel):
     """Request schema for text analysis."""

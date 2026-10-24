@@ -64,13 +64,7 @@ export function Perfil() {
 
   // ── Foto ──────────────────────────────────────────────────────────────
   const fileRef = useRef<HTMLInputElement>(null);
-  const [avatarSrc, setAvatarSrc] = useState<string | null>(
-    user?.foto_url
-      ? (user.foto_url.startsWith('/uploads')
-          ? `http://localhost:8000${user.foto_url}`
-          : user.foto_url)
-      : null
-  );
+  const [avatarSrc, setAvatarSrc] = useState<string | null>(user?.foto_url ?? null);
 
   function showFlash(tipo: 'ok' | 'err', texto: string) {
     setFlash({ tipo, texto });
@@ -85,9 +79,7 @@ export function Perfil() {
     try {
       const res = await perfilService.subirFoto(file);
       const fotoUrl = res.data?.foto_url;
-      setAvatarSrc(fotoUrl
-        ? (fotoUrl.startsWith('/uploads') ? `http://localhost:8000${fotoUrl}` : fotoUrl)
-        : null);
+      setAvatarSrc(fotoUrl ?? null);
       await refreshUser();
       showFlash('ok', 'Foto de perfil actualizada.');
     } catch (err: unknown) {

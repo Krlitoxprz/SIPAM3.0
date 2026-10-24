@@ -1,7 +1,10 @@
 import os
+import secrets
 from pydantic_settings import BaseSettings
-from pydantic import ConfigDict
+from pydantic import ConfigDict, model_validator
 from typing import List
+
+DEFAULT_INSECURE_SECRET = "sipam-usco-super-secret-key-2024-change-in-production"
 
 
 def parse_cors_origins() -> List[str]:
@@ -43,6 +46,12 @@ class Settings(BaseSettings):
     SMTP_FROM: str = ""
     SMTP_TLS: bool = True
 
+    # API key compartida para dispositivos IoT (ESP32 / simulador GPS)
+    IOT_API_KEY: str = "iot_device_key_12345"
+
+    # URL del microservicio de IA (OCR/NLP)
+    AI_SERVICE_URL: str = "http://localhost:5001"
+
     # URL pública del frontend para links en emails
     FRONTEND_URL: str = "http://localhost:5173"
 
@@ -50,6 +59,28 @@ class Settings(BaseSettings):
     COOKIE_DOMAIN: str = ""
     COOKIE_SECURE: bool = False  # Set to True in production (HTTPS)
     COOKIE_SAMESITE: str = "lax"
+
+    @model_validator(mode="after")
+    def _ensure_secret_key(self):
+        """SECRET_KEY nunca puede quedar vacía ni ser la clave de ejemplo.
+
+        Producción: se aborta el arranque. Desarrollo: se genera una clave
+        aleatoria por proceso (las sesiones no sobreviven reinicios, que es
+        aceptable en dev y evita firmar JWTs con una clave conocida/vacía).
+        """
+        if not self.SECRET_KEY or self.SECRET_KEY == DEFAULT_INSECURE_SECRET:
+            if self.ENVIRONMENT == "production" or not self.DEBUG:
+                raise ValueError(
+                    "SECRET_KEY debe configurarse en .env con una clave segura (mín. 32 caracteres) "
+                    "antes de arrancar en producción."
+                )
+            import warnings
+            warnings.warn(
+                "SECRET_KEY no configurada: se generó una clave aleatoria de desarrollo. "
+                "Define SECRET_KEY en backend/.env para mantener sesiones entre reinicios."
+            )
+            self.SECRET_KEY = secrets.token_urlsafe(32)
+        return self
 
     model_config = ConfigDict(env_file=".env", case_sensitive=True)
 

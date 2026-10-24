@@ -13,10 +13,28 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Intentos de refresh: una sola promesa compartida para peticiones concurrentes
+let refreshPromise: Promise<unknown> | null = null;
+
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
+  async (error) => {
+    const original = error.config;
+    const url: string = original?.url ?? '';
+    const esAuth = url.includes('/auth/login') || url.includes('/auth/refresh') || url.includes('/auth/logout');
+
+    if (error.response?.status === 401 && !esAuth && !original?._reintento) {
+      original._reintento = true;
+      try {
+        refreshPromise ??= api.post('/auth/refresh').finally(() => { refreshPromise = null; });
+        await refreshPromise;
+        return api.request(original); // reintenta con la nueva cookie access_token
+      } catch {
+        // refresh falló → sesión terminada
+      }
+    }
+
+    if (error.response?.status === 401 && !esAuth) {
       localStorage.removeItem('sipam_user');
       window.location.href = '/login';
     }

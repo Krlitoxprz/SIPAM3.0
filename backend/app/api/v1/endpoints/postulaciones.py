@@ -183,6 +183,7 @@ async def subir_documento(
         existente.nombre_original = nombre_original
         existente.nombre_almacenado = safe_name
         existente.ruta_archivo = ruta_relativa
+        existente.ruta_completa = ruta_completa
         existente.tamanio_bytes = tamanio
         archivo = existente
     else:
@@ -193,7 +194,10 @@ async def subir_documento(
             nombre_original=nombre_original,
             nombre_almacenado=safe_name,
             ruta_archivo=ruta_relativa,
+            ruta_completa=ruta_completa,
+            tipo_mime=file.content_type,
             tamanio_bytes=tamanio,
+            categoria=tipo_doc,
         )
         db.add(archivo)
 

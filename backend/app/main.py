@@ -18,6 +18,8 @@ from app.db.database import init_db, SessionLocal
 import app.models.historial_estado  # noqa: F401
 import app.models.evaluacion_monitor  # noqa: F401
 import app.models.password_reset  # noqa: F401
+import app.models.refresh_token  # noqa: F401
+import app.models.iot_tracking  # noqa: F401
 import app.models.pago_viatico  # noqa: F401
 
 logger = logging.getLogger(__name__)
@@ -43,7 +45,7 @@ def _build_scheduler() -> AsyncIOScheduler:
 
 scheduler = _build_scheduler()
 
-_DEFAULT_SECRET = "sipam-usco-super-secret-key-2024-change-in-production"
+from app.core.config import DEFAULT_INSECURE_SECRET as _DEFAULT_SECRET
 
 
 def _ensure_admin() -> None:
@@ -185,7 +187,9 @@ async def _actualizar_precios_sicom() -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Hard-fail si se intenta arrancar en producción con clave insegura
-    if settings.SECRET_KEY == _DEFAULT_SECRET and not settings.DEBUG:
+    # (config.py ya impide vacía/default en prod y genera una aleatoria en dev;
+    # estos chequeos quedan como red de seguridad adicional)
+    if (not settings.SECRET_KEY or settings.SECRET_KEY == _DEFAULT_SECRET) and not settings.DEBUG:
         raise ValueError(
             "SECRET_KEY usa el valor por defecto inseguro. "
             "Define SECRET_KEY en el archivo .env antes de desplegar en producción."
@@ -219,13 +223,13 @@ async def lifespan(app: FastAPI):
 
 
 _USING_DEFAULT_KEY = settings.SECRET_KEY == _DEFAULT_SECRET
-if _USING_DEFAULT_KEY:
+if _USING_DEFAULT_KEY or not settings.SECRET_KEY:
     warnings.warn(
-        "\033[91m[SEGURIDAD] SECRET_KEY usa el valor por defecto. "
+        "\033[91m[SEGURIDAD] SECRET_KEY no está configurada o usa el valor por defecto. "
         "Define SECRET_KEY en backend/.env antes de desplegar en producción.\033[0m",
         stacklevel=1,
     )
-    logger.critical("SECRET_KEY usa el valor por defecto — RIESGO CRITICO en producción")
+    logger.critical("SECRET_KEY insegura — RIESGO CRITICO en producción")
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -242,8 +246,23 @@ app.add_middleware(
     allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type", "Accept"],
+    allow_headers=["Authorization", "Content-Type", "Accept", "X-Requested-With"],
 )
+
+
+@app.middleware("http")
+async def csrf_origin_check(request: Request, call_next):
+    """Protección CSRF para auth por cookie: peticiones que mutan estado deben
+    venir con un Origin/Referer permitido o con header Authorization explícito
+    (las cookies viajan automáticamente; un formulario cross-site no puede
+    forjar ni Origin ni Authorization)."""
+    if request.method in ("POST", "PUT", "PATCH", "DELETE"):
+        if "authorization" not in request.headers:
+            origin = request.headers.get("origin") or request.headers.get("referer")
+            if origin and not any(origin.startswith(o) for o in settings.CORS_ORIGINS):
+                from fastapi.responses import JSONResponse
+                return JSONResponse(status_code=403, content={"detail": "Origen no permitido (CSRF)"})
+    return await call_next(request)
 
 
 @app.middleware("http")
@@ -268,10 +287,12 @@ async def security_headers(request: Request, call_next):
 
 app.include_router(api_router, prefix="/api/v1")
 
-# Servir archivos subidos (fotos de perfil, documentos, etc.)
-_uploads_abs = os.path.abspath(settings.UPLOAD_DIR)
-os.makedirs(_uploads_abs, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=_uploads_abs), name="uploads")
+# Solo las fotos de perfil se sirven como estáticos públicos.
+# Los documentos sensibles (postulaciones, presupuesto) NO se exponen:
+# se descargan por /api/v1/archivos/{id} con JWT + RBAC.
+_fotos_abs = os.path.abspath(os.path.join(settings.UPLOAD_DIR, "fotos_perfil"))
+os.makedirs(_fotos_abs, exist_ok=True)
+app.mount("/uploads/fotos_perfil", StaticFiles(directory=_fotos_abs), name="fotos_perfil")
 
 
 @app.get("/", tags=["root"])
