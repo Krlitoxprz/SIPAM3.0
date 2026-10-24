@@ -60,14 +60,14 @@
 ### HU-04 · Crear usuarios del sistema
 🔴 Alta | ✅ Implementada
 
-**Como** administrador o encargado de facultad,
-**quiero** crear nuevos usuarios (estudiantes, profesores, encargados),
+**Como** administrador o jefe de programa,
+**quiero** crear nuevos usuarios (estudiantes, profesores, jefes de programa),
 **para** incorporar al personal al sistema sin acceso directo a la base de datos.
 
 **Criterios de aceptación:**
 - El código, email y cédula deben ser únicos en el sistema.
 - La contraseña inicial debe tener mínimo 8 caracteres.
-- El `encargado_facultad` solo puede crear usuarios con rol `estudiante` o `profesor`.
+- El `jefe_programa` solo puede crear usuarios con rol `estudiante` o `profesor`.
 - No se puede crear ningún usuario con rol `admin` por esta interfaz.
 - El sistema retorna el usuario creado con HTTP 201.
 
@@ -76,7 +76,7 @@
 ### HU-05 · Listar y buscar usuarios
 🟡 Media | ✅ Implementada
 
-**Como** administrador o encargado de facultad,
+**Como** administrador o jefe de programa,
 **quiero** listar todos los usuarios con posibilidad de filtrar por rol y buscar por nombre o código,
 **para** gestionar fácilmente el directorio del sistema.
 
@@ -90,7 +90,7 @@
 ### HU-06 · Activar / desactivar usuarios
 🟡 Media | ✅ Implementada
 
-**Como** administrador o encargado de facultad,
+**Como** administrador o jefe de programa,
 **quiero** activar o desactivar cuentas de usuario,
 **para** controlar el acceso al sistema sin eliminar registros históricos.
 
@@ -104,7 +104,7 @@
 ### HU-07 · Restablecer contraseña de un usuario
 🟡 Media | ✅ Implementada
 
-**Como** administrador o encargado de facultad,
+**Como** administrador o jefe de programa,
 **quiero** restablecer la contraseña de un usuario,
 **para** ayudarlo cuando pierde el acceso a su cuenta.
 
@@ -119,7 +119,7 @@
 ### HU-08 · Validar requisitos académicos de un estudiante
 🔴 Alta | ✅ Implementada
 
-**Como** profesor o encargado de facultad,
+**Como** profesor o jefe de programa,
 **quiero** validar si un estudiante cumple los requisitos académicos para ser monitor,
 **para** asegurar que solo estudiantes aptos participen en las convocatorias (RF-MON-01).
 
@@ -135,7 +135,7 @@
 ### HU-09 · Crear y gestionar asignaturas
 🔴 Alta | ✅ Implementada
 
-**Como** encargado de facultad,
+**Como** jefe de programa,
 **quiero** crear y actualizar asignaturas con su información académica,
 **para** tener un catálogo actualizado de materias disponibles para convocatorias y prácticas.
 
@@ -156,7 +156,7 @@
 
 **Criterios de aceptación:**
 - Los profesores solo ven las asignaturas que dictan.
-- El `encargado_facultad` puede ver también las inactivas con un parámetro opcional.
+- El `jefe_programa` puede ver también las inactivas con un parámetro opcional.
 - Los resultados se ordenan por semestre y nombre.
 
 ---
@@ -164,7 +164,7 @@
 ### HU-11 · Matricular y desmatricular estudiantes en asignaturas
 🔴 Alta | ✅ Implementada
 
-**Como** encargado de facultad,
+**Como** jefe de programa,
 **quiero** matricular y desmatricular estudiantes en asignaturas por período académico,
 **para** reflejar la asistencia real a clases y controlar quién puede firmar consentimientos.
 
@@ -180,7 +180,7 @@
 ### HU-12 · Crear convocatoria de monitoría
 🔴 Alta | ✅ Implementada
 
-**Como** profesor o encargado de facultad,
+**Como** profesor o jefe de programa,
 **quiero** crear una convocatoria de monitoría en estado borrador,
 **para** iniciar el proceso de selección de monitores para una asignatura.
 
@@ -189,7 +189,7 @@
 - La fecha de inicio de postulación no puede ser en el pasado.
 - La fecha de publicación de resultados debe ser posterior al cierre de postulaciones (Art.8).
 - El profesor solo puede crear convocatorias para asignaturas que él dicta.
-- El `encargado_facultad` debe seleccionar explícitamente el profesor responsable.
+- El `jefe_programa` debe seleccionar explícitamente el profesor responsable.
 - La convocatoria se crea en estado `borrador`.
 
 ---
@@ -197,7 +197,7 @@
 ### HU-13 · Publicar convocatoria (cambio de estado)
 🔴 Alta | ✅ Implementada
 
-**Como** encargado de facultad,
+**Como** jefe de programa,
 **quiero** abrir, cerrar y finalizar convocatorias siguiendo un flujo controlado,
 **para** garantizar que el proceso de selección de monitores siga los pasos establecidos.
 
@@ -230,7 +230,7 @@
 ### HU-15 · Editar convocatoria
 🟡 Media | ✅ Implementada
 
-**Como** profesor o encargado de facultad,
+**Como** profesor o jefe de programa,
 **quiero** editar los datos de una convocatoria antes de publicarla o mientras está abierta,
 **para** corregir errores o actualizar la información.
 
@@ -290,7 +290,7 @@
 ### HU-19 · Ver postulantes de una convocatoria
 🟡 Media | ✅ Implementada
 
-**Como** profesor o encargado de facultad,
+**Como** profesor o jefe de programa,
 **quiero** ver la lista de postulantes de una convocatoria con sus datos y estado,
 **para** gestionar el proceso de evaluación.
 
@@ -331,7 +331,7 @@
 ### HU-22 · Descargar documento adjunto de postulación
 🟢 Baja | ✅ Implementada
 
-**Como** profesor o encargado de facultad,
+**Como** profesor o jefe de programa,
 **quiero** descargar los documentos adjuntos de un postulante,
 **para** verificar la autenticidad de la documentación presentada.
 
@@ -347,7 +347,7 @@
 ### HU-23 · Ejecutar algoritmo de selección
 🔴 Alta | ✅ Implementada
 
-**Como** profesor o encargado de facultad,
+**Como** profesor o jefe de programa,
 **quiero** ejecutar el algoritmo de selección automático sobre los postulantes evaluados,
 **para** determinar objetivamente quién(es) serán el (los) monitor(es) seleccionado(s) (RF-MON-05).
 
@@ -364,7 +364,7 @@
 ### HU-24 · Consultar resultados de selección
 🔴 Alta | ✅ Implementada
 
-**Como** estudiante, profesor o encargado de facultad,
+**Como** estudiante, profesor o jefe de programa,
 **quiero** consultar los resultados de selección de una convocatoria,
 **para** conocer quiénes fueron seleccionados como monitores y el ranking de puntajes.
 
@@ -412,7 +412,7 @@
 ### HU-27 · Aprobar o rechazar práctica extramural
 🔴 Alta | ✅ Implementada
 
-**Como** encargado de facultad,
+**Como** jefe de programa,
 **quiero** aprobar o rechazar solicitudes de prácticas extramuros,
 **para** controlar las salidas de campo institucionales.
 
@@ -461,7 +461,7 @@
 ### HU-30 · Gestionar tarifas de viáticos
 🟡 Media | ✅ Implementada
 
-**Como** encargado de facultad,
+**Como** jefe de programa,
 **quiero** crear y actualizar tarifas de viáticos con valor por día y fecha de vigencia,
 **para** que el cálculo de viáticos de prácticas sea automático y actualizado.
 
@@ -475,7 +475,7 @@
 ### HU-31 · Calcular viáticos de una práctica
 🟡 Media | ✅ Implementada
 
-**Como** profesor, encargado de facultad o encargado de gastos,
+**Como** profesor, jefe de programa o administrador,
 **quiero** ver el cálculo estimado de viáticos de una práctica,
 **para** tener una referencia presupuestal antes de aprobar (RF-PRA-02/03).
 
@@ -490,7 +490,7 @@
 ### HU-32 · Crear presupuesto para un período académico
 🔴 Alta | ✅ Implementada
 
-**Como** encargado de facultad,
+**Como** jefe de programa,
 **quiero** crear un presupuesto para un período académico con el monto asignado,
 **para** iniciar el proceso de control financiero (RF-PRA-06).
 
@@ -504,21 +504,21 @@
 ### HU-33 · Solicitar aprobación del presupuesto
 🔴 Alta | ✅ Implementada
 
-**Como** encargado de facultad,
-**quiero** enviar la solicitud de presupuesto al encargado de gastos,
+**Como** jefe de programa,
+**quiero** enviar la solicitud de presupuesto al administrador,
 **para** obtener la aprobación formal del monto.
 
 **Criterios de aceptación:**
 - Solo se puede solicitar desde estado `borrador`, `modificacion` o `rechazado`.
 - Cambia el estado a `solicitado`.
-- Notifica automáticamente a todos los encargados de gastos con el monto solicitado.
+- Notifica automáticamente a todos los administradores con el monto solicitado.
 
 ---
 
 ### HU-34 · Aprobar o rechazar presupuesto
 🔴 Alta | ✅ Implementada
 
-**Como** encargado de gastos,
+**Como** administrador,
 **quiero** aprobar, rechazar o solicitar modificaciones al presupuesto enviado por el jefe,
 **para** controlar el gasto institucional.
 
@@ -533,24 +533,24 @@
 ### HU-35 · Solicitar incremento de presupuesto
 🟡 Media | ✅ Implementada
 
-**Como** encargado de facultad,
+**Como** jefe de programa,
 **quiero** solicitar un incremento a un presupuesto ya aprobado,
 **para** cubrir gastos adicionales no previstos.
 
 **Criterios de aceptación:**
 - Solo se puede sobre un presupuesto en estado `aprobado`.
 - El nuevo monto debe ser mayor al monto actualmente aprobado.
-- El monto aprobado no cambia hasta que el encargado de gastos lo apruebe.
-- Notifica al encargado de gastos con el diferencial solicitado.
+- El monto aprobado no cambia hasta que el administrador lo apruebe.
+- Notifica al administrador con el diferencial solicitado.
 
 ---
 
 ### HU-36 · Subir documentos de soporte al presupuesto
 🟡 Media | ✅ Implementada
 
-**Como** encargado de facultad,
+**Como** jefe de programa,
 **quiero** adjuntar documentos de soporte a una solicitud de presupuesto (actas, cotizaciones, etc.),
-**para** respaldar la solicitud ante el encargado de gastos.
+**para** respaldar la solicitud ante el administrador.
 
 **Criterios de aceptación:**
 - Formatos aceptados: PDF, PNG, JPG, DOCX, XLSX.
@@ -563,7 +563,7 @@
 ### HU-37 · Consultar movimientos presupuestales
 🟡 Media | ✅ Implementada
 
-**Como** encargado de facultad o encargado de gastos,
+**Como** jefe de programa o administrador,
 **quiero** ver el historial de movimientos (compromisos, ejecuciones) de un presupuesto,
 **para** hacer trazabilidad del gasto.
 
@@ -576,7 +576,7 @@
 ### HU-38 · Configurar calendario académico
 🔴 Alta | ✅ Implementada
 
-**Como** encargado de facultad,
+**Como** jefe de programa,
 **quiero** configurar el calendario del semestre con las fechas y semanas habilitadas para solicitudes,
 **para** controlar los períodos en que se pueden abrir convocatorias y registrar prácticas.
 
@@ -593,7 +593,7 @@
 ### HU-39 · Consultar resumen ejecutivo del sistema
 🔴 Alta | ✅ Implementada
 
-**Como** encargado de facultad o encargado de gastos,
+**Como** jefe de programa o administrador,
 **quiero** ver un resumen ejecutivo con estadísticas de convocatorias, postulaciones, prácticas y presupuesto,
 **para** tomar decisiones informadas y rendir cuentas.
 
@@ -608,7 +608,7 @@
 ### HU-40 · Generar datos para el formulario FO-14
 🔴 Alta | ✅ Implementada
 
-**Como** encargado de facultad o profesor,
+**Como** jefe de programa o profesor,
 **quiero** obtener los datos necesarios para diligenciar el formulario oficial MI-FOR-FO-14 (Requerimiento de Monitores),
 **para** cumplir con el proceso administrativo institucional.
 
@@ -624,7 +624,7 @@
 ### HU-41 · Generar datos para el formulario FO-15
 🔴 Alta | ✅ Implementada
 
-**Como** encargado de facultad o profesor,
+**Como** jefe de programa o profesor,
 **quiero** obtener los datos necesarios para diligenciar el formulario oficial MI-FOR-FO-15 (Requerimiento de Prácticas Extramuros),
 **para** cumplir con el proceso administrativo institucional.
 
@@ -723,14 +723,14 @@
 **Criterios de aceptación:**
 - El profesor solo puede aprobar horas de monitores pertenecientes a sus propias convocatorias.
 - Al aprobar, registra quién aprobó y en qué momento (audit log).
-- El `encargado_facultad` puede aprobar horas de cualquier monitor.
+- El `jefe_programa` puede aprobar horas de cualquier monitor.
 
 ---
 
 ### HU-48 · Consultar horas de todos los monitores de una convocatoria
 🟡 Media | ✅ Implementada
 
-**Como** profesor o encargado de facultad,
+**Como** profesor o jefe de programa,
 **quiero** ver un resumen de horas por monitor en una convocatoria,
 **para** supervisar el cumplimiento de cada monitor.
 
@@ -743,7 +743,7 @@
 ### HU-49 · Consultar log de auditoría
 🟡 Media | ✅ Implementada
 
-**Como** administrador, encargado de facultad o encargado de gastos,
+**Como** administrador, jefe de programa o administrador,
 **quiero** consultar el registro de auditoría del sistema con las acciones recientes,
 **para** supervisar el uso del sistema y detectar acciones indebidas.
 
