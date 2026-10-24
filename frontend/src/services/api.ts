@@ -36,7 +36,11 @@ api.interceptors.response.use(
 
     if (error.response?.status === 401 && !esAuth) {
       localStorage.removeItem('sipam_user');
-      window.location.href = '/login';
+      // No redirigir si ya estamos en /login: un 401 aquí dispararía un bucle
+      // de recargas que borra el formulario y martillea el backend
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
