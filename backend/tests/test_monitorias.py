@@ -252,5 +252,17 @@ def test_listar_postulantes_convocatoria(client: TestClient, usuario_profesor, c
     assert isinstance(r.json(), list)
 
 
+# ── PM-010b: Admin también puede listar postulantes ──────────────────────────
+def test_listar_postulantes_admin(client: TestClient, usuario_admin, convocatoria):
+    """Admin tiene acceso de lectura a los postulantes de cualquier convocatoria."""
+    token = get_token(client, usuario_admin.codigo)
+    r = client.get(
+        f"/api/v1/postulaciones/convocatoria/{convocatoria.id}",
+        headers=auth(token),
+    )
+    assert r.status_code == 200
+    assert isinstance(r.json(), list)
+
+
 # helper local para PM-005
 from app.models.convocatoria import Convocatoria as Convocatoria_local

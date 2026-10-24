@@ -60,7 +60,7 @@ async def extract_text_from_document(
 
 
 @router.get("/models")
-async def list_ocr_models():
+async def list_ocr_models(_: User = Depends(get_current_user)):
     """List available OCR models (CNN architectures)."""
     return {
         "models": [

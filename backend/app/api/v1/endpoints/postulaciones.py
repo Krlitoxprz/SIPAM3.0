@@ -241,7 +241,7 @@ def postulantes_de_convocatoria(
     estado: Optional[str] = Query(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(
-        require_roles(RolEnum.profesor, RolEnum.jefe_programa, RolEnum.decano)
+        require_roles(RolEnum.profesor, RolEnum.jefe_programa, RolEnum.decano, RolEnum.admin)
     ),
 ):
     conv = db.query(Convocatoria).filter(Convocatoria.id == conv_id).first()

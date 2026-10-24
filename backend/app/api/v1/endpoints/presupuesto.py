@@ -406,26 +406,6 @@ def movimientos_por_periodo(
     ]
 
 
-@router.get("/periodo-activo")
-def periodo_activo(
-    db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
-):
-    """Retorna el período académico activo — accesible por todos los roles."""
-    cal = db.query(ConfiguracionCalendario).filter(
-        ConfiguracionCalendario.is_active == True
-    ).order_by(ConfiguracionCalendario.periodo_academico.desc()).first()
-    if not cal:
-        raise HTTPException(status_code=404, detail="No hay período académico activo configurado")
-    return {
-        "periodo_academico": cal.periodo_academico,
-        "fecha_inicio_semestre": cal.fecha_inicio_semestre,
-        "fecha_fin_semestre": cal.fecha_fin_semestre,
-        "semana_inicio_solicitudes": cal.semana_inicio_solicitudes,
-        "semana_fin_solicitudes": cal.semana_fin_solicitudes,
-    }
-
-
 @router.get("/configuracion-calendario/", response_model=list[CalendarioOut])
 def listar_calendarios(
     db: Session = Depends(get_db),
