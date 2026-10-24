@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { BookOpen, ClipboardList, MapPin, DollarSign, TrendingUp, CheckCircle, Clock, Loader2, ArrowRight, AlertTriangle, ShieldCheck, Users, UserCheck, UserX, Activity, Database, GraduationCap, Briefcase, Settings } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend, RadialBarChart, RadialBar } from 'recharts';
-import { useAuthContext } from '../context/AuthContext';
+import { useAuthContext } from '../hooks/useAuthContext';
 import { convocatoriasService, postulacionesService, practicasService, presupuestoService, configuracionService, usuariosService, reportesService } from '../services/api';
 import type { Presupuesto, User as UserType } from '../types';
 

@@ -4,7 +4,7 @@ import {
   AlertCircle, Loader2, X, ToggleLeft, ToggleRight, Send, MessageSquare, Users,
 } from 'lucide-react';
 import { configuracionService, presupuestoService, asignaturasService, convocatoriasService } from '../services/api';
-import { useAuthContext } from '../context/AuthContext';
+import { useAuthContext } from '../hooks/useAuthContext';
 
 // ─── tipos locales ──────────────────────────────────────────────────────────
 interface CalendarioConfig {

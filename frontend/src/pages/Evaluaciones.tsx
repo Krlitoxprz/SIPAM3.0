@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import type { Convocatoria, Postulacion, EstadoPostulacion } from '../types';
 import { convocatoriasService, postulacionesService, seleccionService, pdfService, downloadBlob } from '../services/api';
-import { useAuthContext } from '../context/AuthContext';
+import { useAuthContext } from '../hooks/useAuthContext';
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 const estadoBadge: Record<EstadoPostulacion, { label: string; color: string }> = {

@@ -4,7 +4,7 @@ import {
   Camera, Phone, MapPin, GraduationCap, Calendar, TrendingUp, BookOpen,
   Award, Hash, Info, Linkedin, Github, FileText, Trash2, Globe,
 } from 'lucide-react';
-import { useAuthContext } from '../context/AuthContext';
+import { useAuthContext } from '../hooks/useAuthContext';
 import { perfilService } from '../services/api';
 
 const ROL_LABEL: Record<string, string> = {

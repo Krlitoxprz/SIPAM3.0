@@ -3,7 +3,7 @@ import { MapPin, Plus, Trash2, Send, CheckCircle, AlertTriangle, DollarSign, Use
 import type { Practica, EstadoPractica, Asignatura } from '../types';
 import { practicasService, convocatoriasService, configuracionService, reportesService, transporteService, pagoViaticosService, geoService, pdfService, downloadBlob } from '../services/api';
 import { generarConsentimientoPDF, generarFO05, generarFO15Consolidado } from '../utils/pdfForms';
-import { useAuthContext } from '../context/AuthContext';
+import { useAuthContext } from '../hooks/useAuthContext';
 import { MapaRuta } from '../components/maps/MapaRuta';
 
 const estadoConfig: Record<EstadoPractica, { label: string; color: string }> = {
@@ -140,15 +140,25 @@ interface WaypointRowProps {
 
 function WaypointRow({ ruta, idx, totalRutas, departamentos, kmLoading, onFieldChange, onDeptChange, onMunicipioChange, onRemove }: WaypointRowProps) {
   const [municipios, setMunicipios] = useState<string[]>([]);
-  const [loadingMunicipios, setLoadingMunicipios] = useState(false);
+  const [loadingMunicipios, setLoadingMunicipios] = useState(() => Boolean(ruta.departamento));
+  const [prevDept, setPrevDept] = useState(ruta.departamento);
+
+  // Al cambiar de departamento se resetea la lista durante el render
+  // (patrón "adjusting state when props change"); el efecto solo hace el fetch.
+  if (prevDept !== ruta.departamento) {
+    setPrevDept(ruta.departamento);
+    setMunicipios([]);
+    setLoadingMunicipios(Boolean(ruta.departamento));
+  }
 
   useEffect(() => {
-    if (!ruta.departamento) { setMunicipios([]); return; }
-    setLoadingMunicipios(true);
+    if (!ruta.departamento) return;
+    let alive = true;
     geoService.getMunicipios(ruta.departamento)
-      .then(r => setMunicipios((r.data as { municipios: string[] }).municipios))
-      .catch(() => setMunicipios([]))
-      .finally(() => setLoadingMunicipios(false));
+      .then(r => { if (alive) setMunicipios((r.data as { municipios: string[] }).municipios); })
+      .catch(() => { if (alive) setMunicipios([]); })
+      .finally(() => { if (alive) setLoadingMunicipios(false); });
+    return () => { alive = false; };
   }, [ruta.departamento]);
 
   const tipoBadge = ruta.tipo_punto === 'origen'

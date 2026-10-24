@@ -63,6 +63,15 @@ const MODEL_COLORS: Record<string, string> = {
   Stacking: "#2563eb",
 };
 
+function getErrDetail(err: unknown, fallback: string): string {
+  if (err && typeof err === "object" && "response" in err) {
+    const detail = (err as { response?: { data?: { detail?: unknown } } })
+      .response?.data?.detail;
+    if (typeof detail === "string") return detail;
+  }
+  return fallback;
+}
+
 export default function PredictorMonitor() {
   const [form, setForm] = useState<PredictRequest>({
     promedio: 3.8,
@@ -101,10 +110,8 @@ export default function PredictorMonitor() {
     try {
       const res = await api.post<PredictResponse>("/ia/predecir", form);
       setResult(res.data);
-    } catch (err: any) {
-      setError(
-        err?.response?.data?.detail || "Error connecting to AI service."
-      );
+    } catch (err: unknown) {
+      setError(getErrDetail(err, "Error connecting to AI service."));
     } finally {
       setLoading(false);
     }
@@ -117,8 +124,8 @@ export default function PredictorMonitor() {
     try {
       const res = await api.post<PredictResponse>("/ia/explicar", form);
       setResult(res.data);
-    } catch (err: any) {
-      setError(err?.response?.data?.detail || "Error fetching explanation.");
+    } catch (err: unknown) {
+      setError(getErrDetail(err, "Error fetching explanation."));
     } finally {
       setLoadingExplain(false);
     }

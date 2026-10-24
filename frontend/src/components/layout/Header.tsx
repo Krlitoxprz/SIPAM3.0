@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { LogOut, User, Search, BookOpen, GraduationCap, MapPin, Users, X, Menu } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuthContext } from '../../context/AuthContext';
+import { useAuthContext } from '../../hooks/useAuthContext';
 import { NotificacionesBell } from './NotificacionesBell';
 import { busquedaService } from '../../services/api';
 

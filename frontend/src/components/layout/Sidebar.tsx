@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { notificacionesService } from '../../services/api';
 import type { Rol } from '../../types';
-import { useAuthContext } from '../../context/AuthContext';
+import { useAuthContext } from '../../hooks/useAuthContext';
 
 interface NavItem {
   to: string;

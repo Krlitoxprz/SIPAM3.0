@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Clock, Plus, CheckCircle, Loader2, AlertCircle, BookOpen, Download, Star, DollarSign } from 'lucide-react';
 import { monitorService, convocatoriasService, evaluacionMonitorService, exportarService, downloadBlob } from '../services/api';
-import { useAuthContext } from '../context/AuthContext';
+import { useAuthContext } from '../hooks/useAuthContext';
 
 interface HoraItem {
   id: number;
