@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, Numeric, Boolean, Date, DateTime, Index, UniqueConstraint
+from sqlalchemy import Column, Integer, String, Float, Numeric, Boolean, Date, DateTime, Index, UniqueConstraint, CheckConstraint
 from sqlalchemy.sql import func
 
 from app.db.database import Base
@@ -16,6 +16,7 @@ class PrecioCombustible(Base):
     actualizado_en = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     __table_args__ = (
+        CheckConstraint("precio_litro > 0", name="ck_precio_combustible_positivo"),
         Index("ix_precios_combustible_tipo_dept", "tipo", "departamento"),
         UniqueConstraint("tipo", "departamento", "fecha_vigencia", name="uq_precio_combustible"),
     )
