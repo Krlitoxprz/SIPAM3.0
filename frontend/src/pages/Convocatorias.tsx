@@ -529,6 +529,7 @@ function ModalDetalle({
   }
 
   async function descargarArchivo(a: ArchivoAdjunto) {
+    setMsg(null);
     try {
       const r = await archivosService.descargar(a.id);
       downloadBlob(r.data, a.nombre_original);
