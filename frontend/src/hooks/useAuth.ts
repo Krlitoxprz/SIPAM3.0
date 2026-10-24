@@ -13,7 +13,7 @@ export function useAuth() {
     setLoading(true);
     try {
       const res = await authService.login(codigo, password);
-      const userData = res.data;
+      const userData = res.data.user ?? res.data;
       // Token is now stored in HttpOnly cookie by the backend
       localStorage.setItem('sipam_user', JSON.stringify(userData));
       setUser(userData);
