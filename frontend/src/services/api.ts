@@ -4,13 +4,12 @@ const api = axios.create({
   baseURL: '/api/v1',
   headers: { 'Content-Type': 'application/json' },
   timeout: 30_000,
+  withCredentials: true, // Required for HttpOnly cookies
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('sipam_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
+  // Token is now in HttpOnly cookie, no need to add Authorization header
+  // Backend will read from cookie automatically
   return config;
 });
 
@@ -18,7 +17,6 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('sipam_token');
       localStorage.removeItem('sipam_user');
       window.location.href = '/login';
     }
@@ -46,6 +44,7 @@ export async function downloadAuthenticated(url: string, filename: string): Prom
 export const authService = {
   login: (codigo: string, password: string) =>
     api.post('/auth/login', { codigo, password }),
+  logout: () => api.post('/auth/logout'),
   me: () => api.get('/auth/me'),
   validarAcademica: (codigoEstudiante: string) =>
     api.get(`/auth/validar-academica/${codigoEstudiante}`),

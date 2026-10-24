@@ -7,19 +7,15 @@ export function useAuth() {
     const stored = localStorage.getItem('sipam_user');
     return stored ? JSON.parse(stored) : null;
   });
-  const [token, setToken] = useState<string | null>(() =>
-    localStorage.getItem('sipam_token')
-  );
   const [loading, setLoading] = useState(false);
 
   const login = useCallback(async (codigo: string, password: string) => {
     setLoading(true);
     try {
       const res = await authService.login(codigo, password);
-      const { access_token, user: userData } = res.data;
-      localStorage.setItem('sipam_token', access_token);
+      const userData = res.data;
+      // Token is now stored in HttpOnly cookie by the backend
       localStorage.setItem('sipam_user', JSON.stringify(userData));
-      setToken(access_token);
       setUser(userData);
       return userData;
     } finally {
@@ -27,21 +23,28 @@ export function useAuth() {
     }
   }, []);
 
-  const logout = useCallback(() => {
-    localStorage.removeItem('sipam_token');
-    localStorage.removeItem('sipam_user');
-    setToken(null);
-    setUser(null);
+  const logout = useCallback(async () => {
+    try {
+      await authService.logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      localStorage.removeItem('sipam_user');
+      setUser(null);
+    }
   }, []);
 
   useEffect(() => {
-    if (token && !user) {
+    if (!user) {
       authService.me().then((res) => {
         setUser(res.data);
         localStorage.setItem('sipam_user', JSON.stringify(res.data));
-      }).catch(() => logout());
+      }).catch(() => {
+        // Token invalid or expired
+        localStorage.removeItem('sipam_user');
+      });
     }
-  }, [token, user, logout]);
+  }, [user]);
 
   const refreshUser = useCallback(async () => {
     try {
@@ -53,8 +56,7 @@ export function useAuth() {
 
   return {
     user,
-    token,
-    isAuthenticated: !!token && !!user,
+    isAuthenticated: !!user,
     loading,
     login,
     logout,

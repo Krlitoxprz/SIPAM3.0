@@ -4,11 +4,10 @@ import type { User, Rol } from '../types';
 
 interface AuthContextType {
   user: User | null;
-  token: string | null;
   isAuthenticated: boolean;
   loading: boolean;
   login: (codigo: string, password: string) => Promise<User>;
-  logout: () => void;
+  logout: () => Promise<void>;
   hasRole: (...roles: Rol[]) => boolean;
   refreshUser: () => Promise<void>;
 }

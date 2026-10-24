@@ -2,7 +2,7 @@ import re
 import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from pydantic import BaseModel, field_validator
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -14,6 +14,7 @@ from app.core.security import verify_password, create_access_token
 from app.schemas.user import LoginRequest, Token, UserOut, UserCreate, ValidacionAcademicaOut
 from app.api.deps import get_current_user, require_roles
 from app.core.security import get_password_hash
+from app.core.config import settings
 
 PASSWORD_MIN_LEN = 8
 
@@ -58,8 +59,8 @@ def _clear_attempts(_identifier: str, _db: Session) -> None:
 router = APIRouter()
 
 
-@router.post("/login", response_model=Token)
-def login(body: LoginRequest, db: Session = Depends(get_db)):
+@router.post("/login", response_model=UserOut)
+def login(body: LoginRequest, response: Response, db: Session = Depends(get_db)):
     _check_brute_force(body.codigo, db)
     user = db.query(User).filter(User.codigo == body.codigo).first()
     if not user:
@@ -80,7 +81,32 @@ def login(body: LoginRequest, db: Session = Depends(get_db)):
     db.add(AuditLog(usuario_id=user.id, accion="login_exitoso", entidad="auth", detalle=f"Login desde rol {user.rol.value}"))
     db.commit()
     token = create_access_token(subject=str(user.id))
-    return Token(access_token=token, user=UserOut.model_validate(user))
+
+    # Set HttpOnly cookie for JWT
+    response.set_cookie(
+        key="access_token",
+        value=token,
+        httponly=True,
+        secure=settings.COOKIE_SECURE,
+        samesite=settings.COOKIE_SAMESITE,
+        domain=settings.COOKIE_DOMAIN if settings.COOKIE_DOMAIN else None,
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+    )
+
+    return UserOut.model_validate(user)
+
+
+@router.post("/logout")
+def logout(response: Response, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Logout endpoint that clears the HttpOnly cookie."""
+    db.add(AuditLog(usuario_id=current_user.id, accion="logout", entidad="auth", detalle=f"Logout de {current_user.codigo}"))
+    db.commit()
+
+    response.delete_cookie(
+        key="access_token",
+        domain=settings.COOKIE_DOMAIN if settings.COOKIE_DOMAIN else None
+    )
+    return {"message": "Logged out successfully"}
 
 
 @router.get("/me", response_model=UserOut)
