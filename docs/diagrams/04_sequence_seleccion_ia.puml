@@ -1,0 +1,163 @@
+@startuml SIPAM_Sequence_Seleccion_IA
+
+!theme plain
+skinparam backgroundColor #F5F2EA
+
+title SIPAM-USCO - Secuencia: Ejecución Algoritmo RF-MON-05 con IA
+
+actor "Jefe de Programa" as Jefe #8D191D
+participant "Frontend\n(React)" as FE
+participant "Backend API\n(FastAPI)" as BE
+participant "Seleccion\nAlgorithm" as Sel
+database "PostgreSQL" as DB
+participant "AI Service\n(Flask)" as AI
+participant "Modelos\nML" as Models
+
+== Fase 1: Preparación ==
+
+Jefe -> FE: Click "Ejecutar Selección"
+activate FE
+
+FE -> BE: POST /api/v1/seleccion/123/ejecutar
+note right
+  Headers: Authorization: Bearer JWT
+end note
+activate BE
+
+BE -> BE: validate_permissions(JefePrograma)
+
+BE -> DB: SELECT * FROM convocatoria WHERE id = 123
+DB --> BE: Convocatoria(estado='en_evaluacion')
+
+BE -> DB: SELECT * FROM postulaciones
+  WHERE convocatoria_id = 123
+  AND estado = 'evaluado'
+DB --> BE: List[Postulacion] (N postulantes)
+
+BE --> FE: 200 OK: Listo para procesar
+deactivate BE
+FE --> Jefe: Confirmar ejecución
+
+deactivate FE
+
+== Fase 2: Predicción IA (Paralelo) ==
+
+Jefe -> FE: Confirmar
+activate FE
+
+loop Para cada postulación
+    
+    BE -> AI: POST /predict
+    note right
+      {
+        "promedio": 4.2,
+        "porcentaje_creditos": 75.5,
+        "nota_asignatura": 4.5,
+        "nota_entrevista": 4.0,
+        "tipo_monitoria": "academica",
+        ...
+      }
+    end note
+    activate AI
+    
+    AI -> Models: load()
+    activate Models
+    Models --> AI: RandomForest, XGBoost, LogisticRegression
+    deactivate Models
+    
+    AI -> AI: preprocess(features)
+    AI -> AI: rf_pred = RF.predict(X)
+    AI -> AI: xgb_pred = XGB.predict(X)
+    AI -> AI: lr_pred = LR.predict(X)
+    AI -> AI: stacked = [rf_pred, xgb_pred, lr_pred]
+    AI -> AI: final_proba = Meta.predict(stacked)
+    
+    note right
+      Stacking Ensemble:
+      3 modelos base +
+      meta-clasificador
+    end note
+    
+    AI --> BE: {
+      "probability": 0.8472,
+      "will_be_selected": true
+    }
+    deactivate AI
+    
+    BE -> BE: ai_probability = 0.8472
+end
+
+== Fase 3: Cálculo Puntaje Final ==
+
+BE -> Sel: calculate_scores(postulaciones)
+activate Sel
+
+loop Para cada postulación
+    
+    Sel -> Sel: calculate_score()
+    note right
+      Fórmula RF-MON-05:
+      puntaje_final = (
+        nota_asignatura * 0.35 +
+        promedio * 0.35 +
+        nota_entrevista * 0.30
+      )
+    end note
+    
+    Sel -> Sel: apply_ai_factor(probability)
+    note right
+      Bonus IA:
+      +5% si probability > 0.8
+      -5% si probability < 0.3
+    end note
+    
+end
+
+Sel -> Sel: sort_by_puntaje_desc()
+Sel --> BE: List[Postulacion] ordenada
+deactivate Sel
+
+== Fase 4: Asignación ==
+
+BE -> BE: num_monitores = convocatoria.num_requeridos
+
+loop i = 0 to num_monitores - 1
+    BE -> DB: UPDATE postulacion
+      SET estado = 'seleccionado',
+          ranking = i + 1
+      WHERE id = postulaciones[i].id
+    DB --> BE: OK
+end
+
+loop Para el resto
+    BE -> DB: UPDATE postulacion
+      SET estado = 'no_seleccionado'
+      WHERE id = postulacion.id
+    DB --> BE: OK
+end
+
+== Fase 5: Notificación ==
+
+BE -> BE: notify_results()
+note right
+  Enviar emails a:
+  - Monitores seleccionados
+  - Monitores no seleccionados
+end note
+
+BE --> FE: 200 OK
+note right
+  Response: {
+    "total_postulantes": 15,
+    "seleccionados": 2,
+    "no_seleccionados": 13,
+    "promedio_puntaje": 4.12
+  }
+end note
+
+FE --> Jefe: Mostrar resultados + tabla
+
+deactivate BE
+deactivate FE
+
+@enduml

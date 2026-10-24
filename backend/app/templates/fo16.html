@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<style>
+  @page { size: A4 portrait; margin: 14mm 14mm 16mm 14mm; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; font-size: 9pt; color: #1a1a1a; }
+  .header { display: flex; border: 1.2px solid #8D191D; margin-bottom: 5pt; }
+  .header-logo { width: 38mm; border-right: 1.2px solid #8D191D; padding: 5pt 7pt; }
+  .header-logo .univ { font-size: 8.5pt; font-weight: bold; color: #8D191D; line-height: 1.4; }
+  .header-logo .sub  { font-size: 6.5pt; color: #4E6470; margin-top: 2pt; }
+  .header-title {
+    flex: 1; background: #F5F2EA; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; padding: 4pt 8pt;
+    border-right: 1.2px solid #8D191D;
+  }
+  .header-title .main { font-size: 10.5pt; font-weight: bold; color: #8D191D; text-align: center; }
+  .header-title .sub  { font-size: 7pt; color: #4E6470; text-align: center; margin-top: 2pt; }
+  .header-meta { width: 38mm; padding: 5pt 7pt; font-size: 7.5pt; }
+  .header-meta div { margin-bottom: 3pt; }
+  .header-meta b { color: #333; }
+  .vigencia { background: #F5F2EA; border: 1px solid #C8B980; padding: 3pt 7pt; font-size: 7pt; font-style: italic; color: #786028; margin-bottom: 5pt; }
+  .section-title { background: #8D191D; color: #fff; font-size: 8pt; font-weight: bold; padding: 3pt 6pt; text-transform: uppercase; margin: 5pt 0 2pt; }
+  .section-title-gray { background: #4E6470; color: #fff; font-size: 8pt; font-weight: bold; padding: 2.5pt 6pt; margin: 4pt 0 2pt; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 3pt; }
+  td, th { border: 1px solid #CCC; padding: 3.5pt 5pt; font-size: 8.5pt; vertical-align: top; }
+  th { background: #8D191D; color: #fff; font-weight: bold; text-align: center; font-size: 8pt; }
+  td.lbl { background: #F0EEE8; font-weight: bold; color: #444; }
+  tr.alt td { background: #F8F8F8; }
+  .text-block { border: 1px solid #C8B980; background: #FCFAF8; padding: 5pt 6pt; min-height: 22pt; white-space: pre-wrap; margin-bottom: 3pt; }
+  .check-row { border: 1px solid #CCC; padding: 4pt 6pt; margin-bottom: 3pt; }
+  .cb { display: inline-block; width: 9pt; height: 9pt; border: 1pt solid #8D191D; vertical-align: middle; margin-right: 3pt; }
+  .cb.on { background: #8D191D; }
+  .firmas-3 { display: flex; gap: 6pt; margin-top: 10pt; }
+  .firma-box { flex: 1; border: 1px solid #CCC; text-align: center; }
+  .firma-box .ft { background: #F5F2EA; font-weight: bold; font-size: 7pt; color: #8D191D; padding: 2.5pt; text-transform: uppercase; }
+  .firma-box .fm { height: 20pt; }
+  .firma-box .linea { border-top: 1px solid #aaa; margin: 0 8pt; }
+  .firma-box .fn { font-size: 7pt; color: #555; padding: 2pt; }
+  .firma-single { text-align: center; margin: 12pt auto 0; width: 60%; }
+  .firma-single .linea { border-top: 1px solid #aaa; }
+  .firma-single .fn { font-size: 8pt; color: #444; padding: 3pt; }
+  .page-break { page-break-before: always; }
+  .bold { font-weight: bold; }
+  .vinotinto { color: #8D191D; }
+  .center { text-align: center; }
+  .gen { font-size: 7pt; color: #999; text-align: right; margin-bottom: 4pt; }
+  .footer-note { background: #F5F5F5; border: 1px solid #DDD; padding: 3pt 6pt; font-size: 6.5pt; color: #888; font-style: italic; margin-top: 10pt; display: flex; justify-content: space-between; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════ PÁGINA 1 ═══════════════════════ -->
+<div class="gen">Documento generado: {{ fecha_hoy }}</div>
+
+<div class="header">
+  <div class="header-logo">
+    <div class="univ">UNIVERSIDAD<br>SURCOLOMBIANA</div>
+    <div class="sub">Neiva · Huila · Colombia<br>www.usco.edu.co</div>
+  </div>
+  <div class="header-title">
+    <div class="main">JUSTIFICACIÓN PRÁCTICAS EXTRAMUROS</div>
+    <div class="sub">Acuerdo 003/2012 · Reglamento de Prácticas Académicas USCO</div>
+  </div>
+  <div class="header-meta">
+    <div><b>Código:</b> MI-FOR-FO-16</div>
+    <div><b>Versión:</b> 7</div>
+    <div><b>Período:</b> {{ practica.periodo_academico }}</div>
+    <div><b>Estado:</b> {{ practica.estado|upper }}</div>
+  </div>
+</div>
+
+<div class="vigencia">Vigencia 2025 · La versión controlada se consulta en www.usco.edu.co — Sistema Gestión de Calidad</div>
+
+<div class="section-title">1. Datos del Curso y Práctica</div>
+<table>
+  <tr>
+    <td class="lbl" style="width:30%">Nombre del Curso / Asignatura</td>
+    <td colspan="3" class="bold">{{ asignatura.nombre }}</td>
+  </tr>
+  <tr class="alt">
+    <td class="lbl">Código del Curso</td>
+    <td>{{ asignatura.codigo }}</td>
+    <td class="lbl" style="width:22%">Semestre</td>
+    <td>{{ asignatura.semestre }}°</td>
+  </tr>
+  <tr>
+    <td class="lbl">Nombre de la Práctica Extramuros</td>
+    <td colspan="3" class="bold">{{ practica.nombre }}</td>
+  </tr>
+  <tr class="alt">
+    <td class="lbl">Período Académico</td>
+    <td>{{ practica.periodo_academico }}</td>
+    <td class="lbl">Cupo máx. de estudiantes</td>
+    <td>{{ practica.num_alumnos }}</td>
+  </tr>
+</table>
+
+<div class="check-row">
+  <b>Carácter del Curso:</b>&nbsp;&nbsp;
+  <span class="cb {{ 'on' if practica.caracter_curso == 'teorico' else '' }}"></span>Teórico&nbsp;&nbsp;&nbsp;
+  <span class="cb {{ 'on' if practica.caracter_curso == 'teorico_practico' else '' }}"></span>Teórico Práctico
+</div>
+<div class="check-row">
+  <b>Característica del Curso:</b>&nbsp;&nbsp;
+  <span class="cb {{ 'on' if practica.caracteristica_curso == 'especifico' else '' }}"></span>Específico&nbsp;&nbsp;
+  <span class="cb {{ 'on' if practica.caracteristica_curso == 'facultad' else '' }}"></span>De Facultad&nbsp;&nbsp;
+  <span class="cb {{ 'on' if practica.caracteristica_curso == 'institucional' else '' }}"></span>Institucional&nbsp;&nbsp;
+  <span class="cb {{ 'on' if practica.caracteristica_curso == 'componente_flexible' else '' }}"></span>Componente Flexible
+</div>
+
+<div class="section-title">2. Datos del Docente</div>
+<table>
+  <tr>
+    <td class="lbl" style="width:30%">Nombre del Docente</td>
+    <td colspan="3" class="bold">{{ docente.nombres }}</td>
+  </tr>
+  <tr class="alt">
+    <td class="lbl">Programa / Departamento</td>
+    <td>{{ asignatura.programa }}</td>
+    <td class="lbl" style="width:22%">Facultad</td>
+    <td>{{ asignatura.facultad or 'Facultad de Ingeniería' }}</td>
+  </tr>
+  <tr>
+    <td class="lbl">Correo institucional</td>
+    <td>{{ docente.email }}</td>
+    <td class="lbl">Cédula</td>
+    <td>{{ docente.cedula }}</td>
+  </tr>
+</table>
+
+<div class="check-row">
+  <b>Modalidad del Docente:</b>&nbsp;&nbsp;
+  {% for m in ['TCP','TCO','MTP','MTO','CAT'] %}
+  <span class="cb {{ 'on' if practica.modalidad_docente == m else '' }}"></span>{{ m }}&nbsp;&nbsp;
+  {% endfor %}
+</div>
+
+<div class="section-title">3. Fechas y Horarios de la Práctica</div>
+<table>
+  <tr>
+    <td class="lbl" style="width:30%">Fecha de inicio</td>
+    <td>{{ practica.fecha_inicio_fmt }} &nbsp;{{ practica.hora_salida or '—' }}</td>
+    <td class="lbl" style="width:25%">Fecha de finalización</td>
+    <td>{{ practica.fecha_fin_fmt }} &nbsp;{{ practica.hora_llegada or '—' }}</td>
+  </tr>
+  <tr class="alt">
+    <td class="lbl">Duración en días</td>
+    <td>{{ practica.duracion_dias }} día(s)</td>
+    <td class="lbl">Hora de salida USCO</td>
+    <td>{{ practica.hora_salida or '—' }}</td>
+  </tr>
+  <tr>
+    <td class="lbl">Hora de llegada USCO</td>
+    <td>{{ practica.hora_llegada or '—' }}</td>
+    <td class="lbl">Período de realización</td>
+    <td>{{ practica.fecha_inicio_fmt }} al {{ practica.fecha_fin_fmt }}</td>
+  </tr>
+</table>
+
+<!-- ═══════════════════════ PÁGINA 2 ═══════════════════════ -->
+<div class="page-break"></div>
+<div class="header">
+  <div class="header-logo">
+    <div class="univ">UNIVERSIDAD<br>SURCOLOMBIANA</div>
+    <div class="sub">Neiva · Huila · Colombia</div>
+  </div>
+  <div class="header-title">
+    <div class="main">JUSTIFICACIÓN PRÁCTICAS EXTRAMUROS</div>
+    <div class="sub">MI-FOR-FO-16 v7 — Sitio de Realización e Itinerario</div>
+  </div>
+  <div class="header-meta">
+    <div><b>Código:</b> MI-FOR-FO-16</div>
+    <div><b>Práctica ID:</b> {{ practica.id }}</div>
+  </div>
+</div>
+
+<div class="section-title">4. Itinerario Día por Día — Ruta de la Práctica</div>
+{% for dia in dias %}
+<div class="section-title-gray">DÍA {{ dia.numero }} — {{ dia.fecha_str }}</div>
+<table>
+  <tr>
+    <td class="lbl" style="width:28%">Lugar de salida</td>
+    <td>{{ dia.origen_lugar }}</td>
+    <td class="lbl" style="width:22%">Municipio salida</td>
+    <td>{{ dia.origen_municipio }}</td>
+  </tr>
+  <tr class="alt">
+    <td class="lbl">Lugar de llegada</td>
+    <td>{{ dia.destino_lugar }}</td>
+    <td class="lbl">Municipio llegada</td>
+    <td>{{ dia.destino_municipio }}</td>
+  </tr>
+  <tr>
+    <td class="lbl">Departamento / Dirección</td>
+    <td>{{ dia.destino_departamento }}</td>
+    <td class="lbl">Vereda / Zona rural</td>
+    <td>{{ dia.destino_vereda or '—' }}</td>
+  </tr>
+</table>
+{% endfor %}
+
+<div class="section-title">5. Articulación con el Área del Curso y con los Procesos de Evaluación</div>
+<div class="text-block">{{ practica.articulacion_curso or '(No registrada)' }}</div>
+
+<div class="section-title">6. Descripción de la Práctica</div>
+<div class="text-block">{{ practica.descripcion_practica or '(No registrada)' }}</div>
+
+<div class="section-title">7. Justificación — Art. 3.e Acuerdo 003/2012</div>
+<div class="text-block">{{ practica.justificacion or '(No registrada)' }}</div>
+
+<div class="section-title">8. Metodología — Art. 3.e Acuerdo 003/2012</div>
+<div class="text-block">{{ practica.metodologia or '(No registrada)' }}</div>
+
+<!-- ═══════════════════════ PÁGINA 3 ═══════════════════════ -->
+<div class="page-break"></div>
+<div class="header">
+  <div class="header-logo">
+    <div class="univ">UNIVERSIDAD<br>SURCOLOMBIANA</div>
+    <div class="sub">Neiva · Huila · Colombia</div>
+  </div>
+  <div class="header-title">
+    <div class="main">JUSTIFICACIÓN PRÁCTICAS EXTRAMUROS</div>
+    <div class="sub">MI-FOR-FO-16 v7 — Evaluación y Firmas</div>
+  </div>
+  <div class="header-meta">
+    <div><b>Código:</b> MI-FOR-FO-16</div>
+    <div><b>Práctica ID:</b> {{ practica.id }}</div>
+  </div>
+</div>
+
+<div class="section-title">9. Evaluación</div>
+<div class="text-block">{{ practica.evaluacion or '(No registrada)' }}</div>
+
+<div class="section-title">10. Anexos</div>
+<div style="border:1px solid #C8B980; background:#FCFAF8; padding:6pt 8pt; margin-bottom:4pt;">
+  <span class="cb {{ 'on' if practica.carta_autorizacion_empresa else '' }}"></span>
+  <b>Carta de solicitud de autorización a la empresa/institución (Art. 3.l)</b>
+  — {{ 'ADJUNTA en el sistema' if practica.carta_autorizacion_empresa else 'Pendiente' }}<br>
+  <br>
+  <span class="cb"></span>Consentimiento informado firmado por los estudiantes participantes (MI-FOR-FO-15-C).<br>
+  <br>
+  <span class="cb"></span>AP-INF-FO-05 Solicitud de Desplazamiento Vial.
+</div>
+
+{% if practica.observaciones %}
+<div class="section-title">11. Observaciones</div>
+<div class="text-block">{{ practica.observaciones }}</div>
+{% endif %}
+
+<div class="firma-single" style="margin-top:18pt;">
+  <div class="linea"></div>
+  <div class="fn bold">Firma del Docente</div>
+  <div class="fn">{{ docente.nombres }}</div>
+  <div class="fn" style="color:#888;">C.C. {{ docente.cedula }} · {{ docente.email }}</div>
+</div>
+
+<div class="firmas-3" style="margin-top:20pt;">
+  {% for titulo in ['Firma del Docente (Visto Bueno)', 'Firma del Jefe de Programa', 'Firma del Decano'] %}
+  <div class="firma-box">
+    <div class="ft">{{ titulo }}</div>
+    <div class="fm"></div>
+    <div class="linea"></div>
+    <div class="fn">Nombre: ___________________</div>
+    <div class="fn">Fecha: ____________________</div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="footer-note">
+  <span>MI-FOR-FO-16 v7 · Acuerdo 003/2012 USCO · Prácticas Extramuros</span>
+  <span>Generado por SIPAM-USCO</span>
+</div>
+
+</body>
+</html>

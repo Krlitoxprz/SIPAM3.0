@@ -1,0 +1,153 @@
+@startuml SIPAM_Sequence_Convocatoria
+
+!theme plain
+skinparam backgroundColor #F5F2EA
+
+title SIPAM-USCO - Secuencia: Creación y Gestión de Convocatoria
+
+actor "Jefe de Programa" as Jefe #8D191D
+participant "Frontend\n(React)" as FE
+participant "Backend API\n(FastAPI)" as BE
+participant "Auth\nService" as Auth
+participant "Convocatoria\nService" as Conv
+participant "Email\nService" as Email
+database "PostgreSQL" as DB
+
+== Crear Convocatoria ==
+
+Jefe -> FE: Click "Nueva Convocatoria"
+activate FE
+
+FE -> BE: GET /api/v1/asignaturas/
+activate BE
+BE -> DB: SELECT * FROM asignaturas
+DB --> BE: List[Asignatura]
+BE --> FE: 200 OK + asignaturas
+deactivate BE
+
+FE --> Jefe: Mostrar formulario
+
+deactivate FE
+
+Jefe -> FE: Completar datos + Submit
+activate FE
+
+FE -> BE: POST /api/v1/convocatorias/
+note right
+  Body: {
+    titulo: "Monitoría Cálculo I",
+    asignatura_id: 1,
+    tipo_monitoria: "academica",
+    fecha_inicio: "2025-03-01",
+    fecha_fin: "2025-03-15",
+    promedio_minimo: 3.5,
+    num_monitores: 2
+  }
+end note
+
+activate BE
+
+BE -> Auth: validate_token(JWT)
+activate Auth
+Auth --> BE: user: JefePrograma
+Auth --> BE: permissions: ["create_convocatoria"]
+deactivate Auth
+
+BE -> Conv: create_convocatoria(data)
+activate Conv
+
+Conv -> Conv: validate_acuerdo_012()
+note right
+  Validar:
+  - Fechas mínimo 5 días
+  - Promedio >= 3.0
+  - Campos obligatorios
+end note
+
+Conv -> DB: INSERT INTO convocatorias
+DB --> Conv: convocatoria_id: 123
+
+Conv --> BE: Convocatoria(id=123, estado=borrador)
+deactivate Conv
+
+BE -> Email: notify_creation(convocatoria)
+activate Email
+Email --> BE: queued
+Email --> Jefe: Email: Convocatoria creada
+note right
+  Asynchronous
+  notification
+end note
+deactivate Email
+
+BE --> FE: 201 Created + convocatoria
+FE --> Jefe: Mostrar éxito + ID: 123
+
+deactivate BE
+deactivate FE
+
+== Publicar Convocatoria ==
+
+Jefe -> FE: Click "Publicar"
+activate FE
+
+FE -> BE: PATCH /api/v1/convocatorias/123/cambiar-estado
+note right
+  Body: { "nuevo_estado": "abierta" }
+end note
+
+activate BE
+
+BE -> Conv: cambiar_estado(123, "abierta")
+activate Conv
+
+Conv -> DB: SELECT estado FROM convocatoria
+DB --> Conv: estado = "borrador"
+
+Conv -> Conv: validate_transition(borrador → abierta)
+note right
+  Regla: Solo desde borrador
+  o cerrada (reapertura)
+end note
+
+Conv -> DB: UPDATE estado = 'abierta'
+DB --> Conv: OK
+
+Conv --> BE: Convocatoria actualizada
+deactivate Conv
+
+BE -> Email: notify_publication(convocatoria)
+activate Email
+Email --> BE: queued
+Email --> Jefe: Email: Convocatoria publicada
+deactivate Email
+
+BE --> FE: 200 OK + updated convocatoria
+FE --> Jefe: Estado cambiado a "abierta"
+
+deactivate BE
+deactivate FE
+
+== Cierre Automático ==
+
+BE -> Conv: check_expired_convocatorias()
+note right
+  Cron job ejecutado
+  diariamente
+end note
+activate Conv
+
+Conv -> DB: SELECT * FROM convocatorias
+  WHERE fecha_fin < NOW()
+  AND estado = 'abierta'
+DB --> Conv: List[Convocatoria]
+
+loop Para cada convocatoria expirada
+    Conv -> DB: UPDATE estado = 'cerrada'
+    Conv -> Email: notify_closure(convocatoria)
+end
+
+Conv --> BE: N cerradas
+deactivate Conv
+
+@enduml

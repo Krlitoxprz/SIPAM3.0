@@ -1,0 +1,190 @@
+@startuml SIPAM_Use_Case_Diagram
+
+skinparam backgroundColor #F5F2EA
+skinparam usecase {
+    BackgroundColor #FEFEFE
+    BorderColor #8D191D
+    ArrowColor #8D191D
+}
+skinparam actor {
+    BackgroundColor #8D191D
+    FontColor #FFFFFF
+    BorderColor #6B1215
+}
+skinparam packageStyle rectangle
+skinparam package {
+    BackgroundColor #F0EDE5
+    BorderColor #C8B567
+}
+
+title SIPAM-USCO — Complete Use Case Diagram\n(Acuerdo 012/2023 + AI + IoT)
+
+left to right direction
+
+' ===== ACTORS =====
+actor "Admin" as Admin
+actor "Decano" as Decano
+actor "Jefe de\nPrograma" as Jefe
+actor "Profesor" as Profesor
+actor "Estudiante" as Estudiante
+actor "ESP32\nIoT Device" as ESP32 #4A90D9
+actor "AI Service\n(Flask)" as AIService #2E8B57
+
+' ===== SYSTEM =====
+rectangle "SIPAM-USCO Integrated System" {
+
+    package "Authentication & Users" {
+        usecase (Login JWT) as UC01
+        usecase (Manage Users CRUD) as UC02
+        usecase (Role Assignment) as UC03
+        usecase (Sanction User) as UC04
+        usecase (View Profile) as UC05
+    }
+
+    package "Monitoring Module" {
+        usecase (Create Convocatoria) as UC10
+        usecase (Publish Call) as UC11
+        usecase (Apply to Monitoring) as UC12
+        usecase (Upload Documents) as UC13
+        usecase (Evaluate Applicants) as UC14
+        usecase (Auto-Selection Algorithm) as UC15
+        usecase (Generate FO-14 PDF) as UC16
+        usecase (Generate FO-46 QR) as UC17
+    }
+
+    package "AI — Predictive Selection" {
+        usecase (Predict Selection\nProbability) as UC20
+        usecase (Compare Models\nMLP/DT/RF) as UC21
+        usecase (View Feature\nImportance) as UC22
+        usecase (Explain Prediction) as UC23
+    }
+
+    package "CNN OCR Module" {
+        usecase (Upload Document\nImage) as UC30
+        usecase (Extract Text\nwith CNN) as UC31
+        usecase (View OCR\nConfidence) as UC32
+        usecase (List OCR Models) as UC33
+    }
+
+    package "Transformer NLP Module" {
+        usecase (Analyze Motivation\nLetter) as UC40
+        usecase (View Quality Score\n& Sentiment) as UC41
+        usecase (View Attention\nWeights) as UC42
+        usecase (Batch Analyze\nLetters) as UC43
+    }
+
+    package "IoT GPS Tracking" {
+        usecase (Send GPS\nLocation) as UC50
+        usecase (View Device\nHealth) as UC51
+        usecase (Query Practice\nTrack History) as UC52
+        usecase (Export GeoJSON\nRoute) as UC53
+        usecase (Monitor Device\nBattery/Signal) as UC54
+        usecase (Configure IoT\nDevice) as UC55
+    }
+
+    package "Field Practice Management" {
+        usecase (Create Excursion\nRequest) as UC60
+        usecase (Approve Excursion) as UC61
+        usecase (Track GPS in\nReal-time) as UC62
+    }
+}
+
+' ===== ACTOR RELATIONS =====
+
+' Admin
+Admin --> UC02
+Admin --> UC03
+Admin --> UC04
+Admin --> UC55
+
+' Decano
+Decano --> UC61
+Decano --> UC05
+
+' Jefe de Programa
+Jefe --> UC10
+Jefe --> UC15
+Jefe --> UC16
+Jefe --> UC43
+
+' Profesor
+Profesor --> UC14
+Profesor --> UC16
+Profesor --> UC17
+Profesor --> UC60
+Profesor --> UC52
+Profesor --> UC53
+Profesor --> UC40
+Profesor --> UC41
+Profesor --> UC42
+Profesor --> UC43
+
+' Estudiante
+Estudiante --> UC01
+Estudiante --> UC05
+Estudiante --> UC12
+Estudiante --> UC13
+Estudiante --> UC20
+Estudiante --> UC30
+
+' ESP32 IoT Device
+ESP32 --> UC50
+ESP32 --> UC51
+
+' AI Service
+AIService --> UC21
+AIService --> UC31
+AIService --> UC40
+
+' ===== INCLUDE / EXTEND =====
+
+UC10 ..> UC11 : <<extend>>
+UC12 ..> UC13 : <<include>>
+UC15 ..> UC16 : <<include>>
+UC17 ..> UC16 : <<extend>>
+
+UC20 ..> UC21 : <<include>>
+UC20 ..> UC22 : <<include>>
+UC21 ..> UC23 : <<extend>>
+
+UC30 ..> UC31 : <<include>>
+UC31 ..> UC32 : <<include>>
+
+UC40 ..> UC41 : <<include>>
+UC40 ..> UC42 : <<extend>>
+UC43 ..> UC40 : <<include>>
+
+UC50 ..> UC54 : <<include>>
+UC52 ..> UC53 : <<extend>>
+UC60 ..> UC62 : <<extend>>
+UC62 ..> UC52 : <<include>>
+
+' ===== NOTES =====
+note right of UC15
+  Acuerdo 012/2023 Art.4
+  Score = 0.4*GPA + 0.3*Credits
+  + 0.2*SubjectGrade + 0.1*Interview
+end note
+
+note right of UC31
+  CNN: Conv2D(32,64,128,256)
+  + BatchNorm + Dropout + Dense
+  37 classes, 94.2% accuracy
+  Framework: TensorFlow/Keras
+end note
+
+note right of UC40
+  DistilBERT-base-uncased
+  6 layers, 12 attention heads
+  66M parameters, WordPiece
+  Framework: PyTorch + HuggingFace
+end note
+
+note bottom of UC50
+  ESP32 DevKit + NEO-6M GPS
+  WiFi HTTP REST POST
+  X-Api-Key authentication
+  Interval: 60 seconds
+end note
+
+@enduml

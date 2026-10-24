@@ -1,0 +1,26 @@
+OCR Dataset for CNN Training
+==============================
+Generated: 2026-05-19 14:42:04
+
+Dataset Structure:
+- Image size: 128x128 pixels
+- Color mode: Grayscale (1 channel)
+- Character set: 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ
+- Number of classes: 36
+
+Splits:
+- Train: 50 samples per class = 1800 images
+- Validation: 15 samples per class = 540 images
+- Total: 2340 images
+
+Augmentations (train only):
+- Rotation: ±10 degrees
+- Scaling: 90-110%
+- Gaussian blur: 30% probability
+- Noise: 50% probability
+- Brightness/contrast: 40% probability
+
+Course Compliance:
+- CNN input: 128x128x1 (grayscale)
+- Classification: 36 classes (0-9, A-Z)
+- Use case: Document OCR (cédulas, RUT)

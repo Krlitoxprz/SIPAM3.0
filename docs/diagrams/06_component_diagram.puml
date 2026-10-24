@@ -1,0 +1,172 @@
+@startuml SIPAM_Component_Diagram
+
+!theme plain
+skinparam backgroundColor #F5F2EA
+skinparam component {
+    BackgroundColor #FEFEFE
+    BorderColor #8D191D
+}
+skinparam package {
+    BackgroundColor #F5F2EA
+    BorderColor #C8B567
+}
+
+title SIPAM-USCO — Component Diagram (Full System)
+
+package "Clients" {
+    [Web Browser] as Browser
+    [ESP32 IoT\nGPS Tracker] as ESP32 #4A90D9
+}
+
+package "AWS EC2: 18.222.152.152" {
+
+    package "Docker Compose Network" {
+
+        package "Frontend Container\n[Nginx + React]" #E8F5E9 {
+            [Nginx Reverse Proxy] as NginxFE
+            [React 18 + TypeScript] as React
+            [TailwindCSS + shadcn/ui] as UI
+        }
+
+        package "Backend Container\n[FastAPI :8000]" #FFEBEE {
+            [FastAPI App] as FastAPI
+            [SQLAlchemy ORM] as ORM
+            [JWT Auth Middleware] as JWT
+
+            package "API Routers" {
+                [auth.py] as AuthRouter
+                [convocatorias.py] as ConvRouter
+                [postulaciones.py] as PostRouter
+                [seleccion.py] as SelRouter
+                [pdf_gen.py] as PDFRouter
+                [iot_tracking.py] as IoTRouter #4A90D9
+                [ocr.py] as OCRRouter #9C27B0
+                [nlp_analysis.py] as NLPRouter #2E7D32
+            }
+        }
+
+        package "AI Service Container\n[Flask :5001]" #F3E5F5 {
+            [Flask API] as FlaskAPI
+            [CORS Handler] as CORS
+
+            package "Predictive Selection" {
+                [MLP Neural Network] as MLP
+                [Decision Tree] as DT
+                [Random Forest] as RF
+            }
+
+            package "CNN OCR Module" #E8D5F5 {
+                [cnn_ocr.py\n(Architecture)] as CNNOCR
+                [cnn_ocr_final.keras\n(102MB)] as KerasModel
+                [Image Preprocessor\n(OpenCV)] as ImgPrep
+            }
+
+            package "Transformer NLP Module" #D5E8D5 {
+                [nlp_transformer.py] as NLPMod
+                [DistilBERT-base-uncased\n(66M params)] as BERT
+                [Attention Extractor] as Attention
+            }
+        }
+
+        package "Database Container\n[PostgreSQL :5432]" #E3F2FD {
+            [PostgreSQL 16] as Postgres
+            database "Persistent Volume\npostgres_data" as VolDB
+        }
+
+    }
+
+}
+
+package "External" {
+    [GitHub Repository] as GitHub
+}
+
+' ===== CONNECTIONS =====
+
+' Clients -> Frontend
+Browser --> NginxFE : HTTP :80
+ESP32 --> IoTRouter : HTTP POST\nX-Api-Key
+
+' Frontend internal
+NginxFE --> React
+React --> UI
+
+' Frontend -> Backend
+NginxFE --> FastAPI : /api/v1/*
+
+' Backend middleware
+FastAPI --> JWT
+FastAPI --> ORM
+
+' Backend routers
+FastAPI --> AuthRouter
+FastAPI --> ConvRouter
+FastAPI --> PostRouter
+FastAPI --> SelRouter
+FastAPI --> PDFRouter
+FastAPI --> IoTRouter
+FastAPI --> OCRRouter
+FastAPI --> NLPRouter
+
+' Backend -> DB
+ORM --> Postgres
+Postgres --> VolDB
+
+' Backend -> AI Service (HTTP)
+OCRRouter --> FlaskAPI : POST /ocr/extract
+NLPRouter --> FlaskAPI : POST /analyze_letter
+SelRouter --> FlaskAPI : POST /predict
+
+' AI Service internal
+FlaskAPI --> CORS
+FlaskAPI --> MLP
+FlaskAPI --> DT
+FlaskAPI --> RF
+
+FlaskAPI --> CNNOCR
+CNNOCR --> ImgPrep
+CNNOCR --> KerasModel
+
+FlaskAPI --> NLPMod
+NLPMod --> BERT
+NLPMod --> Attention
+
+' CI/CD
+GitHub ..> NginxFE : git pull + docker compose up
+
+' ===== NOTES =====
+note right of Browser
+  Public access:
+  http://18.222.152.152
+  Swagger: /api/v1/docs
+end note
+
+note bottom of ESP32
+  ESP32 DevKit V1
+  NEO-6M GPS Module
+  WiFi 802.11 b/g/n
+  API Key: iot_device_key_12345
+end note
+
+note right of IoTRouter
+  RF-IOT-01: GPS ingestion
+  RF-IOT-02: API Key auth
+  RF-IOT-06: GeoJSON export
+  Endpoint: /api/v1/iot/
+end note
+
+note right of KerasModel
+  Conv2D(32,64,128,256)
+  + BatchNorm + Dropout
+  37 classes (0-9, A-Z, blank)
+  Accuracy: 94.2%
+end note
+
+note right of BERT
+  DistilBERT-base-uncased
+  6 layers, 12 heads
+  66M parameters
+  Output: quality + sentiment
+end note
+
+@enduml

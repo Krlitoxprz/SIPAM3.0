@@ -1,0 +1,101 @@
+@startuml SIPAM_State_Machine
+
+!theme plain
+skinparam backgroundColor #F5F2EA
+
+title SIPAM-USCO - Máquina de Estados: Convocatoria
+
+[*] --> borrador : Crear
+
+state "Borrador" as borrador #FFF9C4 {
+    borrador : Entry: registrar_creador()
+    borrador : Do: editar_datos()
+    borrador : Exit: validar_completo()
+}
+
+state "Abierta" as abierta #C8E6C9 {
+    abierta : Entry: notificar_publicacion()
+    abierta : Do: recibir_postulaciones()
+    abierta : Exit: cerrar_postulacion()
+}
+
+state "Cerrada" as cerrada #FFCCBC {
+    cerrada : Entry: notificar_cierre()
+    cerrada : Do: preparar_evaluacion()
+    cerrada : Exit: iniciar_evaluacion()
+}
+
+state "En Evaluación" as en_evaluacion #BBDEFB {
+    en_evaluacion : Entry: notificar_profesores()
+    en_evaluacion : Do: evaluar_postulantes()
+    en_evaluacion : Do: predecir_ia()
+    en_evaluacion : Exit: ejecutar_seleccion()
+}
+
+state "Finalizada" as finalizada #B39DDB {
+    finalizada : Entry: ejecutar_algoritmo_rf05()
+    finalizada : Do: notificar_resultados()
+    finalizada : Do: generar_fo14()
+    finalizada : Exit: archivo_historico()
+}
+
+state "Cancelada" as cancelada #EF9A9A
+
+' Transiciones principales
+borrador --> abierta : publicar()
+note on link
+  Jefe de Programa
+  o Admin
+end note
+
+abierta --> cerrada : cerrar()
+note on link
+  Automático:
+  fecha_fin < NOW()
+  o manual
+end note
+
+abierta --> cancelada : cancelar()
+cerrada --> cancelada : cancelar()
+
+cerrada --> en_evaluacion : iniciar_evaluacion()
+note on link
+  Jefe de Programa
+end note
+
+en_evaluacion --> finalizada : ejecutar_seleccion()
+note on link
+  RF-MON-05:
+  Calcular puntajes
+  y ordenar
+end note
+
+finalizada --> [*] : archivar()
+
+' Transiciones especiales (reaperturas)
+cerrada --> abierta : reabrir()
+note right of cerrada
+  Reapertura permitida
+  si no hay evaluaciones
+end note
+
+en_evaluacion --> cerrada : cancelar_evaluacion()
+finalizada --> en_evaluacion : reevaluar()
+note right of finalizada
+  Reevaluación:
+  casos especiales
+  con autorización
+end note
+
+' Leyenda
+legend right
+  **Colores:**
+  - Amarillo: Configuración
+  - Verde: Activo/Recibiendo
+  - Naranja: Cerrado/Preparando
+  - Azul: Evaluando
+  - Púrpura: Completado
+  - Rojo: Cancelado
+endlegend
+
+@enduml

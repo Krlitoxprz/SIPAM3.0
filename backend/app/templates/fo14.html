@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<style>
+  @page { size: A4 portrait; margin: 14mm 14mm 16mm 14mm; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; font-size: 9pt; color: #1a1a1a; }
+  .header { display: flex; border: 1.2px solid #8D191D; margin-bottom: 6pt; }
+  .header-logo { width: 38mm; border-right: 1.2px solid #8D191D; padding: 5pt 7pt; }
+  .header-logo .univ { font-size: 8.5pt; font-weight: bold; color: #8D191D; line-height: 1.4; }
+  .header-logo .sub  { font-size: 6.5pt; color: #4E6470; margin-top: 2pt; }
+  .header-title {
+    flex: 1; background: #F5F2EA; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; padding: 4pt 8pt;
+    border-right: 1.2px solid #8D191D;
+  }
+  .header-title .main { font-size: 10.5pt; font-weight: bold; color: #8D191D; text-align: center; }
+  .header-title .sub  { font-size: 7.5pt; color: #4E6470; text-align: center; margin-top: 2pt; }
+  .header-meta { width: 38mm; padding: 5pt 7pt; font-size: 7.5pt; }
+  .header-meta div { margin-bottom: 3pt; }
+  .header-meta b { color: #333; }
+  .section-title {
+    background: #8D191D; color: #fff; font-size: 8pt; font-weight: bold;
+    padding: 3pt 6pt; text-transform: uppercase; margin: 5pt 0 2pt;
+  }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 3pt; }
+  td, th { border: 1px solid #CCC; padding: 3.5pt 5pt; font-size: 8.5pt; vertical-align: top; }
+  th { background: #8D191D; color: #fff; font-weight: bold; text-align: center; font-size: 8pt; }
+  td.lbl { background: #F0EEE8; font-weight: bold; color: #444; }
+  tr.alt td { background: #F8F8F8; }
+  .text-block { border: 1px solid #C8B980; background: #FCFAF8; padding: 5pt 6pt; min-height: 16pt; white-space: pre-wrap; }
+  .firmas { display: flex; gap: 5pt; margin-top: 12pt; }
+  .firma-box { flex: 1; border: 1px solid #CCC; text-align: center; }
+  .firma-box .ft { background: #F5F2EA; font-weight: bold; font-size: 7pt; color: #8D191D; padding: 2.5pt; text-transform: uppercase; }
+  .firma-box .fm { height: 22pt; }
+  .firma-box .linea { border-top: 1px solid #aaa; margin: 0 8pt; }
+  .firma-box .fn { font-size: 7pt; color: #555; padding: 2pt; }
+  .cb { display: inline-block; width: 8pt; height: 8pt; border: 1pt solid #8D191D; vertical-align: middle; margin-right: 2pt; }
+  .cb.on { background: #8D191D; }
+  .kpi-row { display: flex; gap: 5pt; margin-bottom: 5pt; }
+  .kpi { flex: 1; background: #F0EEE8; border: 1px solid #D8CEA3; padding: 4pt 6pt; }
+  .kpi .k { font-size: 7pt; color: #666; }
+  .kpi .v { font-size: 11pt; font-weight: bold; color: #8D191D; }
+  .gen { font-size: 7pt; color: #999; text-align: right; margin-bottom: 4pt; }
+  .footer-strip { background: #8D191D; height: 3pt; margin-top: 12pt; }
+</style>
+</head>
+<body>
+
+<div class="gen">Documento generado: {{ fecha_hoy }}</div>
+
+<div class="header">
+  <div class="header-logo">
+    <div class="univ">UNIVERSIDAD<br>SURCOLOMBIANA</div>
+    <div class="sub">Neiva · Huila · Colombia<br>www.usco.edu.co</div>
+  </div>
+  <div class="header-title">
+    <div class="main">REQUERIMIENTO MONITORES</div>
+    <div class="sub">Acuerdo 012/2023 Art. 3 — Proceso Selección Académica</div>
+  </div>
+  <div class="header-meta">
+    <div><b>Código:</b> MI-FOR-FO-14</div>
+    <div><b>Versión:</b> 1</div>
+    <div><b>Período:</b> {{ convocatoria.periodo_academico }}</div>
+    <div><b>Postulantes:</b> {{ total_postulantes }}</div>
+  </div>
+</div>
+
+<div class="section-title">1. Datos Institucionales</div>
+<table>
+  <tr>
+    <td class="lbl" style="width:30%">Facultad</td>
+    <td>{{ asignatura.facultad or 'Facultad de Ingeniería' }}</td>
+    <td class="lbl" style="width:28%">Tipo de Monitoría</td>
+    <td>{{ tipo_monitoria_label }}</td>
+  </tr>
+  <tr class="alt">
+    <td class="lbl">Programa Académico</td>
+    <td>{{ asignatura.programa }}</td>
+    <td class="lbl">Horas / Semana</td>
+    <td>{{ convocatoria.horas_semana }}</td>
+  </tr>
+  <tr>
+    <td class="lbl">Período Académico</td>
+    <td>{{ convocatoria.periodo_academico }}</td>
+    <td class="lbl">Horas / Semestre</td>
+    <td>{{ convocatoria.horas_semestre }}</td>
+  </tr>
+  <tr class="alt">
+    <td class="lbl">Sede</td>
+    <td>{{ convocatoria.sede or 'Neiva' }}</td>
+    <td class="lbl">N° Semanas</td>
+    <td>{{ num_semanas }}</td>
+  </tr>
+</table>
+
+<div class="section-title">2. Datos de la Asignatura</div>
+<table>
+  <tr>
+    <td class="lbl" style="width:30%">Nombre del Curso</td>
+    <td colspan="3" class="bold">{{ asignatura.nombre }}</td>
+  </tr>
+  <tr class="alt">
+    <td class="lbl">Código</td>
+    <td>{{ asignatura.codigo }}</td>
+    <td class="lbl">Créditos</td>
+    <td>{{ asignatura.creditos }}</td>
+  </tr>
+  <tr>
+    <td class="lbl">Semestre</td>
+    <td>{{ asignatura.semestre }}°</td>
+    <td class="lbl">Promedio mínimo req.</td>
+    <td>{{ "%.2f"|format(convocatoria.promedio_minimo) }}</td>
+  </tr>
+</table>
+
+<div class="section-title">3. Docente Solicitante</div>
+<table>
+  <tr>
+    <td class="lbl" style="width:30%">Nombre completo</td>
+    <td colspan="3" class="bold">{{ docente.nombres }}</td>
+  </tr>
+  <tr class="alt">
+    <td class="lbl">Cédula de ciudadanía</td>
+    <td>{{ docente.cedula }}</td>
+    <td class="lbl">Correo institucional</td>
+    <td>{{ docente.email }}</td>
+  </tr>
+</table>
+
+<div class="section-title">4. Monitor Seleccionado</div>
+{% if monitor %}
+<table>
+  <tr>
+    <td class="lbl" style="width:30%">Nombre completo</td>
+    <td colspan="3" class="bold">{{ monitor.nombres }}</td>
+  </tr>
+  <tr class="alt">
+    <td class="lbl">Código estudiantil</td>
+    <td>{{ monitor.codigo }}</td>
+    <td class="lbl">Cédula</td>
+    <td>{{ monitor.cedula }}</td>
+  </tr>
+  <tr>
+    <td class="lbl">Programa</td>
+    <td>{{ monitor.programa or '—' }}</td>
+    <td class="lbl">Promedio acumulado</td>
+    <td>{{ "%.2f"|format(monitor.promedio) if monitor.promedio else '—' }}</td>
+  </tr>
+  <tr class="alt">
+    <td class="lbl">% Créditos aprobados</td>
+    <td>{{ "%.1f"|format(monitor.porcentaje_creditos) ~ '%' if monitor.porcentaje_creditos else '—' }}</td>
+    <td class="lbl">Nota en la asignatura</td>
+    <td>{{ "%.2f"|format(monitor.nota_asignatura) if monitor.nota_asignatura else '—' }}</td>
+  </tr>
+</table>
+{% else %}
+<p style="font-style:italic; color:#aaa; padding:5pt;">Aún no se ha seleccionado un monitor para esta convocatoria.</p>
+{% endif %}
+
+<div class="section-title">5. Criterios de Selección — RF-MON-05: (Nota×0.30) + (Promedio×0.30) + (Entrevista×0.40)</div>
+<table>
+  <tr>
+    <th style="width:40%">Criterio</th>
+    <th style="width:20%">Ponderación</th>
+    <th style="width:20%">Valor obtenido</th>
+    <th style="width:20%">Contribución</th>
+  </tr>
+  <tr>
+    <td class="bold">Nota en la asignatura</td>
+    <td class="center">30 %</td>
+    <td class="center">{{ "%.2f"|format(monitor.nota_asignatura) if monitor and monitor.nota_asignatura else '—' }}</td>
+    <td class="center">{{ "%.4f"|format(monitor.nota_asignatura * 0.30) if monitor and monitor.nota_asignatura else '—' }}</td>
+  </tr>
+  <tr class="alt">
+    <td class="bold">Promedio académico</td>
+    <td class="center">30 %</td>
+    <td class="center">{{ "%.2f"|format(monitor.promedio) if monitor and monitor.promedio else '—' }}</td>
+    <td class="center">{{ "%.4f"|format(monitor.promedio * 0.30) if monitor and monitor.promedio else '—' }}</td>
+  </tr>
+  <tr>
+    <td class="bold">Resultado entrevista</td>
+    <td class="center">40 %</td>
+    <td class="center">{{ "%.2f"|format(monitor.nota_entrevista) if monitor and monitor.nota_entrevista else '—' }}</td>
+    <td class="center">{{ "%.4f"|format(monitor.nota_entrevista * 0.40) if monitor and monitor.nota_entrevista else '—' }}</td>
+  </tr>
+  <tr>
+    <td class="bold vinotinto">PUNTAJE FINAL</td>
+    <td class="center bold">100 %</td>
+    <td></td>
+    <td class="center bold vinotinto">{{ "%.4f"|format(monitor.puntaje_final) if monitor and monitor.puntaje_final else '—' }}</td>
+  </tr>
+</table>
+
+<div class="section-title">6. Actividades y Compromisos de la Monitoría</div>
+<div class="text-block">{{ convocatoria.descripcion_actividades or 'No registradas.' }}</div>
+
+<div class="section-title">7. Documentos Adjuntos Requeridos</div>
+<table>
+  <tr><th style="width:70%">Documento</th><th>Estado</th></tr>
+  <tr><td>Fotocopia cédula de ciudadanía</td><td class="center">Obligatorio</td></tr>
+  <tr class="alt"><td>Certificado bancario (cuenta activa)</td><td class="center">Obligatorio</td></tr>
+  <tr><td>RUT (Registro Único Tributario)</td><td class="center">Obligatorio</td></tr>
+</table>
+
+<div class="section-title">8. Aprobación y Firmas</div>
+<div class="firmas">
+  {% set firmantes = [
+    ('Docente Solicitante', docente.nombres),
+    ('Monitor Seleccionado', monitor.nombres if monitor else '________________________'),
+    ('Jefe de Programa', '________________________'),
+    ('Decano(a) de Facultad', '________________________'),
+  ] %}
+  {% for titulo, nombre in firmantes %}
+  <div class="firma-box">
+    <div class="ft">{{ titulo }}</div>
+    <div class="fm"></div>
+    <div class="linea"></div>
+    <div class="fn">{{ nombre }}</div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="footer-strip"></div>
+</body>
+</html>

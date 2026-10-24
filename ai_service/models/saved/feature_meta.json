@@ -1,0 +1,43 @@
+{
+  "numeric_features": [
+    "promedio",
+    "porcentaje_creditos",
+    "nota_asignatura",
+    "nota_entrevista",
+    "semestre_asignatura",
+    "creditos_asignatura",
+    "num_postulantes",
+    "num_monitores_requeridos",
+    "ratio_competencia",
+    "puntaje_formula"
+  ],
+  "categorical_features": [
+    "tipo_monitoria"
+  ],
+  "feature_names": [
+    "promedio",
+    "porcentaje_creditos",
+    "nota_asignatura",
+    "nota_entrevista",
+    "semestre_asignatura",
+    "creditos_asignatura",
+    "num_postulantes",
+    "num_monitores_requeridos",
+    "ratio_competencia",
+    "puntaje_formula",
+    "tipo_monitoria_academica",
+    "tipo_monitoria_academica_cursos",
+    "tipo_monitoria_acreditacion",
+    "tipo_monitoria_administrativa",
+    "tipo_monitoria_biblioteca",
+    "tipo_monitoria_cultural",
+    "tipo_monitoria_deportiva",
+    "tipo_monitoria_investigacion",
+    "tipo_monitoria_laboratorios",
+    "tipo_monitoria_nee",
+    "tipo_monitoria_permanencia_graduacion",
+    "tipo_monitoria_regimenes_especiales",
+    "tipo_monitoria_tic"
+  ],
+  "target": "seleccionado"
+}

@@ -1,0 +1,754 @@
+\documentclass[12pt,a4paper]{article}
+
+% ─── Paquetes ─────────────────────────────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{graphicx}
+\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage{colortbl}
+
+% ─── Colores USCO ─────────────────────────────────────────────────────────────
+\definecolor{vinotinto}{HTML}{8D191D}
+\definecolor{ocre}{HTML}{D8CEA3}
+\definecolor{grisusco}{HTML}{4E6470}
+\definecolor{lightgray}{HTML}{F5F5F5}
+
+% ─── Formato de secciones ────────────────────────────────────────────────────
+\titleformat{\section}{\large\bfseries\color{vinotinto}}{\thesection}{1em}{}[\titlerule]
+\titleformat{\subsection}{\normalsize\bfseries\color{grisusco}}{\thesubsection}{1em}{}
+
+% ─── Encabezado y pie de página ──────────────────────────────────────────────
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{grisusco}SIPAM-USCO}
+\fancyhead[R]{\small\color{grisusco}Documentación Técnica v1.0}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ─── Comandos personalizados ─────────────────────────────────────────────────
+\newcommand{\method}[1]{\texttt{\textbf{\color{vinotinto}#1}}}
+\newcommand{\endpoint}[1]{\texttt{\color{grisusco}#1}}
+\newcommand{\role}[1]{\textit{\color{vinotinto}#1}}
+\newcommand{\req}[1]{\texttt{[#1]}}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{document}
+
+% ─── Portada ──────────────────────────────────────────────────────────────────
+\begin{titlepage}
+  \centering
+  \vspace*{2cm}
+  {\color{vinotinto}\rule{\linewidth}{1.5pt}}\\[0.5cm]
+  {\Huge\bfseries\color{vinotinto} SIPAM-USCO}\\[0.3cm]
+  {\large Sistema de Información de Prácticas Académicas y Monitorías}\\[0.2cm]
+  {\color{vinotinto}\rule{\linewidth}{1.5pt}}\\[1cm]
+  {\LARGE\bfseries Documentación Técnica del Sistema}\\[0.5cm]
+  {\large Trabajo de Grado — Ingeniería de Software}\\[2cm]
+  \begin{tabular}{rl}
+    \textbf{Institución:} & Universidad Surcolombiana (USCO) \\[0.3cm]
+    \textbf{Versión:}     & 1.0.0 \\[0.3cm]
+    \textbf{Stack:}       & FastAPI · PostgreSQL · React · TypeScript \\[0.3cm]
+    \textbf{Fecha:}       & Mayo 2026 \\
+  \end{tabular}
+  \vfill
+  {\color{grisusco}\small Documento generado automáticamente a partir del código fuente del sistema}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Resumen del Proyecto}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\textbf{SIPAM-USCO} es un sistema web institucional desarrollado como trabajo de grado para la
+Universidad Surcolombiana. Gestiona dos procesos académicos centrales:
+
+\begin{enumerate}
+  \item \textbf{Monitorías Académicas} — Administración completa del ciclo de vida de las
+        convocatorias de monitores: publicación, postulación, selección algorítmica, seguimiento
+        de horas y evaluación de desempeño, con base en el \textit{Acuerdo 012/2023 del Consejo
+        Académico}.
+  \item \textbf{Prácticas Extramuros} — Gestión del flujo de aprobación escalonado de prácticas
+        de campo universitarias: solicitud, aprobación curricular, aval de facultad, aprobación
+        de la Vicerrectoría, ejecución y cierre con informe de resultados, con base en el
+        \textit{Acuerdo 003/2012}.
+\end{enumerate}
+
+\subsection*{Tecnologías utilizadas}
+\begin{tabular}{ll}
+  \toprule
+  \textbf{Capa} & \textbf{Tecnología} \\
+  \midrule
+  Backend        & FastAPI (Python 3.13) + SQLAlchemy ORM \\
+  Base de datos  & PostgreSQL (localhost:5432/sipam\_db) \\
+  Frontend       & React 19 + TypeScript + Vite 8 + Tailwind CSS v4 \\
+  Autenticación  & JWT (JSON Web Tokens) \\
+  PDF            & jsPDF + jspdf-autotable \\
+  Gráficas       & Recharts \\
+  Íconos         & Lucide React \\
+  \bottomrule
+\end{tabular}
+
+\subsection*{Roles del sistema}
+\begin{tabular}{ll}
+  \toprule
+  \textbf{Rol} & \textbf{Responsabilidad} \\
+  \midrule
+  \role{admin}         & Administrador del sistema / Vicerrectoría \\
+  \role{jefe\_programa} & Jefe de Programa / Comité de Currículo \\
+  \role{decano}        & Decano de Facultad / Consejo de Facultad \\
+  \role{profesor}      & Docente solicitante de prácticas y convocatorias \\
+  \role{estudiante}    & Estudiante postulante y participante de prácticas \\
+  \bottomrule
+\end{tabular}
+
+\newpage
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Inventario de Endpoints de la API}
+% ══════════════════════════════════════════════════════════════════════════════
+
+Todos los endpoints se encuentran bajo el prefijo \endpoint{/api/v1}.
+
+% ─────────────────────────────────────────────────────────
+\subsection{Autenticación y Usuarios \texttt{/auth}}
+% ─────────────────────────────────────────────────────────
+\begin{longtable}{>{\ttfamily}p{1.5cm} >{\ttfamily}p{6cm} p{4.5cm} p{2cm}}
+  \toprule
+  \textbf{Método} & \textbf{Ruta} & \textbf{Descripción} & \textbf{Roles} \\
+  \midrule
+  \endfirsthead
+  \toprule
+  \textbf{Método} & \textbf{Ruta} & \textbf{Descripción} & \textbf{Roles} \\
+  \midrule
+  \endhead
+  POST   & /auth/login & Inicio de sesión con código/cédula y contraseña & Todos \\
+  GET    & /auth/me & Datos del usuario autenticado & Todos \\
+  GET    & /auth/validar-academica/\{codigo\} & Validación académica del estudiante & prof, jefe, decano \\
+  GET    & /auth/usuarios & Listar usuarios con filtros & admin, jefe, decano \\
+  POST   & /auth/usuarios & Crear nuevo usuario & admin \\
+  PATCH  & /auth/usuarios/\{id\}/toggle-activo & Activar/desactivar usuario & admin, jefe, decano \\
+  PATCH  & /auth/usuarios/\{id\}/toggle-sancionado & Marcar sanción disciplinaria & admin, jefe, decano \\
+  PATCH  & /auth/usuarios/\{id\}/reset-password & Restablecer contraseña & admin \\
+  GET    & /auth/sistema/testing-mode & Consultar modo de pruebas & Todos \\
+  PATCH  & /auth/sistema/testing-mode & Activar/desactivar modo pruebas & admin \\
+  \bottomrule
+\end{longtable}
+
+% ─────────────────────────────────────────────────────────
+\subsection{Convocatorias de Monitorías \texttt{/convocatorias}}
+% ─────────────────────────────────────────────────────────
+\begin{longtable}{>{\ttfamily}p{1.5cm} >{\ttfamily}p{6cm} p{4.5cm} p{2cm}}
+  \toprule
+  \textbf{Método} & \textbf{Ruta} & \textbf{Descripción} & \textbf{Roles} \\
+  \midrule
+  \endfirsthead
+  \toprule \textbf{Método} & \textbf{Ruta} & \textbf{Descripción} & \textbf{Roles} \\ \midrule
+  \endhead
+  GET    & /convocatorias/ & Listar convocatorias con filtros & Todos \\
+  POST   & /convocatorias/ & Crear nueva convocatoria & prof, jefe \\
+  GET    & /convocatorias/\{id\} & Obtener convocatoria por ID & Todos \\
+  PUT    & /convocatorias/\{id\} & Actualizar convocatoria & prof, jefe \\
+  PATCH  & /convocatorias/\{id\}/estado & Cambiar estado de convocatoria & prof, jefe, decano \\
+  GET    & /convocatorias/plantillas & Plantillas de convocatoria & prof, jefe \\
+  GET    & /convocatorias/asignaturas/todas & Listar asignaturas & Todos autenticados \\
+  POST   & /convocatorias/asignaturas & Crear asignatura & jefe, admin \\
+  PUT    & /convocatorias/asignaturas/\{id\} & Actualizar asignatura & jefe, admin \\
+  GET    & /convocatorias/asignaturas/\{id\}/estudiantes & Estudiantes de una asignatura & prof, jefe \\
+  GET    & /convocatorias/profesores & Listar profesores & jefe, decano \\
+  GET    & /convocatorias/mis-materias & Materias del profesor autenticado & prof \\
+  GET    & /convocatorias/programa-academico & Vista del programa del jefe & jefe, decano \\
+  \bottomrule
+\end{longtable}
+
+% ─────────────────────────────────────────────────────────
+\subsection{Postulaciones \texttt{/postulaciones}}
+% ─────────────────────────────────────────────────────────
+\begin{longtable}{>{\ttfamily}p{1.5cm} >{\ttfamily}p{6cm} p{4.5cm} p{2cm}}
+  \toprule
+  \textbf{Método} & \textbf{Ruta} & \textbf{Descripción} & \textbf{Roles} \\
+  \midrule
+  \endfirsthead
+  \toprule \textbf{Método} & \textbf{Ruta} & \textbf{Descripción} & \textbf{Roles} \\ \midrule
+  \endhead
+  POST   & /postulaciones/convocatoria/\{id\} & Postularse a una convocatoria & estudiante \\
+  PATCH  & /postulaciones/\{id\}/desistir & Retirar propia postulación & estudiante \\
+  GET    & /postulaciones/mis-postulaciones & Ver mis postulaciones & estudiante \\
+  GET    & /postulaciones/convocatoria/\{id\} & Ver postulantes de una convocatoria & prof, jefe, decano \\
+  POST   & /postulaciones/\{id\}/documentos & Subir documento de soporte & estudiante \\
+  GET    & /postulaciones/documentos/\{arch\_id\}/descargar & Descargar documento & prof, jefe, decano \\
+  PATCH  & /postulaciones/\{id\}/nota-asignatura & Registrar nota de asignatura & prof, jefe \\
+  PATCH  & /postulaciones/\{id\}/entrevista & Registrar nota de entrevista & prof, jefe \\
+  \bottomrule
+\end{longtable}
+
+% ─────────────────────────────────────────────────────────
+\subsection{Selección de Monitores \texttt{/seleccion}}
+% ─────────────────────────────────────────────────────────
+\begin{longtable}{>{\ttfamily}p{1.5cm} >{\ttfamily}p{6.5cm} p{4cm} p{2cm}}
+  \toprule
+  \textbf{Método} & \textbf{Ruta} & \textbf{Descripción} & \textbf{Roles} \\
+  \midrule
+  POST   & /seleccion/convocatorias/\{id\}/ejecutar-seleccion & Ejecutar algoritmo RF-MON-05 & prof, jefe, decano \\
+  GET    & /seleccion/convocatorias/\{id\}/resultados & Consultar resultados & prof, jefe, decano, est. \\
+  \bottomrule
+\end{longtable}
+
+% ─────────────────────────────────────────────────────────
+\subsection{Monitor — Horas y Evaluaciones \texttt{/monitor}}
+% ─────────────────────────────────────────────────────────
+\begin{longtable}{>{\ttfamily}p{1.5cm} >{\ttfamily}p{6cm} p{4.5cm} p{2cm}}
+  \toprule
+  \textbf{Método} & \textbf{Ruta} & \textbf{Descripción} & \textbf{Roles} \\
+  \midrule
+  POST   & /monitor/horas & Registrar horas semanales & estudiante \\
+  GET    & /monitor/mis-horas & Ver mis horas registradas & estudiante \\
+  GET    & /monitor/horas/\{postulacion\_id\} & Ver horas de un monitor & prof, jefe \\
+  PATCH  & /monitor/horas/\{hora\_id\}/aprobar & Aprobar registro de horas & prof \\
+  POST   & /monitor/evaluaciones & Evaluar desempeño de monitor & prof \\
+  GET    & /monitor/evaluaciones/\{postulacion\_id\} & Ver evaluación de un monitor & prof, jefe, est. \\
+  \bottomrule
+\end{longtable}
+
+% ─────────────────────────────────────────────────────────
+\subsection{Prácticas Extramuros \texttt{/practicas}}
+% ─────────────────────────────────────────────────────────
+\begin{longtable}{>{\ttfamily}p{1.5cm} >{\ttfamily}p{6.5cm} p{3.5cm} p{2cm}}
+  \toprule
+  \textbf{Método} & \textbf{Ruta} & \textbf{Descripción} & \textbf{Roles} \\
+  \midrule
+  \endfirsthead
+  \toprule \textbf{Método} & \textbf{Ruta} & \textbf{Descripción} & \textbf{Roles} \\ \midrule
+  \endhead
+  GET    & /practicas/ & Listar prácticas (filtrado por rol) & Todos \\
+  POST   & /practicas/ & Crear nueva práctica & prof \\
+  GET    & /practicas/\{id\} & Obtener práctica por ID & Todos \\
+  PUT    & /practicas/\{id\} & Actualizar práctica & prof, jefe, decano \\
+  PATCH  & /practicas/\{id\}/solicitar & Enviar a revisión & prof \\
+  PATCH  & /practicas/\{id\}/aprobar & Aprobar según etapa & jefe, decano, admin \\
+  PATCH  & /practicas/\{id\}/rechazar & Rechazar según etapa & jefe, decano, admin \\
+  PATCH  & /practicas/\{id\}/iniciar & Iniciar práctica & prof \\
+  PATCH  & /practicas/\{id\}/finalizar & Finalizar con informe & prof, jefe, admin \\
+  POST   & /practicas/\{id\}/firmar-consentimiento & Firma de consentimiento & estudiante \\
+  GET    & /practicas/\{id\}/viaticos & Calcular viáticos & prof, jefe, admin \\
+  POST   & /practicas/\{id\}/pago-viatico & Registrar pago de viáticos & admin \\
+  GET    & /practicas/plantillas & Plantillas institucionales & prof, jefe \\
+  GET    & /practicas/tarifas/vigentes & Tarifas vigentes de viáticos & Todos \\
+  GET    & /practicas/limites-duracion & Límites de duración por zona & Todos \\
+  GET    & /practicas/autocompletar & Autocompletar desde práctica previa & prof \\
+  GET    & /practicas/datos-asignatura & Datos de asignatura para formulario & prof, jefe, decano, admin \\
+  \bottomrule
+\end{longtable}
+
+% ─────────────────────────────────────────────────────────
+\subsection{Presupuesto \texttt{/presupuesto}}
+% ─────────────────────────────────────────────────────────
+\begin{longtable}{>{\ttfamily}p{1.5cm} >{\ttfamily}p{6.5cm} p{3.5cm} p{2cm}}
+  \toprule
+  \textbf{Método} & \textbf{Ruta} & \textbf{Descripción} & \textbf{Roles} \\
+  \midrule
+  GET    & /presupuesto/ & Listar presupuestos & jefe, decano, admin \\
+  POST   & /presupuesto/ & Crear presupuesto & jefe \\
+  GET    & /presupuesto/actual & Presupuesto del período activo & jefe, decano, admin \\
+  GET    & /presupuesto/siguiente-periodo & Calcular próximo período & jefe, decano \\
+  GET    & /presupuesto/movimientos/\{periodo\} & Movimientos presupuestales & jefe, decano, admin \\
+  GET    & /presupuesto/\{periodo\} & Obtener por período & jefe, decano, admin \\
+  PATCH  & /presupuesto/\{periodo\}/solicitar & Solicitar aprobación & jefe \\
+  PATCH  & /presupuesto/\{periodo\}/solicitar-incremento & Solicitar incremento & jefe \\
+  PATCH  & /presupuesto/\{periodo\}/editar & Editar presupuesto & jefe, admin \\
+  PATCH  & /presupuesto/\{periodo\}/aprobar & Aprobar presupuesto & decano, admin \\
+  PATCH  & /presupuesto/\{periodo\}/rechazar & Rechazar presupuesto & decano, admin \\
+  PATCH  & /presupuesto/\{periodo\}/pedir-modificacion & Solicitar modificación & decano, admin \\
+  POST   & /presupuesto/\{periodo\}/documentos & Subir documento soporte & jefe, admin \\
+  GET    & /presupuesto/\{periodo\}/documentos & Listar documentos & jefe, decano, admin \\
+  DELETE & /presupuesto/\{periodo\}/documentos/\{id\} & Eliminar documento & admin \\
+  \bottomrule
+\end{longtable}
+
+% ─────────────────────────────────────────────────────────
+\subsection{Reportes y Documentos PDF \texttt{/reportes}}
+% ─────────────────────────────────────────────────────────
+\begin{longtable}{>{\ttfamily}p{1.5cm} >{\ttfamily}p{6cm} p{4.5cm} p{2cm}}
+  \toprule
+  \textbf{Método} & \textbf{Ruta} & \textbf{Descripción} & \textbf{Roles} \\
+  \midrule
+  GET    & /reportes/resumen & Resumen ejecutivo del sistema & decano, admin \\
+  GET    & /reportes/fo14/\{conv\_id\} & Datos formulario FO-14 & prof, jefe, decano \\
+  GET    & /reportes/fo15/\{practica\_id\} & Datos formulario FO-15 & prof, jefe, decano, admin \\
+  GET    & /reportes/fo16/\{practica\_id\} & Datos formulario FO-16 & prof, jefe, decano \\
+  GET    & /reportes/fo46/\{conv\_id\} & Datos formulario FO-46 & prof, jefe, decano \\
+  GET    & /reportes/fo05/\{practica\_id\} & Datos formulario AP-INF-FO-05 & prof, jefe, admin \\
+  GET    & /reportes/consentimiento/\{practica\_id\} & Acta de consentimiento informado & prof, jefe \\
+  GET    & /reportes/practicas-programa & Prácticas consolidadas por programa & jefe, decano, admin \\
+  \bottomrule
+\end{longtable}
+
+% ─────────────────────────────────────────────────────────
+\subsection{Transporte y Geolocalización \texttt{/transporte}}
+% ─────────────────────────────────────────────────────────
+\begin{longtable}{>{\ttfamily}p{1.5cm} >{\ttfamily}p{6.5cm} p{3.5cm} p{2cm}}
+  \toprule
+  \textbf{Método} & \textbf{Ruta} & \textbf{Descripción} & \textbf{Roles} \\
+  \midrule
+  GET    & /transporte/combustible/precios & Precios combustible (SICOM) & Todos \\
+  GET    & /transporte/peajes & Listar peajes nacionales & Todos \\
+  GET    & /transporte/parametros & Parámetros de cálculo & Todos \\
+  POST   & /transporte/rutas/calcular & Calcular ruta entre puntos & Todos \\
+  POST   & /transporte/rutas/\{id\}/calcular-distancias & Calcular distancias de práctica & prof, jefe \\
+  GET    & /transporte/costos/\{practica\_id\} & Costos de transporte de práctica & prof, jefe, admin \\
+  GET    & /transporte/peajes-ruta/\{practica\_id\} & Peajes en ruta de práctica & prof, jefe, admin \\
+  GET    & /transporte/geo/departamentos & Departamentos de Colombia & Todos \\
+  GET    & /transporte/geo/municipios & Municipios de un departamento & Todos \\
+  POST   & /transporte/geo/distancia & Distancia vial entre municipios & Todos \\
+  \bottomrule
+\end{longtable}
+
+% ─────────────────────────────────────────────────────────
+\subsection{Otros módulos}
+% ─────────────────────────────────────────────────────────
+\begin{longtable}{>{\ttfamily}p{1.5cm} >{\ttfamily}p{6.5cm} p{3.5cm} p{2cm}}
+  \toprule
+  \textbf{Método} & \textbf{Ruta} & \textbf{Descripción} & \textbf{Roles} \\
+  \midrule
+  \multicolumn{4}{l}{\textbf{Notificaciones} \texttt{/notificaciones}} \\
+  \midrule
+  GET    & /notificaciones/ & Listar notificaciones & Todos \\
+  GET    & /notificaciones/no-leidas/conteo & Conteo de no leídas & Todos \\
+  PATCH  & /notificaciones/\{id\}/leer & Marcar como leída & Todos \\
+  PATCH  & /notificaciones/leer-todas & Marcar todas como leídas & Todos \\
+  DELETE & /notificaciones/\{id\} & Eliminar notificación & Todos \\
+  \midrule
+  \multicolumn{4}{l}{\textbf{Perfil} \texttt{/perfil}} \\
+  \midrule
+  GET    & /perfil/ & Ver perfil propio & Todos \\
+  PUT    & /perfil/ & Actualizar datos de perfil & Todos \\
+  PATCH  & /perfil/foto & Subir foto de perfil & Todos \\
+  \midrule
+  \multicolumn{4}{l}{\textbf{Códigos QR} \texttt{/qr}} \\
+  \midrule
+  GET    & /qr/convocatoria/\{id\} & QR de convocatoria & prof, jefe, admin \\
+  GET    & /qr/practica/\{id\} & QR de práctica & prof, jefe, admin \\
+  GET    & /qr/postulacion/\{id\} & QR de postulación & prof, jefe, admin \\
+  \midrule
+  \multicolumn{4}{l}{\textbf{Administración} \texttt{/admin}} \\
+  \midrule
+  GET    & /admin/semestres & Listar configuraciones de semestre & admin \\
+  POST   & /admin/semestres & Crear configuración de semestre & admin \\
+  PATCH  & /admin/semestres/\{id\} & Actualizar semestre & admin \\
+  PATCH  & /admin/semestres/\{id\}/activar & Activar semestre & admin \\
+  DELETE & /admin/semestres/\{id\} & Eliminar semestre & admin \\
+  GET    & /admin/monitorias & Listar monitorías (panel admin) & admin \\
+  DELETE & /admin/monitorias/\{id\} & Eliminar convocatoria & admin \\
+  DELETE & /admin/monitorias/postulaciones/\{id\} & Eliminar postulación & admin \\
+  GET    & /admin/practicas & Listar prácticas (panel admin) & admin \\
+  DELETE & /admin/practicas/\{id\} & Eliminar práctica & admin \\
+  GET    & /health & Estado del servidor & Público \\
+  \bottomrule
+\end{longtable}
+
+\newpage
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Historias de Usuario}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Módulo de Monitorías}
+
+\begin{longtable}{>{\bfseries}p{1.2cm} p{3cm} p{9cm}}
+  \toprule
+  \textbf{ID} & \textbf{Rol} & \textbf{Historia} \\
+  \midrule
+  \endfirsthead
+  \toprule \textbf{ID} & \textbf{Rol} & \textbf{Historia} \\ \midrule
+  \endhead
+
+  HU-01 & Profesor / Jefe & \textbf{Como} docente, \textbf{quiero} crear una convocatoria de monitores para una asignatura específica, \textbf{para} encontrar estudiantes calificados que apoyen el proceso académico. \\[4pt]
+
+  HU-02 & Estudiante & \textbf{Como} estudiante, \textbf{quiero} postularme a una convocatoria de monitores adjuntando mis documentos de soporte (cédula, RUT, certificado bancario), \textbf{para} participar en el proceso de selección. \\[4pt]
+
+  HU-03 & Estudiante & \textbf{Como} estudiante, \textbf{quiero} poder retirar mi postulación antes de que se ejecute la selección, \textbf{para} tener control sobre mi participación en el proceso. \\[4pt]
+
+  HU-04 & Profesor & \textbf{Como} profesor, \textbf{quiero} registrar la nota de asignatura y la nota de entrevista de cada postulante, \textbf{para} alimentar el algoritmo de selección. \\[4pt]
+
+  HU-05 & Profesor / Jefe & \textbf{Como} docente, \textbf{quiero} ejecutar el algoritmo de selección automático, \textbf{para} obtener el ranking de candidatos ordenado por puntaje ponderado. \\[4pt]
+
+  HU-06 & Estudiante & \textbf{Como} monitor seleccionado, \textbf{quiero} registrar mis horas de trabajo semanal, \textbf{para} que el sistema lleve un control de mi desempeño. \\[4pt]
+
+  HU-07 & Profesor & \textbf{Como} docente, \textbf{quiero} revisar y aprobar las horas registradas por mis monitores semana a semana, \textbf{para} validar el cumplimiento del contrato de monitoría. \\[4pt]
+
+  HU-08 & Profesor & \textbf{Como} docente, \textbf{quiero} evaluar el desempeño final de mis monitores al cerrar la convocatoria, \textbf{para} generar un registro institucional del servicio prestado. \\[4pt]
+
+  HU-09 & Jefe & \textbf{Como} jefe de programa, \textbf{quiero} ver el listado de profesores, asignaturas y estudiantes matriculados de mi propio programa, \textbf{para} tener visibilidad del estado académico. \\[4pt]
+
+  HU-10 & Admin & \textbf{Como} administrador, \textbf{quiero} marcar la sanción disciplinaria de un estudiante, \textbf{para} impedir que se postule a monitorías (Acuerdo 012/2023 Art.4.c). \\
+
+  \bottomrule
+\end{longtable}
+
+\subsection{Módulo de Prácticas Extramuros}
+
+\begin{longtable}{>{\bfseries}p{1.2cm} p{3cm} p{9cm}}
+  \toprule
+  \textbf{ID} & \textbf{Rol} & \textbf{Historia} \\
+  \midrule
+  \endfirsthead
+  \toprule \textbf{ID} & \textbf{Rol} & \textbf{Historia} \\ \midrule
+  \endhead
+
+  HU-11 & Profesor & \textbf{Como} docente, \textbf{quiero} crear una solicitud de práctica extramural con ruta, fechas y justificación académica, \textbf{para} iniciar el proceso de aprobación institucional. \\[4pt]
+
+  HU-12 & Estudiante & \textbf{Como} estudiante matriculado, \textbf{quiero} firmar digitalmente el consentimiento informado de la práctica, \textbf{para} confirmar mi participación voluntaria. \\[4pt]
+
+  HU-13 & Jefe & \textbf{Como} jefe de programa, \textbf{quiero} aprobar o rechazar prácticas del Comité de Currículo, \textbf{para} asegurar la pertinencia académica de las salidas de campo. \\[4pt]
+
+  HU-14 & Decano & \textbf{Como} decano, \textbf{quiero} avalar las prácticas aprobadas por el Comité de Currículo, \textbf{para} dar el visto bueno del Consejo de Facultad. \\[4pt]
+
+  HU-15 & Admin & \textbf{Como} administrador (Vicerrectoría), \textbf{quiero} dar la aprobación final de transporte a las prácticas, \textbf{para} autorizar la ejecución y comprometer el presupuesto. \\[4pt]
+
+  HU-16 & Profesor & \textbf{Como} docente, \textbf{quiero} iniciar la práctica el día programado y finalizarla con un informe de resultados, \textbf{para} completar el ciclo y dejar evidencia institucional. \\[4pt]
+
+  HU-17 & Profesor & \textbf{Como} docente, \textbf{quiero} que el sistema calcule automáticamente los viáticos según las tarifas vigentes y la duración de la práctica, \textbf{para} gestionar el presupuesto de transporte. \\[4pt]
+
+  HU-18 & Jefe / Admin & \textbf{Como} jefe de programa, \textbf{quiero} descargar los formatos institucionales (FO-05, FO-15, FO-16, FO-14) con los datos de la práctica ya rellenados, \textbf{para} ahorrar tiempo en papeleo. \\[4pt]
+
+  HU-19 & Admin & \textbf{Como} administrador, \textbf{quiero} gestionar el presupuesto semestral de prácticas y ver los movimientos comprometidos y ejecutados, \textbf{para} controlar el gasto institucional. \\[4pt]
+
+  HU-20 & Admin & \textbf{Como} administrador, \textbf{quiero} configurar las semanas habilitadas para solicitudes de prácticas por período académico, \textbf{para} controlar la apertura y cierre del proceso. \\
+
+  \bottomrule
+\end{longtable}
+
+\subsection{Módulo Transversal}
+
+\begin{longtable}{>{\bfseries}p{1.2cm} p{3cm} p{9cm}}
+  \toprule
+  \textbf{ID} & \textbf{Rol} & \textbf{Historia} \\
+  \midrule
+
+  HU-21 & Todos & \textbf{Como} usuario del sistema, \textbf{quiero} recibir notificaciones en tiempo real sobre cambios de estado en mis trámites, \textbf{para} estar informado sin necesidad de revisar el sistema constantemente. \\[4pt]
+
+  HU-22 & Todos & \textbf{Como} usuario, \textbf{quiero} actualizar mi perfil con datos de contacto, foto y seguridad social, \textbf{para} mantener mi información actualizada. \\[4pt]
+
+  HU-23 & Admin & \textbf{Como} administrador, \textbf{quiero} activar un modo de prueba que desactive las restricciones de fechas y quórum, \textbf{para} poder demostrar el sistema sin esperar ventanas de tiempo reales. \\[4pt]
+
+  HU-24 & Profesor / Admin & \textbf{Como} docente, \textbf{quiero} calcular el costo de peajes y combustible para la ruta de una práctica, \textbf{para} estimar el presupuesto necesario con datos reales del INVIAS y SICOM. \\
+
+  \bottomrule
+\end{longtable}
+
+\newpage
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Historias de Prueba}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Pruebas de Monitorías}
+
+\begin{longtable}{>{\bfseries}p{1.2cm} p{2.5cm} p{9.5cm}}
+  \toprule
+  \textbf{ID} & \textbf{HU ref.} & \textbf{Caso de prueba} \\
+  \midrule
+  \endfirsthead
+  \toprule \textbf{ID} & \textbf{HU ref.} & \textbf{Caso de prueba} \\ \midrule
+  \endhead
+
+  HP-01 & HU-02 & Un estudiante con promedio $<$ 3.50 intenta postularse. \textbf{Resultado esperado:} error 403 con motivo. \\[3pt]
+  HP-02 & HU-02 & Un estudiante con porcentaje de créditos aprobados $<$ 30\% intenta postularse. \textbf{Resultado esperado:} error 403. \\[3pt]
+  HP-03 & HU-10 & Un estudiante con sanción disciplinaria activa intenta postularse. \textbf{Resultado esperado:} error 403, Acuerdo 012/2023 Art.4.c. \\[3pt]
+  HP-04 & HU-02 & Un estudiante intenta postularse fuera del período de postulación. \textbf{Resultado esperado:} error 400 con fechas de apertura. \\[3pt]
+  HP-05 & HU-02 & Un estudiante intenta postularse dos veces a la misma convocatoria. \textbf{Resultado esperado:} error 409 de conflicto. \\[3pt]
+  HP-06 & HU-05 & Se ejecuta el algoritmo con 3 candidatos y 1 cupo. \textbf{Resultado esperado:} 1 seleccionado, 2 no\_seleccionados, puntajes calculados según fórmula RF-MON-05. \\[3pt]
+  HP-07 & HU-05 & Se ejecuta el algoritmo con empate en puntaje final. \textbf{Resultado esperado:} desempate por nota\_entrevista, luego promedio, luego nota\_asignatura. \\[3pt]
+  HP-08 & HU-06 & Un monitor registra horas en semana 21. \textbf{Resultado esperado:} error 400 (semana máxima = 20). \\[3pt]
+  HP-09 & HU-06 & Un monitor registra horas en una semana ya registrada. \textbf{Resultado esperado:} error 409 por UniqueConstraint. \\[3pt]
+  HP-10 & HU-03 & Un estudiante desiste de su postulación en estado \texttt{pendiente}. \textbf{Resultado esperado:} estado cambia a \texttt{desistido}. \\[3pt]
+  HP-11 & HU-03 & Un estudiante intenta desistir una postulación ya \texttt{seleccionado}. \textbf{Resultado esperado:} error 400. \\
+
+  \bottomrule
+\end{longtable}
+
+\subsection{Pruebas de Prácticas Extramuros}
+
+\begin{longtable}{>{\bfseries}p{1.2cm} p{2.5cm} p{9.5cm}}
+  \toprule
+  \textbf{ID} & \textbf{HU ref.} & \textbf{Caso de prueba} \\
+  \midrule
+  \endfirsthead
+  \toprule \textbf{ID} & \textbf{HU ref.} & \textbf{Caso de prueba} \\ \midrule
+  \endhead
+
+  HP-12 & HU-11 & Un profesor solicita una práctica con menos de 30 días de anticipación. \textbf{Resultado esperado:} error 400 con fecha mínima permitida. \\[3pt]
+  HP-13 & HU-11 & Un profesor solicita una práctica dentro del Huila con 4 días de duración. \textbf{Resultado esperado:} error 400 (máximo = 3 días para prácticas en Huila). \\[3pt]
+  HP-14 & HU-11 & Un profesor solicita una práctica fuera del Huila con 5 días de duración. \textbf{Resultado esperado:} error 400 (máximo = 4 días fuera del Huila). \\[3pt]
+  HP-15 & HU-11 & Un profesor crea una práctica duplicada (misma asignatura + período + docente). \textbf{Resultado esperado:} error 409. \\[3pt]
+  HP-16 & HU-12 & Un estudiante intenta firmar el consentimiento antes de la ventana (D-10). \textbf{Resultado esperado:} error 400 con fecha de apertura. \\[3pt]
+  HP-17 & HU-12 & Un estudiante no matriculado en la asignatura intenta firmar. \textbf{Resultado esperado:} error 403. \\[3pt]
+  HP-18 & HU-12 & Al alcanzar el 66\% de firmas, la práctica en \texttt{pendiente\_quorum} avanza automáticamente a \texttt{aprobada\_curriculo}. \textbf{Resultado esperado:} transición de estado automática. \\[3pt]
+  HP-19 & HU-13 & El jefe de programa intenta aprobar una práctica ya en \texttt{aprobada\_curriculo}. \textbf{Resultado esperado:} error 400. \\[3pt]
+  HP-20 & HU-14 & El decano intenta avalar una práctica que aún está \texttt{solicitada}. \textbf{Resultado esperado:} error 400. \\[3pt]
+  HP-21 & HU-19 & Se intenta comprometer más viáticos que el presupuesto disponible. \textbf{Resultado esperado:} el sistema registra el movimiento (aviso informativo, no bloquea). \\[3pt]
+  HP-22 & HU-23 & Con modo de prueba activo, un profesor crea una práctica con 0 días de anticipación. \textbf{Resultado esperado:} creación exitosa (validación omitida). \\
+
+  \bottomrule
+\end{longtable}
+
+\subsection{Pruebas de Seguridad y Sistema}
+
+\begin{longtable}{>{\bfseries}p{1.2cm} p{2.5cm} p{9.5cm}}
+  \toprule
+  \textbf{ID} & \textbf{HU ref.} & \textbf{Caso de prueba} \\
+  \midrule
+
+  HP-23 & HU-01 & Un estudiante intenta crear una convocatoria. \textbf{Resultado esperado:} error 403 (rol insuficiente). \\[3pt]
+  HP-24 & — & Se realizan 5 intentos fallidos de login con el mismo código en 15 minutos. \textbf{Resultado esperado:} error 429 (demasiados intentos). \\[3pt]
+  HP-25 & — & Se intenta acceder a un endpoint protegido sin token JWT. \textbf{Resultado esperado:} error 401. \\[3pt]
+  HP-26 & — & Se intenta hacer login con token expirado. \textbf{Resultado esperado:} redirección a \texttt{/login} y limpieza del localStorage. \\[3pt]
+  HP-27 & HU-07 & Un profesor intenta aprobar horas de un monitor de otro profesor. \textbf{Resultado esperado:} error 403. \\
+
+  \bottomrule
+\end{longtable}
+
+\newpage
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Funcionalidades del Sistema}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Gestión de Monitorías Académicas}
+\begin{itemize}[leftmargin=1.5cm]
+  \item Creación y publicación de convocatorias de monitores con plantillas institucionales.
+  \item Control del período de postulación con validación de fechas (Acuerdo 012/2023).
+  \item Postulación en línea con carga de documentos (cédula, RUT, certificado bancario).
+  \item Validación académica automática: promedio mínimo 3.50 y 30\% de créditos aprobados.
+  \item Bloqueo de postulación a estudiantes con sanción disciplinaria vigente.
+  \item Registro de nota de asignatura y nota de entrevista por parte del docente.
+  \item Algoritmo de selección ponderado RF-MON-05: (nota\_asig × 0.30) + (promedio × 0.30) + (entrevista × 0.40).
+  \item Desempate por entrevista, luego promedio, luego nota de asignatura.
+  \item Retiro voluntario de postulación (\texttt{desistir}) antes de la selección.
+  \item Registro semanal de horas por monitor (semanas 1--20) con aprobación docente.
+  \item Evaluación de desempeño al cierre de la convocatoria.
+  \item Generación de formularios PDF: FO-14 (acta selección), FO-46 (contrato monitoria).
+  \item Códigos QR de convocatorias y postulaciones.
+  \item Notificaciones automáticas en cada cambio de estado.
+\end{itemize}
+
+\subsection{Gestión de Prácticas Extramuros}
+\begin{itemize}[leftmargin=1.5cm]
+  \item Solicitud de práctica con información completa: ruta, fechas, justificación FO-16.
+  \item Validación de anticipación mínima: 30 días antes de la fecha de inicio.
+  \item Validación de duración máxima: 3 días (Huila) / 4 días (fuera del Huila).
+  \item Control de período habilitado por semanas del semestre (configurable por el admin).
+  \item Flujo de aprobación escalonado en 3 etapas (Acuerdo 003/2012):
+    \begin{enumerate}
+      \item Jefe de Programa (Comité de Currículo)
+      \item Decano (Consejo de Facultad)
+      \item Administrador (Vicerrectoría Académica)
+    \end{enumerate}
+  \item Firma digital de consentimiento informado con ventana D-10 a D-5.
+  \item Umbral de quórum: el 66\% de estudiantes debe firmar para avanzar.
+  \item Cálculo automático de viáticos según tarifas vigentes.
+  \item Registro de pago de viáticos y compromiso presupuestal automático.
+  \item Cálculo de peajes INVIAS y costos de combustible (datos SICOM actualizados diariamente).
+  \item Generación de formularios PDF: FO-05 (desplazamiento), FO-15 (solicitud), FO-16 (justificación), Acta de consentimiento.
+  \item Auto-completado de ruta desde práctica previa de la misma asignatura.
+  \item Historial de estados con registro de responsable y observaciones.
+\end{itemize}
+
+\subsection{Gestión de Presupuesto}
+\begin{itemize}[leftmargin=1.5cm]
+  \item Creación y aprobación de presupuesto semestral por período académico.
+  \item Flujo de aprobación: jefe solicita → decano/admin aprueba.
+  \item Control de montos: comprometido, ejecutado, disponible y solicitado (incremento).
+  \item Movimientos presupuestales con trazabilidad completa.
+  \item Carga de documentos de soporte.
+\end{itemize}
+
+\subsection{Módulo Transversal}
+\begin{itemize}[leftmargin=1.5cm]
+  \item Autenticación JWT con protección contra fuerza bruta (5 intentos / 15 min, persistida en BD).
+  \item Protección de endpoints con roles granulares.
+  \item Sistema de notificaciones en tiempo real (por rol y por entidad).
+  \item Perfil de usuario con foto, datos de contacto y seguridad social.
+  \item Búsqueda global en el sistema.
+  \item Geolocalización: listado de departamentos y municipios de Colombia, cálculo de distancias viales.
+  \item Modo de prueba para demostraciones (desactiva restricciones temporales).
+  \item Cron jobs diarios: actualización de precios SICOM a las 6:00 am, recordatorios a las 8:00 am.
+  \item Auditoría de acciones: login, cambios de estado, activaciones de usuarios.
+\end{itemize}
+
+\newpage
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Lista de Requerimientos Implementados}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Requerimientos Funcionales — Monitorías}
+
+\begin{longtable}{>{\bfseries}p{2.2cm} p{4cm} p{6.5cm} p{1.5cm}}
+  \toprule
+  \textbf{ID} & \textbf{Nombre} & \textbf{Descripción} & \textbf{Estado} \\
+  \midrule
+  \endfirsthead
+  \toprule \textbf{ID} & \textbf{Nombre} & \textbf{Descripción} & \textbf{Estado} \\ \midrule
+  \endhead
+
+  RF-MON-01 & Validación académica & Verificar promedio ≥ 3.50 y créditos ≥ 30\% & \textcolor{green!50!black}{Implementado} \\[3pt]
+  RF-MON-02 & Postulación & Postularse con documentos adjuntos dentro del período & \textcolor{green!50!black}{Implementado} \\[3pt]
+  RF-MON-03 & Gestión documentos & Subir y descargar documentos de postulación & \textcolor{green!50!black}{Implementado} \\[3pt]
+  RF-MON-04 & Evaluación académica & Registrar notas de asignatura y entrevista & \textcolor{green!50!black}{Implementado} \\[3pt]
+  RF-MON-05 & Algoritmo selección & Selección ponderada 30/30/40 con desempate & \textcolor{green!50!black}{Implementado} \\[3pt]
+  RF-MON-06 & Registro de horas & Control semanal de horas del monitor (sem. 1-20) & \textcolor{green!50!black}{Implementado} \\[3pt]
+  RF-MON-07 & Aprobación horas & Docente aprueba las horas registradas & \textcolor{green!50!black}{Implementado} \\[3pt]
+  RF-MON-08 & Evaluación desempeño & Calificación final del monitor por el docente & \textcolor{green!50!black}{Implementado} \\[3pt]
+  RF-MON-09 & Sanción disciplinaria & Bloqueo de postulación por sanción (Art.4.c) & \textcolor{green!50!black}{Implementado} \\[3pt]
+  RF-MON-10 & Desistimiento & Retiro voluntario de postulación & \textcolor{green!50!black}{Implementado} \\[3pt]
+  RF-MON-11 & Plantillas convocatoria & Creación desde plantillas institucionales & \textcolor{green!50!black}{Implementado} \\[3pt]
+  RF-MON-12 & Formularios PDF & Generación FO-14, FO-46 & \textcolor{green!50!black}{Implementado} \\
+
+  \bottomrule
+\end{longtable}
+
+\subsection{Requerimientos Funcionales — Prácticas}
+
+\begin{longtable}{>{\bfseries}p{2.2cm} p{4cm} p{6.5cm} p{1.5cm}}
+  \toprule
+  \textbf{ID} & \textbf{Nombre} & \textbf{Descripción} & \textbf{Estado} \\
+  \midrule
+  \endfirsthead
+  \toprule \textbf{ID} & \textbf{Nombre} & \textbf{Descripción} & \textbf{Estado} \\ \midrule
+  \endhead
+
+  RF-PRA-01 & Solicitud práctica & Crear con ruta, fechas y datos FO-16 & \textcolor{green!50!black}{Implementado} \\[3pt]
+  RF-PRA-02 & Anticipación mínima & Solicitud con ≥ 30 días antes & \textcolor{green!50!black}{Implementado} \\[3pt]
+  RF-PRA-03 & Límite duración & 3 días Huila / 4 días fuera & \textcolor{green!50!black}{Implementado} \\[3pt]
+  RF-PRA-04 & Flujo aprobación & Tres etapas: currículo, facultad, vicerrectoría & \textcolor{green!50!black}{Implementado} \\[3pt]
+  RF-PRA-05 & Rechazo escalonado & Rechazo por etapa con observaciones & \textcolor{green!50!black}{Implementado} \\[3pt]
+  RF-PRA-06 & Ventana consentimiento & Apertura D-10, cierre D-5 & \textcolor{green!50!black}{Implementado} \\[3pt]
+  RF-PRA-07 & Firma consentimiento & Firma digital con IP y timestamp & \textcolor{green!50!black}{Implementado} \\[3pt]
+  RF-PRA-08 & Quórum automático & Avance automático al 66\% de firmas & \textcolor{green!50!black}{Implementado} \\[3pt]
+  RF-PRA-09 & Cálculo viáticos & Según tarifas vigentes y duración & \textcolor{green!50!black}{Implementado} \\[3pt]
+  RF-PRA-10 & Presupuesto & Compromiso y ejecución presupuestal & \textcolor{green!50!black}{Implementado} \\[3pt]
+  RF-PRA-11 & Costos transporte & Peajes INVIAS + combustible SICOM & \textcolor{green!50!black}{Implementado} \\[3pt]
+  RF-PRA-12 & Formularios PDF & FO-05, FO-15, FO-15C, FO-16, acta consentimiento & \textcolor{green!50!black}{Implementado} \\[3pt]
+  RF-PRA-13 & Historial estados & Trazabilidad de cada cambio de estado & \textcolor{green!50!black}{Implementado} \\[3pt]
+  RF-PRA-UNI-01 & Una práctica activa & Por asignatura + período + docente & \textcolor{green!50!black}{Implementado} \\[3pt]
+  RF-PRA-TIME-01 & Semanas habilitadas & Configuración por semana del semestre & \textcolor{green!50!black}{Implementado} \\
+
+  \bottomrule
+\end{longtable}
+
+\subsection{Requerimientos No Funcionales}
+
+\begin{longtable}{>{\bfseries}p{2.2cm} p{4cm} p{6.5cm} p{1.5cm}}
+  \toprule
+  \textbf{ID} & \textbf{Nombre} & \textbf{Descripción} & \textbf{Estado} \\
+  \midrule
+
+  RNF-01 & Autenticación JWT & Tokens seguros con expiración & \textcolor{green!50!black}{Implementado} \\[3pt]
+  RNF-02 & Control de acceso & Roles granulares por endpoint & \textcolor{green!50!black}{Implementado} \\[3pt]
+  RNF-03 & Protección fuerza bruta & 5 intentos / 15 min, persistido en BD & \textcolor{green!50!black}{Implementado} \\[3pt]
+  RNF-04 & Auditoría & Log de acciones críticas en audit\_logs & \textcolor{green!50!black}{Implementado} \\[3pt]
+  RNF-05 & Seguridad archivos & Validación de tipo MIME y extensión & \textcolor{green!50!black}{Implementado} \\[3pt]
+  RNF-06 & Cabeceras HTTP & Content-Security-Policy, X-Frame-Options, etc. & \textcolor{green!50!black}{Implementado} \\[3pt]
+  RNF-07 & Integridad BD & CHECK constraints en todos los rangos críticos & \textcolor{green!50!black}{Implementado} \\[3pt]
+  RNF-08 & Rendimiento BD & Índices en todas las columnas frecuentemente filtradas & \textcolor{green!50!black}{Implementado} \\[3pt]
+  RNF-09 & Notificaciones & Sistema de alertas por rol y entidad & \textcolor{green!50!black}{Implementado} \\[3pt]
+  RNF-10 & Datos externos & Actualización diaria SICOM (combustible) & \textcolor{green!50!black}{Implementado} \\
+
+  \bottomrule
+\end{longtable}
+
+\newpage
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Estado del Proyecto}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Estado general}
+
+\begin{center}
+\begin{tabular}{lcc}
+  \toprule
+  \textbf{Módulo} & \textbf{Completitud} & \textbf{Estado} \\
+  \midrule
+  Autenticación y usuarios      & 100\% & \textcolor{green!50!black}{Completo} \\
+  Monitorías — Convocatorias    & 100\% & \textcolor{green!50!black}{Completo} \\
+  Monitorías — Postulaciones    & 100\% & \textcolor{green!50!black}{Completo} \\
+  Monitorías — Selección        & 100\% & \textcolor{green!50!black}{Completo} \\
+  Monitorías — Horas y eval.    & 100\% & \textcolor{green!50!black}{Completo} \\
+  Prácticas — Flujo aprobación  & 100\% & \textcolor{green!50!black}{Completo} \\
+  Prácticas — Consentimiento    & 100\% & \textcolor{green!50!black}{Completo} \\
+  Prácticas — Viáticos          & 100\% & \textcolor{green!50!black}{Completo} \\
+  Transporte y geo              & 100\% & \textcolor{green!50!black}{Completo} \\
+  Presupuesto                   & 100\% & \textcolor{green!50!black}{Completo} \\
+  Reportes / PDF                & 100\% & \textcolor{green!50!black}{Completo} \\
+  Notificaciones                & 100\% & \textcolor{green!50!black}{Completo} \\
+  Panel Admin                   & 100\% & \textcolor{green!50!black}{Completo} \\
+  Base de datos (hardening)     & 100\% & \textcolor{green!50!black}{Completo} \\
+  \midrule
+  \textbf{TOTAL}                & \textbf{100\%} & \textcolor{green!50!black}{\textbf{Producción}} \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Resumen de la base de datos}
+
+\begin{center}
+\begin{tabular}{lr}
+  \toprule
+  \textbf{Entidad} & \textbf{Registros} \\
+  \midrule
+  Usuarios                    & 655 \\
+  Asignaturas                 & 51 \\
+  Matrículas (asig-estudiante) & 1.262 \\
+  Plantillas monitoría        & 51 \\
+  Plantillas práctica         & 90 \\
+  Prácticas                   & 3 \\
+  Firmas consentimiento       & 21 \\
+  Configuraciones calendario  & 3 \\
+  Presupuestos                & 3 \\
+  Peajes nacionales           & 10 \\
+  Precios combustible         & 12 \\
+  Tarifas viáticos            & 4 \\
+  Notificaciones              & 40 \\
+  Audit logs                  & 78 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Decisiones técnicas relevantes}
+
+\begin{itemize}[leftmargin=1.5cm]
+  \item \textbf{Multirol estricto:} Cada endpoint valida el rol exacto requerido; no hay herencia de permisos.
+  \item \textbf{Brute-force DB-backed:} Los intentos fallidos se persisten en \texttt{audit\_logs}, funcionando correctamente en entornos multi-worker.
+  \item \textbf{\_calcular\_puntaje centralizado:} Función única en \texttt{app/utils/seleccion\_utils.py}, importada por \texttt{seleccion.py} y \texttt{postulaciones.py}.
+  \item \textbf{PDF generados en el cliente:} jsPDF + jspdf-autotable en el frontend; el backend provee solo los datos JSON. Esto reduce la carga del servidor.
+  \item \textbf{Modo de prueba:} Bandera en tabla \texttt{sistema\_config} que desactiva todas las validaciones temporales sin modificar código.
+  \item \textbf{Cron jobs:} Scheduler APScheduler dentro del lifespan de FastAPI; no requiere infraestructura externa.
+  \item \textbf{Schema PostgreSQL endurecido:} 26 CHECK constraints, 42 índices, defaults explícitos en BD para desacoplar la lógica del ORM.
+\end{itemize}
+
+\subsection{Notas para producción}
+
+\begin{itemize}[leftmargin=1.5cm]
+  \item Cambiar \texttt{SECRET\_KEY} en el archivo \texttt{.env} antes del despliegue (actualmente usa valor por defecto con advertencia en startup).
+  \item Configurar HTTPS para proteger los tokens JWT en tránsito.
+  \item Considerar migrar el almacenamiento de archivos adjuntos a un servicio externo (S3, MinIO) para escalar.
+  \item Los precios de combustible se actualizan desde la API pública de SICOM — verificar disponibilidad del servicio en producción.
+\end{itemize}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\vfill
+\begin{center}
+  {\color{vinotinto}\rule{0.5\linewidth}{0.8pt}}\\[0.3cm]
+  {\small Universidad Surcolombiana — Facultad de Ingeniería — Ingeniería de Software}\\
+  {\small SIPAM-USCO v1.0 — Mayo 2026}
+\end{center}
+
+\end{document}

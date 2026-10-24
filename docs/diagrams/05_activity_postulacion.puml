@@ -1,0 +1,124 @@
+@startuml SIPAM_Activity_Postulacion
+
+!theme plain
+skinparam backgroundColor #F5F2EA
+
+title SIPAM-USCO - Diagrama de Actividad: Proceso de Postulación Estudiante
+
+|Estudiante|
+start
+:Ver listado de
+convocatorias abiertas;
+
+:Seleccionar
+convocatoria;
+
+|Frontend|
+:Mostrar detalles
+de convocatoria;
+
+|Backend|
+:Validar requisitos
+académicos;
+
+if (¿Cumple requisitos?) then (sí)
+  :Retornar datos
+  de convocatoria;
+  
+  |Estudiante|
+  :Leer descripción
+  y requisitos;
+  
+  :Click "Postularme";
+  
+  |Frontend|
+  :Mostrar formulario
+de postulación;
+  
+  |Estudiante|
+  :Escribir carta
+de motivación;
+  
+  :Subir documentos
+  (PDF):
+  * Cédula
+  * RUT
+  * Certificado Bancario;
+  
+  :Click "Enviar Postulación";
+  
+  |Frontend|
+  :Validar campos
+  obligatorios;
+  
+  |Backend|
+  :Verificar convocatoria
+todavía abierta;
+  
+  :Verificar no postulado
+  previamente;
+  
+  if (¿Validaciones OK?) then (sí)
+    :Crear registro
+    de postulación;
+    
+    :Guardar archivos
+    adjuntos;
+    
+    :Estado inicial:
+    **pendiente_documentos**;
+    
+    if (¿Documentos completos?) then (sí)
+      :Cambiar estado a:
+      **documentos_completos**;
+    else (no)
+      :Mantener estado:
+      **pendiente_documentos**;
+    endif
+    
+    :Enviar email
+    confirmación;
+    
+    |Estudiante|
+    :Recibir confirmación;
+    
+    |Frontend|
+    :Mostrar mensaje
+    "Postulación exitosa";
+    
+    stop
+    
+  else (no)
+    :Retornar error;
+    
+    |Frontend|
+    :Mostrar error;
+    
+    |Estudiante|
+    :Ver mensaje de error;
+    
+    if (¿Reintentar?) then (sí)
+      :Corregir datos;
+      -> postularme
+    else (no)
+      :Cancelar;
+      stop
+    endif
+  endif
+  
+else (no)
+  |Backend|
+  :Retornar error 403;
+  
+  |Frontend|
+  :Mostrar mensaje
+  "No cumple requisitos";
+  
+  |Estudiante|
+  :Ver requisitos
+  faltantes;
+  
+  stop
+endif
+
+@enduml

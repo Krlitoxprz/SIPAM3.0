@@ -1,0 +1,193 @@
+@startuml SIPAM_ER_Diagram
+
+!theme plain
+skinparam backgroundColor #F5F2EA
+
+title SIPAM-USCO - Diagrama Entidad-Relación
+
+' Entidades
+entity "users" as Users {
+    * id : INT <<PK>>
+    --
+    * codigo : VARCHAR(20) <<UQ>>
+    * nombres : VARCHAR(100)
+    * apellidos : VARCHAR(100)
+    * email : VARCHAR(255) <<UQ>>
+    * hashed_password : VARCHAR(255)
+    * rol : ENUM
+    programa : VARCHAR(150)
+    sede : VARCHAR(100)
+    promedio : DECIMAL(3,2)
+    porcentaje_creditos : DECIMAL(5,2)
+    * activo : BOOLEAN
+    sancionado : BOOLEAN
+    created_at : TIMESTAMP
+    updated_at : TIMESTAMP
+}
+
+entity "asignaturas" as Asignaturas {
+    * id : INT <<PK>>
+    --
+    * codigo : VARCHAR(20) <<UQ>>
+    * nombre : VARCHAR(200)
+    * semestre : INT
+    * creditos : INT
+    programa : VARCHAR(150)
+    * activa : BOOLEAN
+}
+
+entity "convocatorias" as Convocatorias {
+    * id : INT <<PK>>
+    --
+    * codigo : VARCHAR(50) <<UQ>>
+    * titulo : VARCHAR(300)
+    descripcion : TEXT
+    * tipo_monitoria : ENUM
+    * estado : ENUM
+    fecha_inicio_postulacion : TIMESTAMP
+    fecha_fin_postulacion : TIMESTAMP
+    fecha_inicio_evaluacion : TIMESTAMP
+    fecha_fin_evaluacion : TIMESTAMP
+    * promedio_minimo : DECIMAL(3,2)
+    * creditos_minimos : INT
+    * num_monitores_requeridos : INT
+    -- FKs
+    * asignatura_id : INT <<FK>>
+    * profesor_id : INT <<FK>>
+    * created_by : INT <<FK>>
+}
+
+entity "postulaciones" as Postulaciones {
+    * id : INT <<PK>>
+    --
+    * estado : ENUM
+    carta_motivacion : TEXT
+    nota_asignatura : DECIMAL(3,2)
+    nota_entrevista : DECIMAL(3,2)
+    puntaje_final : DECIMAL(4,2)
+    ai_prediction : DECIMAL(3,2)
+    -- FKs
+    * convocatoria_id : INT <<FK>>
+    * estudiante_id : INT <<FK>>
+    created_at : TIMESTAMP
+    updated_at : TIMESTAMP
+}
+
+entity "archivos_adjuntos" as Archivos {
+    * id : INT <<PK>>
+    --
+    * tipo : VARCHAR(50)
+    * filename : VARCHAR(255)
+    * file_path : VARCHAR(500)
+    mime_type : VARCHAR(100)
+    file_size : INT
+    -- FK
+    * postulacion_id : INT <<FK>>
+    uploaded_at : TIMESTAMP
+}
+
+entity "practicas_extramuros" as Practicas {
+    * id : INT <<PK>>
+    --
+    * codigo : VARCHAR(50) <<UQ>>
+    * objetivo : TEXT
+    fecha_salida : TIMESTAMP
+    fecha_regreso : TIMESTAMP
+    * destino : VARCHAR(300)
+    * num_estudiantes : INT
+    * estado : VARCHAR(50)
+    -- FKs
+    * profesor_id : INT <<FK>>
+    * asignatura_id : INT <<FK>>
+}
+
+entity "audit_log" as AuditLog {
+    * id : INT <<PK>>
+    --
+    * action : VARCHAR(100)
+    * entity_type : VARCHAR(100)
+    entity_id : INT
+    * user_id : INT <<FK>>
+    old_values : JSON
+    new_values : JSON
+    * created_at : TIMESTAMP
+}
+
+entity "iot_tracking" as IoTTracking {
+    * id : INT <<PK>>
+    --
+    * device_id : VARCHAR(50)
+    * practice_id : VARCHAR(50)
+    latitude : DECIMAL(10,8)
+    longitude : DECIMAL(11,8)
+    altitude : DECIMAL(8,2)
+    speed_kmh : DECIMAL(6,2)
+    course : DECIMAL(5,2)
+    satellites : INT
+    hdop : DECIMAL(4,2)
+    datetime_gps : VARCHAR(50)
+    battery_voltage : DECIMAL(4,2)
+    wifi_rssi : INT
+    uptime_seconds : INT
+    error : VARCHAR(200)
+    * recorded_at : TIMESTAMP
+    -- FK
+    practica_id : INT <<FK>>
+}
+
+' Relaciones
+Users ||--o{ Convocatorias : "profesor_id > crea"
+Users ||--o{ Convocatorias : "created_by > registra"
+Users ||--o{ Postulaciones : "estudiante_id > postula"
+Users ||--o{ Practicas : "profesor_id > organiza"
+Users ||--o{ AuditLog : "user_id > realiza"
+
+Asignaturas ||--o{ Convocatorias : "tiene >"
+Asignaturas ||--o{ Practicas : "tiene >"
+
+Convocatorias ||--o{ Postulaciones : "recibe >"
+
+Postulaciones ||--o{ Archivos : "tiene >"
+
+Practicas ||--o{ IoTTracking : "practica_id > registra GPS >"
+
+' Notas
+note right of Users
+  **roles ENUM:**
+  - admin
+  - decano
+  - jefe_programa
+  - profesor
+  - estudiante
+  - auxiliar
+end note
+
+note right of Convocatorias
+  **estado ENUM:**
+  1. borrador
+  2. abierta
+  3. cerrada
+  4. en_evaluacion
+  5. finalizada
+  6. cancelada
+end note
+
+note right of Postulaciones
+  **estado ENUM:**
+  - pendiente_documentos
+  - documentos_completos
+  - evaluacion_pendiente
+  - evaluado
+  - seleccionado
+  - no_seleccionado
+end note
+
+note bottom of Archivos
+  **tipos:**
+  - cedula
+  - rut
+  - certificado_bancario
+  - carta_motivacion
+end note
+
+@enduml

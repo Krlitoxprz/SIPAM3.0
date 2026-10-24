@@ -1,0 +1,1134 @@
+[
+  {
+    "no": 1,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Neiva      La Plata",
+    "nombre": "Práctica integral de suelos",
+    "profesores": [
+      "Jhon Jairo Arévalo Hernández",
+      "Johnny Mauricio Gutierrez Marroquín"
+    ],
+    "asignaturas": [
+      "Suelos"
+    ]
+  },
+  {
+    "no": 2,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Neiva     La Plata",
+    "nombre": "Práctica integral de ingeniería drenajes // Práctica integral para el reconocimiento de componentes y sistemas de riegos por aspersión, localizados y por gravedad",
+    "profesores": [
+      "Oscar Eduardo Gutiérrez Olaya",
+      "Javier Eduardo Bonilla Perdomo"
+    ],
+    "asignaturas": [
+      "Drenajes agrícolas",
+      "Riegos II"
+    ]
+  },
+  {
+    "no": 3,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Neiva     La Plata",
+    "nombre": "Práctica integral de fertilidad y nutrición",
+    "profesores": [
+      "Johnny Mauricio Gutierrez Marroquín"
+    ],
+    "asignaturas": [
+      "Fertilidad y nutrición"
+    ]
+  },
+  {
+    "no": 4,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Neiva",
+    "nombre": "Producción de semillas y tecnologías de producción (Centro de investigación Natagaima y Tibaitatá - Agrosavia)",
+    "profesores": [
+      "Wilmer Licerio Ladino Garzón"
+    ],
+    "asignaturas": [
+      "Fisiología vegetal"
+    ]
+  },
+  {
+    "no": 5,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Neiva",
+    "nombre": "Visita de construcciones rurales a los municipios de Fomequé, Choachí y Ubaqué en el departamento de Cundinamarca, para visitar explotaciones agropecuarias en donde se pueda observar diseños vanguardistas, tecnología, mecanización y atomatización de sus procesos.",
+    "profesores": [
+      "Wilson Javier Erazo Espinosa"
+    ],
+    "asignaturas": [
+      "Construcciones rurales"
+    ]
+  },
+  {
+    "no": 6,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Garzón",
+    "nombre": "Reconocimiento perfiles de suelo, sistemas de siembra, producción de abonos orgánicos e identificación de invertebrados del suelo - Centro esperiemental Casa Luker - El Agrado-Huila",
+    "profesores": [
+      "Daniel Felipe Fernández Reyes"
+    ],
+    "asignaturas": [
+      "Suelos"
+    ]
+  },
+  {
+    "no": 7,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Garzón  La Plata",
+    "nombre": "Identificación de los factores y procesos que inciden en el manejo y conservación de productos agropecuarios",
+    "profesores": [
+      "Oscar Mauricio Barrera Bermeo",
+      "Yaneth Liliana Ruíz Osorio"
+    ],
+    "asignaturas": [
+      "Manejo y conservación de productos agropecuarios"
+    ]
+  },
+  {
+    "no": 8,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Garzón",
+    "nombre": "Visita a planta para visualizar conceptos de secado y diseño de plantas de secamiento",
+    "profesores": [
+      "Oscar Mauricio Barrera Bermeo"
+    ],
+    "asignaturas": [
+      "Secado de productos biológicos"
+    ]
+  },
+  {
+    "no": 9,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Garzón La Plata",
+    "nombre": "Características de los ecosistemas mediante el reconocimiento y caracterización de dos ecosistemas frágiles y relevantes de nuestra región y del país en general.",
+    "profesores": [
+      "Martha Lucía Peña Quimbaya",
+      "Yanet Caridad Apin Campos"
+    ],
+    "asignaturas": [
+      "Ecología"
+    ]
+  },
+  {
+    "no": 10,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Garzón Pitalito",
+    "nombre": "Práctica de motores de combustión interna",
+    "profesores": [
+      "Miyer Javier Valdés Ortiz",
+      "Giovanni Andrés Vargas Galván"
+    ],
+    "asignaturas": [
+      "Fuentes de potencia"
+    ]
+  },
+  {
+    "no": 11,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Garzón  La Plata  Pitalito",
+    "nombre": "Implementación y tecnologías de agricultura de presición en Pajonales",
+    "profesores": [
+      "Jairo Murcia Leal",
+      "Miyer Javier Valdés Ortiz",
+      "Giovanni Andrés Vargas Galván"
+    ],
+    "asignaturas": [
+      "Máquinas agrícolas"
+    ]
+  },
+  {
+    "no": 12,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Garzón",
+    "nombre": "Práctica integral para la identificación de las principales obras hidraúlicas que conforman un distrito de riego de canales abiertos",
+    "profesores": [
+      "Héctor Jair Beltrán Vargas"
+    ],
+    "asignaturas": [
+      "Hidraúlica"
+    ]
+  },
+  {
+    "no": 13,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Garzón La Plata",
+    "nombre": "Componentes de estación meteorológica",
+    "profesores": [
+      "Héctor Jair Beltrán Vargas"
+    ],
+    "asignaturas": [
+      "Hidrología"
+    ]
+  },
+  {
+    "no": 14,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Garzón Pitalito",
+    "nombre": "Práctica integral para el reconocimiento de componentes y sistemas de riegos por aspersión, localizados y por gravedad",
+    "profesores": [
+      "Jhon Jairo Vargas Hoyos",
+      "Jhon Jairo Beltrán Díaz"
+    ],
+    "asignaturas": [
+      "Ingeniería de riegos II"
+    ]
+  },
+  {
+    "no": 15,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Garzón Pitalito",
+    "nombre": "Reconocimiento de componentes y sistemas de drenajes agrícolas, superficial y subsuperficial",
+    "profesores": [
+      "Jhon Jairo Vargas Hoyos",
+      "Edinson Mujica Rodríguez"
+    ],
+    "asignaturas": [
+      "Denajes agrícolas"
+    ]
+  },
+  {
+    "no": 16,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Garzón La Plata",
+    "nombre": "Práctica para la identificación y evaluación de las principales estructuras hidraúlicas",
+    "profesores": [
+      "Oscar Eduardo Gutiérrez Olaya",
+      "Hecto Jair Beltrán"
+    ],
+    "asignaturas": [
+      "Hidraúlica"
+    ]
+  },
+  {
+    "no": 17,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Garzón La Plata",
+    "nombre": "Identificación de los factores y procesos que inciden en el manejo y conservación de productos agropecuarios",
+    "profesores": [
+      "Oscar Mauricio Barrera Bermeo",
+      "Yaneth Liliana Ruíz Osorio"
+    ],
+    "asignaturas": [
+      "Manejo y conservación de productos agropecuarios"
+    ]
+  },
+  {
+    "no": 18,
+    "programa": "Ingeniería Agrícola",
+    "sede": "La Plata",
+    "nombre": "Características morfológicas de los granos",
+    "profesores": [
+      "Dennis Milena Villamil Ospina"
+    ],
+    "asignaturas": [
+      "Secado de productos biológicos"
+    ]
+  },
+  {
+    "no": 19,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Garzón La Plata",
+    "nombre": "Características de los ecosistemas mediante el reconocimiento y caracterización de dos ecosistemas frágiles y relevantes de nuestra región y del país en general.",
+    "profesores": [
+      "Martha Lucía Peña Quimbaya",
+      "Yanet Caridad Apin Campos"
+    ],
+    "asignaturas": [
+      "Ecología"
+    ]
+  },
+  {
+    "no": 20,
+    "programa": "Ingeniería Agrícola",
+    "sede": "La Plata",
+    "nombre": "Reconocimiento de las prácticas de manejo y conservación que se vienen adelantando en la cuenca del río las Ceibas",
+    "profesores": [
+      "Johnny Mauricio Gutiérrez Marroquín"
+    ],
+    "asignaturas": [
+      "Manejo y conservación de suelos"
+    ]
+  },
+  {
+    "no": 21,
+    "programa": "Ingeniería Agrícola",
+    "sede": "La Plata",
+    "nombre": "Manejo del microclima dentro del invernadero, manejo del cultivo de tomate bajo invernadero",
+    "profesores": [
+      "Eddinson Ortega Martínez"
+    ],
+    "asignaturas": [
+      "Manejo de cultivos en invernadero"
+    ]
+  },
+  {
+    "no": 22,
+    "programa": "Ingeniería Agrícola",
+    "sede": "La Plata",
+    "nombre": "Reconocimiento y caracterización de una planta de tratamiento de aguas pitar",
+    "profesores": [
+      "Yanet Caridad Apin Campos"
+    ],
+    "asignaturas": [
+      "Calidad de aguas"
+    ]
+  },
+  {
+    "no": 23,
+    "programa": "Ingeniería Agrícola",
+    "sede": "La Plata",
+    "nombre": "Fisiología aplicada al mejoramiento vegetal: respuestas adaptadas y eficientes fisiológicas en cultivos tropicales",
+    "profesores": [
+      "Yanet Caridad Apin Campos"
+    ],
+    "asignaturas": [
+      "Fisiología Vegetal"
+    ]
+  },
+  {
+    "no": 24,
+    "programa": "Ingeniería Agrícola",
+    "sede": "La Plata",
+    "nombre": "Identificación de tecnologías para la poscosecha e industrialización del café",
+    "profesores": [
+      "Yaneth Liliana Ruíz Osorio"
+    ],
+    "asignaturas": [
+      "Tecnología del Café"
+    ]
+  },
+  {
+    "no": 25,
+    "programa": "Ingeniería Agrícola",
+    "sede": "La Plata",
+    "nombre": "Identificación de tecnologías para la poscosecha e industrialización del café",
+    "profesores": [
+      "Yaneth Liliana Ruíz Osorio"
+    ],
+    "asignaturas": [
+      "Tecnología del Café"
+    ]
+  },
+  {
+    "no": 26,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Garzón La Plata Pitalito",
+    "nombre": "Implementación y tecnologías de agricultura de presición en Pajonales",
+    "profesores": [
+      "Miyer Javier Valdés Ortiz",
+      "Jairo Murcia Leal",
+      "Giovanni Andrés Vargas Galvan"
+    ],
+    "asignaturas": [
+      "Máquinas agrícolas"
+    ]
+  },
+  {
+    "no": 27,
+    "programa": "Ingeniería Agrícola",
+    "sede": "La Plata",
+    "nombre": "Práctica integral para la identificación de distritos de riego",
+    "profesores": [
+      "Oscar Eduardo Gutiérrez Olaya"
+    ],
+    "asignaturas": [
+      "Pequeña Irrigación"
+    ]
+  },
+  {
+    "no": 28,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Garzón La Plata",
+    "nombre": "Identificación de los elementos de un sistema de riego y determinación de variables para su diseño",
+    "profesores": [
+      "Oscar Eduardo Gutiérrez Olaya"
+    ],
+    "asignaturas": [
+      "Ingeniería de riegos I"
+    ]
+  },
+  {
+    "no": 29,
+    "programa": "Ingeniería Agrícola",
+    "sede": "La Plata",
+    "nombre": "El desarrollo sostenible entorno en la finca agroecológica",
+    "profesores": [
+      "Martha Lucia Peña Quimbaya"
+    ],
+    "asignaturas": [
+      "Desarrollo sostenible y medio ambiente"
+    ]
+  },
+  {
+    "no": 30,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Pitalito",
+    "nombre": "Práctica integral para la identificación de las principales obras hidraúlicas que conforman un distrito de riego de canales abiertos",
+    "profesores": [
+      "Jhon Jairo Beltrán Díaz"
+    ],
+    "asignaturas": [
+      "Hidraúlica"
+    ]
+  },
+  {
+    "no": 31,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Pitalito",
+    "nombre": "Reconocimiento de la reserva de la sociedad civil El Encanto para identificar las especies bióticas y abióticas existentes en nuestra región",
+    "profesores": [
+      "Damaris Perdomo Medina"
+    ],
+    "asignaturas": [
+      "Ecología"
+    ]
+  },
+  {
+    "no": 32,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Pitalito",
+    "nombre": "Caracterización in situ de la fuente hidrica Guachicos del municipio de Pitalito",
+    "profesores": [
+      "Damaris Perdomo Medina"
+    ],
+    "asignaturas": [
+      "Calidad de aguas"
+    ]
+  },
+  {
+    "no": 33,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Pitalito",
+    "nombre": "El desarrollo rural del sector agrícola en el sur de departamento del Huila, experiencias exitosas",
+    "profesores": [
+      "Luisa Marcela Cerquera Barrera"
+    ],
+    "asignaturas": [
+      "Desarrollo y extensión rural"
+    ]
+  },
+  {
+    "no": 34,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Garzón Pitalito",
+    "nombre": "Tecnificación de drenaje agrícola superficial y subsuperficial",
+    "profesores": [
+      "Jhon Jairo Vargas Hoyos",
+      "Edison Mujica Rodríguez"
+    ],
+    "asignaturas": [
+      "Drenajes agrícolas"
+    ]
+  },
+  {
+    "no": 35,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Garzón Pitalito",
+    "nombre": "Práctica integral para el reconocimiento de componentes y sistemas de riegos por aspersión, localizados y por gravedad en distrito de riego y drenaje RUT en el Valle del Cauca",
+    "profesores": [
+      "Jhon Jairo Beltrán",
+      "Jhon Jairo Vargas Hoyos"
+    ],
+    "asignaturas": [
+      "Ingeniería de riegos II"
+    ]
+  },
+  {
+    "no": 36,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Pitalito",
+    "nombre": "Identificación de los factores y procesos que inciden en el manejo y conservación de productos agropecuarios",
+    "profesores": [
+      "Victor Manuel Martínez Castro"
+    ],
+    "asignaturas": [
+      "Manejo y conservación de productos agropecuarios"
+    ]
+  },
+  {
+    "no": 37,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Pitalito",
+    "nombre": "Visita a planta para visualizar conceptos de secado y diseño de plantas de secamiento",
+    "profesores": [
+      "Victor Manuel Martínez Castro"
+    ],
+    "asignaturas": [
+      "Secado de productos biológicos"
+    ]
+  },
+  {
+    "no": 38,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Pitalito",
+    "nombre": "Identificación de tecnologías para la poscosecha e industrialización del café",
+    "profesores": [
+      "Victor Manuel Martínez Castro"
+    ],
+    "asignaturas": [
+      "Tecnología del Café"
+    ]
+  },
+  {
+    "no": 39,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Garzón Pitalito",
+    "nombre": "Práctica de motores de combustión interna",
+    "profesores": [
+      "Miyer Javier Valdés Ortiz",
+      "Giovanny Andrés Vargas Galvan"
+    ],
+    "asignaturas": [
+      "Fuentes de potencia"
+    ]
+  },
+  {
+    "no": 40,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Garzón La Plata Pitalito",
+    "nombre": "Implementación y tecnologías de agricultura de presición en Pajonales",
+    "profesores": [
+      "Miyer Javier Valdés Ortiz",
+      "Jairo Murcia Leal                           3 Giovanny Andrés Vargas Galvan"
+    ],
+    "asignaturas": [
+      "Máquinas agrícolas"
+    ]
+  },
+  {
+    "no": 41,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Pitalito",
+    "nombre": "Visita a plantas de tratamiento de aguas residuales domésticas municipales y plantas de aprovechamiento de Pajonales",
+    "profesores": [
+      "Edison Mujica Rodríguez"
+    ],
+    "asignaturas": [
+      "Saneamiento urbano y rural"
+    ]
+  },
+  {
+    "no": 42,
+    "programa": "Ingeniería Agroindustrial",
+    "sede": "Neiva",
+    "nombre": "Visita Casa Grajales",
+    "profesores": [
+      "Eduardo Pastrana Bonilla"
+    ],
+    "asignaturas": [
+      "Enología"
+    ]
+  },
+  {
+    "no": 43,
+    "programa": "Ingeniería Agroindustrial",
+    "sede": "Neiva",
+    "nombre": "Control de calidad en la Agroindustrial del café y cacao",
+    "profesores": [
+      "Andrés Felipe Bahamon Monje"
+    ],
+    "asignaturas": [
+      "Control de calidad instrumental en alimentos"
+    ]
+  },
+  {
+    "no": 44,
+    "programa": "Ingeniería Agroindustrial",
+    "sede": "Neiva",
+    "nombre": "Visita a centros de investigación agrícola de Colombia",
+    "profesores": [
+      "Andrés Felipe Bahamon Monje"
+    ],
+    "asignaturas": [
+      "Sistemas productivas Agrícolas"
+    ]
+  },
+  {
+    "no": 45,
+    "programa": "Ingeniería Agroindustrial",
+    "sede": "Neiva",
+    "nombre": "Practica integral: Sistemas de producción pecuaria",
+    "profesores": [
+      "Beatriz Elena Zapata Berruecos"
+    ],
+    "asignaturas": [
+      "Producción pecuaria y acuícola"
+    ]
+  },
+  {
+    "no": 46,
+    "programa": "Ingeniería Agroindustrial",
+    "sede": "Neiva",
+    "nombre": "Producción y manejo pos cosecha de flores",
+    "profesores": [
+      "Laura Nathalia Ochoa Ospitia"
+    ],
+    "asignaturas": [
+      "Industrialización de productos no alimentarios"
+    ]
+  },
+  {
+    "no": 47,
+    "programa": "Ingeniería Agroindustrial",
+    "sede": "Neiva",
+    "nombre": "Procesamiento y almacenamiento de arroz",
+    "profesores": [
+      "Jaime Daniel Bustos Vanegas"
+    ],
+    "asignaturas": [
+      "Procesos industriales granos y semillas"
+    ]
+  },
+  {
+    "no": 48,
+    "programa": "Ingeniería Agroindustrial",
+    "sede": "Neiva",
+    "nombre": "Procesamiento de café y cacao",
+    "profesores": [
+      "Jaime Daniel Bustos Vanegas"
+    ],
+    "asignaturas": [
+      "Tecnología de café y cacao"
+    ]
+  },
+  {
+    "no": 49,
+    "programa": "Ingeniería Agroindustrial",
+    "sede": "Neiva",
+    "nombre": "Sistemas de empaques para alimentos",
+    "profesores": [
+      "Jaime Daniel Bustos Vanegas"
+    ],
+    "asignaturas": [
+      "Almacenamiento de productos biológicos"
+    ]
+  },
+  {
+    "no": 50,
+    "programa": "Ingeniería Agroindustrial",
+    "sede": "Neiva",
+    "nombre": "Reconocimiento del proceso de transformación de la tilapia tipo exportación e identificar las etapas de procesamiento de reses",
+    "profesores": [
+      "Andrea Elinor Lara Sánchez"
+    ],
+    "asignaturas": [
+      "Procesos industriales cárnicos"
+    ]
+  },
+  {
+    "no": 51,
+    "programa": "Ingeniería Agroindustrial",
+    "sede": "Neiva",
+    "nombre": "Practica integral: Manejo post- cosecha de pescado",
+    "profesores": [
+      "Angélica María Otero Paternina"
+    ],
+    "asignaturas": [
+      "Procesamiento, transformación e inocuidad de productos piscícolas"
+    ]
+  },
+  {
+    "no": 52,
+    "programa": "Ingeniería Agroindustrial",
+    "sede": "Neiva",
+    "nombre": "Practica integral: Manejo post- cosecha de pescado",
+    "profesores": [
+      "Angélica María Otero Paternina"
+    ],
+    "asignaturas": [
+      "Procesamiento, transformación e inocuidad de productos piscícolas"
+    ]
+  },
+  {
+    "no": 53,
+    "programa": "Ingeniería Agroindustrial",
+    "sede": "Neiva",
+    "nombre": "Reconocimiento de los procesos productivos, diseños y ubicación de la planta.",
+    "profesores": [
+      "Natalia Puentes"
+    ],
+    "asignaturas": [
+      "Diseño de plantas, agroindustriales"
+    ]
+  },
+  {
+    "no": 54,
+    "programa": "Ingeniería Civil",
+    "sede": "Neiva",
+    "nombre": "Caracterización Geo ambiental del Territorio: Geopotencial Morfo estructuras y Geodimicas, del Correo Geográfico del Valle Superior del Magdalena",
+    "profesores": [
+      "Isauro Trujillo Vásquez"
+    ],
+    "asignaturas": [
+      "Geología para Ingenieros"
+    ]
+  },
+  {
+    "no": 55,
+    "programa": "Ingeniería Civil",
+    "sede": "Neiva",
+    "nombre": "Caracterización Geo ambiental del Territorio: Geopotencial Morfo estructuras y Geodimicas, del Correo Geográfico del Valle Superior del Magdalena",
+    "profesores": [
+      "Isauro Trujillo Vásquez"
+    ],
+    "asignaturas": [
+      "Geología para Ingenieros"
+    ]
+  },
+  {
+    "no": 56,
+    "programa": "Ingeniería Civil",
+    "sede": "Neiva",
+    "nombre": "Caracterización Geo ambiental del Territorio: Geopotencial Morfo estructuras y Geodésicas, del Correo Geográfico del Valle Superior del Magdalena",
+    "profesores": [
+      "Isauro Trujillo Vásquez"
+    ],
+    "asignaturas": [
+      "Geología para Ingenieros"
+    ]
+  },
+  {
+    "no": 57,
+    "programa": "Ingeniería Civil",
+    "sede": "Neiva",
+    "nombre": "Medición de Caudales",
+    "profesores": [
+      "Jaime izquierdo Bautista"
+    ],
+    "asignaturas": [
+      "Hidrología"
+    ]
+  },
+  {
+    "no": 58,
+    "programa": "Ingeniería Civil",
+    "sede": "Neiva",
+    "nombre": "Estructuras hidráulicas de una presa y de un distrito de riego",
+    "profesores": [
+      "Jaime izquierdo Bautista"
+    ],
+    "asignaturas": [
+      "Estructuras Hidráulicas"
+    ]
+  },
+  {
+    "no": 59,
+    "programa": "Ingeniería Civil",
+    "sede": "Neiva",
+    "nombre": "Practica para identificación y evaluación de las principales estructuras hidráulicas que hacen parte de canales abiertos",
+    "profesores": [
+      "Mario German Trujillo Vela"
+    ],
+    "asignaturas": [
+      "Hidráulica"
+    ]
+  },
+  {
+    "no": 60,
+    "programa": "Ingeniería Civil",
+    "sede": "Neiva",
+    "nombre": "Practica para identificación y evaluación de las principales estructuras hidráulicas que hacen parte de canales abiertos",
+    "profesores": [
+      "Nadia Brigitte Sanabria Méndez"
+    ],
+    "asignaturas": [
+      "Hidráulica"
+    ]
+  },
+  {
+    "no": 61,
+    "programa": "Ingeniería de Petróleos",
+    "sede": "Neiva",
+    "nombre": "Practica conjunta: Reconocimiento geológico de la estratigrafía y geología del petróleos con énfasis en yacimientos carbonatados de la parte norte de la cuenca del Valle Superior del Magdalena",
+    "profesores": [
+      "Ingrid Natalia Muñoz Quijano"
+    ],
+    "asignaturas": [
+      "Sedimentología y Geología del Petróleos Yacimientos Carbonatados"
+    ]
+  },
+  {
+    "no": 62,
+    "programa": "Ingeniería de Petróleos",
+    "sede": "Neiva",
+    "nombre": "Practica conjunta: Reconocimiento geológico estructural introducción a la geotérmicos de la cordillera central centro de Colombia",
+    "profesores": [
+      "Ingrid Natalia Muñoz Quijano"
+    ],
+    "asignaturas": [
+      "Geología Estructurales Introducción a la Geotermia y sus usos"
+    ]
+  },
+  {
+    "no": 63,
+    "programa": "Ingeniería de Petróleos",
+    "sede": "Neiva",
+    "nombre": "Manejo de cartografías aéreas y toma de datos con GPS, visita a los departamentos de cartografía, fotogrametría y siguiente del IGAC (Bogotá)",
+    "profesores": [
+      "Jorge Orlando Mayorga Bautista"
+    ],
+    "asignaturas": [
+      "Sistemas de información Geográfica 1-2"
+    ]
+  },
+  {
+    "no": 64,
+    "programa": "Ingeniería de Petróleos",
+    "sede": "Neiva",
+    "nombre": "Reconocimiento Geológico de la estratigrafía de las subcuentas de prado y Girardot",
+    "profesores": [
+      "Roberto Vargas Cuervo"
+    ],
+    "asignaturas": [
+      "Geología General -1"
+    ]
+  },
+  {
+    "no": 65,
+    "programa": "Ingeniería de Petróleos",
+    "sede": "Neiva",
+    "nombre": "Reconocimiento Geológico de la estratigrafía de las subcuentas de prado y Girardot",
+    "profesores": [
+      "Roberto Vargas Cuervo"
+    ],
+    "asignaturas": [
+      "Geología General -2"
+    ]
+  },
+  {
+    "no": 66,
+    "programa": "Ingeniería de Software",
+    "sede": "Neiva",
+    "nombre": "Práctica temprana en la industria de software",
+    "profesores": [
+      "Jorge Eliecer Martínez Gaitán"
+    ],
+    "asignaturas": [
+      "AlgorAlgoritmia I"
+    ]
+  },
+  {
+    "no": 67,
+    "programa": "Ingeniería de Software",
+    "sede": "Neiva",
+    "nombre": "Práctica temprana en la industria de software",
+    "profesores": [
+      "Euripides Triana Tucuma"
+    ],
+    "asignaturas": [
+      "Base de datos"
+    ]
+  },
+  {
+    "no": 1,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Neiva",
+    "nombre": "Prácticas contempladas en el microdiseño de la asignatura  (teórico - práctico)",
+    "profesores": [
+      "Miguel Ángel Díaz Herrera"
+    ],
+    "asignaturas": [
+      "Máquinas Agrícolas"
+    ]
+  },
+  {
+    "no": 2,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Neiva",
+    "nombre": "Curso de carácter Teórico - Práctico, el cual requiere que a partir de la semana (8) se desarrolle en la Granja Experimental",
+    "profesores": [
+      "Nadia Brigitte Sanabria Méndez"
+    ],
+    "asignaturas": [
+      "Producción Agrícola"
+    ]
+  },
+  {
+    "no": 3,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Neiva",
+    "nombre": "Curso de carácter Teórico - Práctico, los cuales requeiren que sus clases sean realizadas en la Granja",
+    "profesores": [
+      "José Daniel Cardona Cárdenas"
+    ],
+    "asignaturas": [
+      "Fuentes de Potencia"
+    ]
+  },
+  {
+    "no": 4,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Neiva       La Plata",
+    "nombre": "Curso de carácter Teórico - Práctico, los cuales requeiren que sus clases sean realizadas en la Granja",
+    "profesores": [
+      "Johnny Mauricio Gutierrez Marroquín"
+    ],
+    "asignaturas": [
+      "Fertilidad y Nutrición"
+    ]
+  },
+  {
+    "no": 5,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Garzón   La Plata  Pitalito",
+    "nombre": "Práctica de tractores - Patinamiento",
+    "profesores": [
+      "Miyer Javier Valdés Ortiz",
+      "Jairo Murcia Leal",
+      "Giovanni Andrés Vargas Galván"
+    ],
+    "asignaturas": [
+      "Fuentes de Potencia"
+    ]
+  },
+  {
+    "no": 6,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Garzón  Pitalito",
+    "nombre": "Práctica de sistemas mecánicos en maquinaria agrícola",
+    "profesores": [
+      "Miyer Javier Valdés Ortiz",
+      "Giovanni Andrés Vargas Galván"
+    ],
+    "asignaturas": [
+      "Elementos de máquinas"
+    ]
+  },
+  {
+    "no": 7,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Garzón   La Plata  Pitalito",
+    "nombre": "Práctica de libranza primaria y secundaria siembra, fertilización y protección",
+    "profesores": [
+      "Miyer Javier Valdés Ortiz",
+      "Jairo Murcia Leal",
+      "Giovanni Andrés Vargas Galván"
+    ],
+    "asignaturas": [
+      "Máquinas Agrícolas"
+    ]
+  },
+  {
+    "no": 8,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Garzón   La Plata  Pitalito",
+    "nombre": "Práctica de cultivo, recolección de cosecha, manejo y acondicionamiento de forrajes",
+    "profesores": [
+      "Jairo Murcia Leal",
+      "Miyer Javier Valdés Ortiz",
+      "Giovanni Andrés Vargas Galván"
+    ],
+    "asignaturas": [
+      "Máquinas Agrícolas"
+    ]
+  },
+  {
+    "no": 9,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Garzón   Pitalito",
+    "nombre": "Determinación de la uniformidad de emisión de riego por aspersión e identificación de los componentes del sistema de riego a presión en el laboratorio de sistemas de producción en ambiente controlado en la granja experimental de la universidad. Determinación de la velocidad de infiltración, por el método de anillos y por surcos en la granja experimental",
+    "profesores": [
+      "Jhon Jairo Vargas Hoyos",
+      "Jhon Jairo Beltrán Díaz"
+    ],
+    "asignaturas": [
+      "Ingeniería de riegos I y II",
+      "(se actualiza)"
+    ]
+  },
+  {
+    "no": 10,
+    "programa": "Ingeniería Agrícola",
+    "sede": "La Plata",
+    "nombre": "Determinación de la uniformidad de emisión de riego por aspersión e identificación de los componentes del sistema de riego a presión en el laboratorio de sistemas de producción en ambiente controlado en la granja experimental de la universidad. Determinación de la velocidad de infiltración, por el método de anillos y por surcos en la granja experimental",
+    "profesores": [
+      "Oscar Eduardo Gutiérrez Olaya"
+    ],
+    "asignaturas": [
+      "Ingeniería de riegos I"
+    ]
+  },
+  {
+    "no": 11,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Neiva",
+    "nombre": "Determinación de la velocidad de infiltración por el método de anillos y por surcos en la granja experimental de la universidad surcolombiana (práctica de laboratorio se requiere transporte a la granja experimental)",
+    "profesores": [
+      "Jhon Jairo Arévalo Hernández"
+    ],
+    "asignaturas": [
+      "Inegniería de riegos I"
+    ]
+  },
+  {
+    "no": 12,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Neiva",
+    "nombre": "Evaluación del sistema de riego por aspersión y goteo experimental de la universidad surcolombiana (práctica de laboratorio se requiere transporte a la granja experimental)",
+    "profesores": [
+      "Jhon Jairo Arévalo Hernández"
+    ],
+    "asignaturas": [
+      "Inegniería de riegos I"
+    ]
+  },
+  {
+    "no": 13,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Garzón",
+    "nombre": "Evaluación de estándares de calidad y legislación en agua potable",
+    "profesores": [
+      "Silvia Cristina Carrera Quintana"
+    ],
+    "asignaturas": [
+      "Calidad de aguas"
+    ]
+  },
+  {
+    "no": 14,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Garzón",
+    "nombre": "Producción, procesos y comercialización de productos acuícolas",
+    "profesores": [
+      "Silvia Cristina Carrera Quintana"
+    ],
+    "asignaturas": [
+      "Procesos agroindustriales en la acuicultura"
+    ]
+  },
+  {
+    "no": 15,
+    "programa": "Ingeniería Civil",
+    "sede": "Neiva",
+    "nombre": "Practica para identificación de estación de niveles y medición de caudales en fuentes hídricas",
+    "profesores": [
+      "Mario German Trujillo Vela"
+    ],
+    "asignaturas": [
+      "Hidrología"
+    ]
+  },
+  {
+    "no": 16,
+    "programa": "Ingeniería Agroindustrial",
+    "sede": "Neiva",
+    "nombre": "Laboratorios sistemas de producción acuícola",
+    "profesores": [
+      "Beatriz Elena Zapata Berruecos"
+    ],
+    "asignaturas": [
+      "Producción pecuaria y acuícola"
+    ]
+  },
+  {
+    "no": 1,
+    "programa": "Ingeniería Agrícola",
+    "sede": "La Plata",
+    "nombre": "Prácticas de laboratorio física electromagnética",
+    "profesores": [
+      "Arbey Sánchez Rodríguez"
+    ],
+    "asignaturas": [
+      "Física Electromagnética"
+    ]
+  },
+  {
+    "no": 2,
+    "programa": "Ingeniería Agrícola",
+    "sede": "La Plata",
+    "nombre": "Prácticas de laboratorio física mecánica",
+    "profesores": [
+      "Carlos Alberto Paloma"
+    ],
+    "asignaturas": [
+      "Física Mecánica"
+    ]
+  },
+  {
+    "no": 3,
+    "programa": "Ingeniería Agrícola",
+    "sede": "La Plata",
+    "nombre": "Laboratorio de mecánica de fluidos",
+    "profesores": [
+      "Javier Eduardo Bonilla Perdomo"
+    ],
+    "asignaturas": [
+      "Mecánica de fluidos"
+    ]
+  },
+  {
+    "no": 4,
+    "programa": "Ingeniería Agrícola",
+    "sede": "La Plata",
+    "nombre": "laboratorio de calidad de aguas",
+    "profesores": [
+      "Yanet Caridad Apin Campos"
+    ],
+    "asignaturas": [
+      "Calidad de aguas"
+    ]
+  },
+  {
+    "no": 5,
+    "programa": "Ingeniería Agrícola",
+    "sede": "La Plata",
+    "nombre": "Laboratorio de física mecánica",
+    "profesores": [
+      "Carlos Alberto Paloma"
+    ],
+    "asignaturas": [
+      "Física mecánica"
+    ]
+  },
+  {
+    "no": 6,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Garzón",
+    "nombre": "Compactación - consolidación y capacidad portante del suelo o esfuerzo admisible",
+    "profesores": [
+      "Oscar Fabián Losada Gómez"
+    ],
+    "asignaturas": [
+      "Mecánica de suelos"
+    ]
+  },
+  {
+    "no": 7,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Garzón",
+    "nombre": "Laboratorio de mecánica de fuidos",
+    "profesores": [
+      "Jhon Jairo Vargas Hoyos"
+    ],
+    "asignaturas": [
+      "Mecánica de fluidos"
+    ]
+  },
+  {
+    "no": 8,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Pitalito",
+    "nombre": "Laboratorio de mecánica de fuidos",
+    "profesores": [
+      "Edinson Mujica Rodríguez"
+    ],
+    "asignaturas": [
+      "Mecánica de fluidos"
+    ]
+  },
+  {
+    "no": 9,
+    "programa": "Ingeniería Agrícola",
+    "sede": "Pitalito",
+    "nombre": "Contextualización en análisis de laboratorio de suelos y gestión de suelos en cultivos de clima cálido",
+    "profesores": [
+      "Yony Arley Chavez Parra"
+    ],
+    "asignaturas": [
+      "Suelos"
+    ]
+  }
+]

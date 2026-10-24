@@ -1,0 +1,20 @@
+{
+  "name": "SIPAM-USCO",
+  "short_name": "SIPAM",
+  "description": "Sistema Integrado de Prácticas Académicas y Monitorías — Universidad Surcolombiana",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#8D191D",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/vite.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "productivity"],
+  "lang": "es-CO"
+}

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<style>
+  @page { size: A4 portrait; margin: 14mm 14mm 16mm 14mm; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; font-size: 9pt; color: #1a1a1a; }
+  .header { display: flex; border: 1.2px solid #8D191D; margin-bottom: 6pt; }
+  .header-logo { width: 38mm; border-right: 1.2px solid #8D191D; padding: 5pt 7pt; }
+  .header-logo .univ { font-size: 8.5pt; font-weight: bold; color: #8D191D; line-height: 1.4; }
+  .header-logo .sub  { font-size: 6.5pt; color: #4E6470; margin-top: 2pt; }
+  .header-title {
+    flex: 1; background: #F5F2EA; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; padding: 4pt 8pt;
+    border-right: 1.2px solid #8D191D;
+  }
+  .header-title .main { font-size: 10.5pt; font-weight: bold; color: #8D191D; text-align: center; }
+  .header-title .sub  { font-size: 7pt; color: #4E6470; text-align: center; margin-top: 2pt; }
+  .header-meta { width: 38mm; padding: 5pt 7pt; font-size: 7.5pt; }
+  .header-meta div { margin-bottom: 3pt; }
+  .header-meta b { color: #333; }
+  .section-title { background: #8D191D; color: #fff; font-size: 8pt; font-weight: bold; padding: 3pt 6pt; text-transform: uppercase; margin: 5pt 0 2pt; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 4pt; }
+  td, th { border: 1px solid #CCC; padding: 3.5pt 5pt; font-size: 8.5pt; vertical-align: top; }
+  th { background: #8D191D; color: #fff; font-weight: bold; text-align: center; font-size: 8pt; }
+  td.lbl { background: #F0EEE8; font-weight: bold; color: #444; }
+  tr.alt td { background: #F8F8F8; }
+  .badge { display: inline-block; padding: 1pt 5pt; border-radius: 3pt; font-size: 7.5pt; font-weight: bold; }
+  .badge-ok { background: #D4EDDA; color: #155724; }
+  .badge-no { background: #F8D7DA; color: #721C24; }
+  .badge-pend { background: #FFF3CD; color: #856404; }
+  .kpi-row { display: flex; gap: 6pt; margin-bottom: 6pt; }
+  .kpi { flex: 1; border: 1px solid #D8CEA3; background: #F5F2EA; padding: 4pt 6pt; text-align: center; }
+  .kpi .k { font-size: 7pt; color: #666; margin-bottom: 2pt; }
+  .kpi .v { font-size: 13pt; font-weight: bold; color: #8D191D; }
+  .firmas { display: flex; gap: 6pt; margin-top: 14pt; }
+  .firma-box { flex: 1; border: 1px solid #CCC; text-align: center; }
+  .firma-box .ft { background: #F5F2EA; font-weight: bold; font-size: 7pt; color: #8D191D; padding: 2.5pt; text-transform: uppercase; }
+  .firma-box .fm { height: 22pt; }
+  .firma-box .linea { border-top: 1px solid #aaa; margin: 0 8pt; }
+  .firma-box .fn { font-size: 7pt; color: #555; padding: 2pt; }
+  .footer-strip { background: #8D191D; height: 3pt; margin-top: 14pt; }
+  .gen { font-size: 7pt; color: #999; text-align: right; margin-bottom: 4pt; }
+</style>
+</head>
+<body>
+
+<div class="gen">Documento generado: {{ fecha_hoy }}</div>
+
+<div class="header">
+  <div class="header-logo">
+    <div class="univ">UNIVERSIDAD<br>SURCOLOMBIANA</div>
+    <div class="sub">Neiva · Huila · Colombia<br>www.usco.edu.co</div>
+  </div>
+  <div class="header-title">
+    <div class="main">PRÁCTICA EXTRAMURAL — LISTA DE PARTICIPANTES</div>
+    <div class="sub">MI-FOR-FO-15 · Acuerdo 003/2012 USCO</div>
+  </div>
+  <div class="header-meta">
+    <div><b>Código:</b> MI-FOR-FO-15</div>
+    <div><b>Versión:</b> 5</div>
+    <div><b>Período:</b> {{ practica.periodo_academico }}</div>
+  </div>
+</div>
+
+<div class="section-title">1. Datos Generales de la Práctica</div>
+<table>
+  <tr>
+    <td class="lbl" style="width:30%">Nombre de la Práctica</td>
+    <td colspan="3" style="font-weight:bold;">{{ practica.nombre }}</td>
+  </tr>
+  <tr class="alt">
+    <td class="lbl">Asignatura</td>
+    <td>{{ asignatura.nombre }} ({{ asignatura.codigo }})</td>
+    <td class="lbl" style="width:22%">Programa</td>
+    <td>{{ asignatura.programa }}</td>
+  </tr>
+  <tr>
+    <td class="lbl">Docente responsable</td>
+    <td>{{ docente.nombres }}</td>
+    <td class="lbl">Período académico</td>
+    <td>{{ practica.periodo_academico }}</td>
+  </tr>
+  <tr class="alt">
+    <td class="lbl">Fecha de inicio</td>
+    <td>{{ practica.fecha_inicio_fmt }}</td>
+    <td class="lbl">Fecha de finalización</td>
+    <td>{{ practica.fecha_fin_fmt }}</td>
+  </tr>
+  <tr>
+    <td class="lbl">Lugar / Destino</td>
+    <td>{{ destino_lugar }}</td>
+    <td class="lbl">Estado</td>
+    <td style="font-weight:bold; color:#8D191D;">{{ practica.estado|upper }}</td>
+  </tr>
+</table>
+
+<div class="kpi-row">
+  <div class="kpi"><div class="k">Cupo máximo</div><div class="v">{{ practica.num_alumnos }}</div></div>
+  <div class="kpi"><div class="k">Firmas obtenidas</div><div class="v">{{ practica.firmas_obtenidas }}</div></div>
+  <div class="kpi"><div class="k">Firmas requeridas</div><div class="v">{{ practica.firmas_requeridas }}</div></div>
+  <div class="kpi">
+    <div class="k">Quórum (≥ 80%)</div>
+    <div class="v" style="color:{{ '#155724' if practica.quorum_alcanzado else '#721C24' }};">
+      {{ '✔ Sí' if practica.quorum_alcanzado else '✘ No' }}
+    </div>
+  </div>
+</div>
+
+<div class="section-title">2. Lista de Participantes</div>
+<table>
+  <tr>
+    <th style="width:5%">#</th>
+    <th style="width:18%">Código</th>
+    <th style="width:32%">Nombre del Estudiante</th>
+    <th style="width:15%">Cédula</th>
+    <th style="width:18%">Fecha Firma</th>
+    <th style="width:12%">Estado</th>
+  </tr>
+  {% for p in participantes %}
+  <tr {% if loop.index is odd %}{% else %}class="alt"{% endif %}>
+    <td style="text-align:center;">{{ loop.index }}</td>
+    <td>{{ p.codigo }}</td>
+    <td style="font-weight:bold;">{{ p.nombres }}</td>
+    <td>{{ p.cedula }}</td>
+    <td style="text-align:center;">{{ p.fecha_firma or '—' }}</td>
+    <td style="text-align:center;">
+      {% if p.fecha_firma %}
+        <span class="badge badge-ok">Firmado</span>
+      {% else %}
+        <span class="badge badge-pend">Pendiente</span>
+      {% endif %}
+    </td>
+  </tr>
+  {% else %}
+  <tr><td colspan="6" style="text-align:center; font-style:italic; color:#aaa;">Sin participantes registrados.</td></tr>
+  {% endfor %}
+</table>
+
+{% if viaticos %}
+<div class="section-title">3. Viáticos y Costos</div>
+<table>
+  <tr>
+    <th style="width:40%">Descripción</th>
+    <th style="width:15%">Valor/Día</th>
+    <th style="width:10%">Días</th>
+    <th style="width:15%">Personas</th>
+    <th style="width:20%">Total</th>
+  </tr>
+  {% for v in viaticos %}
+  <tr {% if loop.index is odd %}{% else %}class="alt"{% endif %}>
+    <td>{{ v.descripcion }}</td>
+    <td style="text-align:right;">{{ v.valor_dia_fmt }}</td>
+    <td style="text-align:center;">{{ v.num_dias }}</td>
+    <td style="text-align:center;">{{ v.num_personas }}</td>
+    <td style="text-align:right; font-weight:bold;">{{ v.total_fmt }}</td>
+  </tr>
+  {% endfor %}
+  <tr>
+    <td colspan="4" style="text-align:right; font-weight:bold; background:#F0EEE8;">TOTAL VIÁTICOS</td>
+    <td style="text-align:right; font-weight:bold; color:#8D191D; background:#F0EEE8;">{{ total_viaticos_fmt }}</td>
+  </tr>
+</table>
+{% endif %}
+
+<div class="firmas">
+  {% for titulo, nombre in [
+    ('Docente Responsable', docente.nombres),
+    ('Jefe de Programa', '________________________'),
+    ('Decano(a) de Facultad', '________________________'),
+  ] %}
+  <div class="firma-box">
+    <div class="ft">{{ titulo }}</div>
+    <div class="fm"></div>
+    <div class="linea"></div>
+    <div class="fn">{{ nombre }}</div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="footer-strip"></div>
+</body>
+</html>

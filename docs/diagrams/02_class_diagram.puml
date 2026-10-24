@@ -1,0 +1,234 @@
+@startuml SIPAM_Class_Diagram
+
+!define RECTANGLE class
+
+skinparam backgroundColor #F5F2EA
+skinparam classAttributeIconSize 0
+
+title SIPAM-USCO - Diagrama de Clases (Simplified)
+
+' ==================== ENUMS ====================
+enum EstadoConvocatoriaEnum {
+    borrador
+    abierta
+    cerrada
+    en_evaluacion
+    finalizada
+    cancelada
+}
+
+enum EstadoPostulacionEnum {
+    pendiente_documentos
+    documentos_completos
+    evaluacion_pendiente
+    evaluado
+    seleccionado
+    no_seleccionado
+}
+
+enum TipoMonitoriaEnum {
+    nee
+    regimenes_especiales
+    academica_cursos
+    laboratorios
+    tic
+    permanencia_graduacion
+    deportiva
+    cultural
+    biblioteca
+    acreditacion
+    investigacion
+    academica
+    administrativa
+}
+
+enum RolEnum {
+    admin
+    decano
+    jefe_programa
+    profesor
+    estudiante
+    auxiliar
+}
+
+' ==================== CLASSES ====================
+
+class User {
+    +id: int
+    +codigo: str
+    +nombres: str
+    +apellidos: str
+    +email: str
+    +hashed_password: str
+    +rol: RolEnum
+    +programa: str
+    +sede: str
+    +promedio: float
+    +porcentaje_creditos: float
+    +activo: bool
+    +sancionado: bool
+    +created_at: datetime
+    +updated_at: datetime
+    --
+    +verify_password(password: str): bool
+    +full_name(): str
+    +can_create_convocatoria(): bool
+}
+
+class Asignatura {
+    +id: int
+    +codigo: str
+    +nombre: str
+    +semestre: int
+    +creditos: int
+    +programa: str
+    +activa: bool
+    --
+    +get_programa_name(): str
+}
+
+class Convocatoria {
+    +id: int
+    +codigo: str
+    +titulo: str
+    +descripcion: str
+    +tipo_monitoria: TipoMonitoriaEnum
+    +estado: EstadoConvocatoriaEnum
+    +fecha_inicio_postulacion: datetime
+    +fecha_fin_postulacion: datetime
+    +fecha_inicio_evaluacion: datetime
+    +fecha_fin_evaluacion: datetime
+    +promedio_minimo: float
+    +creditos_minimos: int
+    +num_monitores_requeridos: int
+    +asignatura_id: int
+    +profesor_id: int
+    +created_by: int
+    --
+    +is_open(): bool
+    +can_evaluate(): bool
+    +get_selected_monitors(): List[Postulacion]
+    +generate_fo14(): PDF
+}
+
+class Postulacion {
+    +id: int
+    +estado: EstadoPostulacionEnum
+    +carta_motivacion: str
+    +nota_asignatura: float
+    +nota_entrevista: float
+    +puntaje_final: float
+    +convocatoria_id: int
+    +estudiante_id: int
+    +created_at: datetime
+    +updated_at: datetime
+    --
+    +calculate_final_score(): float
+    +attach_document(tipo: str, file: File): bool
+    +get_status(): str
+}
+
+class ArchivoAdjunto {
+    +id: int
+    +tipo: str
+    +filename: str
+    +file_path: str
+    +mime_type: str
+    +file_size: int
+    +postulacion_id: int
+    +uploaded_at: datetime
+    --
+    +get_url(): str
+    +validate_type(): bool
+}
+
+class PracticasExtramuros {
+    +id: int
+    +codigo: str
+    +objetivo: str
+    +fecha_salida: datetime
+    +fecha_regreso: datetime
+    +destino: str
+    +num_estudiantes: int
+    +estado: str
+    +profesor_id: int
+    +asignatura_id: int
+    --
+    +approve(): bool
+    +generate_fo15(): PDF
+    +generate_fo16(): PDF
+}
+
+class SeleccionAlgorithm {
+    -weights: dict
+    --
+    +calculate_score(postulacion: Postulacion): float
+    +run_selection(convocatoria: Convocatoria): List[Postulacion]
+    +sort_candidates(postulaciones: List[Postulacion]): List[Postulacion]
+}
+
+class AIPredictionService {
+    -model_path: str
+    -scaler: object
+    --
+    +load_models(): bool
+    +predict(postulante_data: dict): dict
+    +explain_prediction(features: array): dict
+    +get_feature_importance(): List[tuple]
+}
+
+class PDFGenerator {
+    -template_dir: str
+    --
+    +generate_fo14(convocatoria: Convocatoria): bytes
+    +generate_fo46(convocatoria: Convocatoria): bytes
+    +generate_qr(data: str): bytes
+    +render_template(template: str, context: dict): str
+}
+
+' ==================== RELATIONSHIPS ====================
+
+User "1" --> "*" Convocatoria : creates/manages
+User "1" --> "*" Postulacion : applies
+User "1" --> "*" PracticasExtramuros : organizes
+User "1" --> "1" RolEnum : has role
+
+Asignatura "1" --> "*" Convocatoria : has
+Asignatura "1" --> "*" PracticasExtramuros : has
+
+Convocatoria "1" --> "1" TipoMonitoriaEnum : is type
+Convocatoria "1" --> "1" EstadoConvocatoriaEnum : has state
+Convocatoria "1" --> "*" Postulacion : receives
+Convocatoria "1" --> "1" User : created by
+
+Postulacion "1" --> "*" ArchivoAdjunto : has
+Postulacion "1" --> "1" EstadoPostulacionEnum : has state
+
+SeleccionAlgorithm ..> Postulacion : uses
+SeleccionAlgorithm ..> Convocatoria : uses
+
+AIPredictionService ..> Postulacion : predicts
+
+PDFGenerator ..> Convocatoria : generates for
+
+' Notes
+note right of User
+  User model supports all roles
+  through single table inheritance
+  pattern with rol enum field
+end note
+
+note bottom of Convocatoria
+  State Machine:
+  borrador → abierta → cerrada
+  → en_evaluacion → finalizada
+end note
+
+note right of SeleccionAlgorithm
+  Implements RF-MON-05:
+  Weighted formula using
+  nota_asignatura, promedio,
+  nota_entrevista
+end note
+
+@enduml

@@ -1,0 +1,101 @@
+version: "3.9"
+
+# ── SIPAM-USCO — Docker Compose ───────────────────────────────────────────────
+# Servicios: PostgreSQL | FastAPI backend | Flask AI | React/Nginx frontend
+# Uso: docker compose --env-file .env.production up -d
+
+services:
+
+  # ── Base de datos ────────────────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       ${POSTGRES_DB:-sipam_db}
+      POSTGRES_USER:     ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - sipam_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-sipam_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── FastAPI Backend ──────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file: .env.production
+    environment:
+      DATABASE_URL:    postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-sipam_db}
+      AI_SERVICE_URL:  http://ai_service:5001
+    volumes:
+      - uploads_data:/app/uploads
+    networks:
+      - sipam_net
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ── Flask AI Microservice ────────────────────────────────────────────────────
+  ai_service:
+    build:
+      context: ./ai_service
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      DB_URL:     postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-sipam_db}
+      AI_PORT:    "5001"
+      PGCLIENTENCODING: utf8
+    volumes:
+      - ai_models:/app/models/saved
+    networks:
+      - sipam_net
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      interval: 30s
+      timeout: 15s
+      start_period: 120s
+      retries: 5
+
+  # ── React Frontend + Nginx ───────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    networks:
+      - sipam_net
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+# ── Volumes ──────────────────────────────────────────────────────────────────
+volumes:
+  postgres_data:
+  uploads_data:
+  ai_models:
+
+# ── Network ──────────────────────────────────────────────────────────────────
+networks:
+  sipam_net:
+    driver: bridge

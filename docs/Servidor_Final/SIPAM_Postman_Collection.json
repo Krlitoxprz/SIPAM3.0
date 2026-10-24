@@ -1,0 +1,435 @@
+{
+  "info": {
+    "name": "SIPAM USCO — API Collection",
+    "_postman_id": "sipam-usco-2026",
+    "description": "Sistema Integrado de Prácticas Académicas y Monitorías — Universidad Surcolombiana\nBase URL: http://localhost:8000/api/v1",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8000/api/v1" },
+    { "key": "token_admin", "value": "" },
+    { "key": "token_profesor", "value": "" },
+    { "key": "token_estudiante", "value": "" },
+    { "key": "token_jefe", "value": "" },
+    { "key": "token_decano", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "1. Autenticación",
+      "item": [
+        {
+          "name": "PA-001 Login Admin",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Tiene access_token', () => { var j=pm.response.json(); pm.expect(j).to.have.property('access_token'); pm.collectionVariables.set('token_admin', j.access_token); });"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST", "header": [],
+            "body": { "mode": "urlencoded", "urlencoded": [
+              {"key": "username", "value": "Krlitoxprz"},
+              {"key": "password", "value": "Sasuke24"}
+            ]},
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "PA-002 Login Profesor",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "var j=pm.response.json(); pm.collectionVariables.set('token_profesor', j.access_token);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST", "header": [],
+            "body": { "mode": "urlencoded", "urlencoded": [
+              {"key": "username", "value": "87650001"},
+              {"key": "password", "value": "sipam2025"}
+            ]},
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "PA-003 Login Estudiante",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "var j=pm.response.json(); pm.collectionVariables.set('token_estudiante', j.access_token);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST", "header": [],
+            "body": { "mode": "urlencoded", "urlencoded": [
+              {"key": "username", "value": "1136279761"},
+              {"key": "password", "value": "sipam2025"}
+            ]},
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "PA-004 Login Jefe de Programa",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "var j=pm.response.json(); pm.collectionVariables.set('token_jefe', j.access_token);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST", "header": [],
+            "body": { "mode": "urlencoded", "urlencoded": [
+              {"key": "username", "value": "76001001"},
+              {"key": "password", "value": "sipam2025"}
+            ]},
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "PA-005 Login Decano",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "var j=pm.response.json(); pm.collectionVariables.set('token_decano', j.access_token);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST", "header": [],
+            "body": { "mode": "urlencoded", "urlencoded": [
+              {"key": "username", "value": "12791500"},
+              {"key": "password", "value": "sipam2025"}
+            ]},
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "PA-006 Login Credenciales Inválidas → 401",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 401', () => pm.response.to.have.status(401));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST", "header": [],
+            "body": { "mode": "urlencoded", "urlencoded": [
+              {"key": "username", "value": "NADIE"},
+              {"key": "password", "value": "WRONG"}
+            ]},
+            "url": "{{baseUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "PA-007 Obtener perfil (GET /me)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Tiene codigo', () => pm.expect(pm.response.json()).to.have.property('codigo'));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token_admin}}"}],
+            "url": "{{baseUrl}}/auth/me"
+          }
+        },
+        {
+          "name": "PA-008 Sin token → 401",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 401', () => pm.response.to.have.status(401));"
+          ], "type": "text/javascript" }}],
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/auth/me" }
+        }
+      ]
+    },
+    {
+      "name": "2. Monitorías — Convocatorias",
+      "item": [
+        {
+          "name": "PM-001 Listar convocatorias",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Retorna array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token_profesor}}"}],
+            "url": "{{baseUrl}}/convocatorias/"
+          }
+        },
+        {
+          "name": "PM-002 Listar plantillas monitoría",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token_profesor}}"}],
+            "url": "{{baseUrl}}/convocatorias/plantillas"
+          }
+        },
+        {
+          "name": "PM-003 Mis postulaciones (estudiante)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Retorna array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token_estudiante}}"}],
+            "url": "{{baseUrl}}/postulaciones/mis-postulaciones"
+          }
+        },
+        {
+          "name": "PM-004 Cambiar estado → cerrada",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200 o 400', () => pm.expect(pm.response.code).to.be.oneOf([200,400]));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token_jefe}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": { "mode": "raw", "raw": "{\"estado\": \"cerrada\"}" },
+            "url": "{{baseUrl}}/convocatorias/1/estado"
+          }
+        },
+        {
+          "name": "PM-005 Ejecutar selección",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200 o 400 o 422', () => pm.expect(pm.response.code).to.be.oneOf([200,400,422]));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Authorization", "value": "Bearer {{token_profesor}}"}],
+            "url": "{{baseUrl}}/seleccion/convocatorias/1/ejecutar-seleccion"
+          }
+        },
+        {
+          "name": "PM-006 Resultados de selección",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200 o 404', () => pm.expect(pm.response.code).to.be.oneOf([200,404]));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token_jefe}}"}],
+            "url": "{{baseUrl}}/seleccion/convocatorias/1/resultados"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Prácticas Extramuros",
+      "item": [
+        {
+          "name": "PP-001 Listar prácticas",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Retorna array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token_profesor}}"}],
+            "url": "{{baseUrl}}/practicas/"
+          }
+        },
+        {
+          "name": "PP-002 Listar plantillas prácticas",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token_profesor}}"}],
+            "url": "{{baseUrl}}/practicas/plantillas"
+          }
+        },
+        {
+          "name": "PP-003 Tarifas viáticos vigentes",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token_profesor}}"}],
+            "url": "{{baseUrl}}/practicas/tarifas/vigentes"
+          }
+        },
+        {
+          "name": "PP-004 Obtener práctica por ID",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200 o 404', () => pm.expect(pm.response.code).to.be.oneOf([200,404]));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token_profesor}}"}],
+            "url": "{{baseUrl}}/practicas/1"
+          }
+        },
+        {
+          "name": "PP-005 Historial estados práctica",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200 o 404', () => pm.expect(pm.response.code).to.be.oneOf([200,404]));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token_jefe}}"}],
+            "url": "{{baseUrl}}/practicas/1/historial"
+          }
+        },
+        {
+          "name": "PP-006 Calcular viáticos práctica",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200 o 404', () => pm.expect(pm.response.code).to.be.oneOf([200,404]));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token_profesor}}"}],
+            "url": "{{baseUrl}}/practicas/1/viaticos"
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Inteligencia Artificial",
+      "item": [
+        {
+          "name": "PIA-001 Recomendaciones (estudiante)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Tiene recomendaciones', () => pm.expect(pm.response.json()).to.have.property('recomendaciones'));",
+            "pm.test('Tiene fuente', () => pm.expect(pm.response.json()).to.have.property('fuente'));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token_estudiante}}"}],
+            "url": { "raw": "{{baseUrl}}/ia/recomendaciones?limite=5", "query": [{"key": "limite", "value": "5"}] }
+          }
+        },
+        {
+          "name": "PIA-002 Recomendaciones con rol incorrecto → 403",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 403', () => pm.response.to.have.status(403));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token_profesor}}"}],
+            "url": "{{baseUrl}}/ia/recomendaciones"
+          }
+        },
+        {
+          "name": "PIA-003 Predicción IA",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200 o 503', () => pm.expect(pm.response.code).to.be.oneOf([200,503,504]));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Bearer {{token_profesor}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "body": { "mode": "raw", "raw": "{\"promedio\": 4.0, \"porcentaje_creditos\": 60.0, \"nota_asignatura\": 4.2, \"nota_entrevista\": 3.8, \"tipo_monitoria\": \"academica_cursos\", \"semestre_asignatura\": 4, \"creditos_asignatura\": 3, \"num_postulantes\": 5, \"num_monitores_requeridos\": 1}" },
+            "url": "{{baseUrl}}/ia/predecir"
+          }
+        },
+        {
+          "name": "PIA-004 Métricas del modelo",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200 o 503', () => pm.expect(pm.response.code).to.be.oneOf([200,503]));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token_admin}}"}],
+            "url": "{{baseUrl}}/ia/metricas"
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Generación PDF",
+      "item": [
+        {
+          "name": "PPDF-001 FO-14 por convocatoria",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200 o 404', () => pm.expect(pm.response.code).to.be.oneOf([200,404]));",
+            "if(pm.response.code===200) pm.test('Content-Type PDF', () => pm.expect(pm.response.headers.get('content-type')).to.include('pdf'));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token_jefe}}"}],
+            "url": "{{baseUrl}}/pdf/fo14/1"
+          }
+        },
+        {
+          "name": "PPDF-002 FO-16 por práctica",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200 o 404', () => pm.expect(pm.response.code).to.be.oneOf([200,404]));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token_jefe}}"}],
+            "url": "{{baseUrl}}/pdf/fo16/1"
+          }
+        },
+        {
+          "name": "PPDF-003 FO-15 por práctica",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200 o 404', () => pm.expect(pm.response.code).to.be.oneOf([200,404]));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token_jefe}}"}],
+            "url": "{{baseUrl}}/pdf/fo15/1"
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Notificaciones",
+      "item": [
+        {
+          "name": "PN-001 Listar notificaciones",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token_estudiante}}"}],
+            "url": "{{baseUrl}}/notificaciones/"
+          }
+        },
+        {
+          "name": "PN-002 Conteo no leídas",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token_estudiante}}"}],
+            "url": "{{baseUrl}}/notificaciones/no-leidas/count"
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Admin — Panel",
+      "item": [
+        {
+          "name": "PAD-001 Listar monitorías (admin)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token_admin}}"}],
+            "url": "{{baseUrl}}/admin/monitorias"
+          }
+        },
+        {
+          "name": "PAD-002 Listar prácticas (admin)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token_admin}}"}],
+            "url": "{{baseUrl}}/admin/practicas"
+          }
+        },
+        {
+          "name": "PAD-003 Estudiante sin token → 401",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 401', () => pm.response.to.have.status(401));"
+          ], "type": "text/javascript" }}],
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/admin/monitorias" }
+        }
+      ]
+    }
+  ]
+}

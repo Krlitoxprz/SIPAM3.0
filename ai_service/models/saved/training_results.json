@@ -1,0 +1,145 @@
+{
+  "val_metrics": {
+    "RandomForest": {
+      "accuracy": 0.8686,
+      "precision": 0.7973,
+      "recall": 0.7867,
+      "f1": 0.7919,
+      "roc_auc": 0.938,
+      "confusion_matrix": [
+        [
+          146,
+          15
+        ],
+        [
+          16,
+          59
+        ]
+      ]
+    },
+    "XGBoost": {
+      "accuracy": 0.8686,
+      "precision": 0.7821,
+      "recall": 0.8133,
+      "f1": 0.7974,
+      "roc_auc": 0.9353,
+      "confusion_matrix": [
+        [
+          144,
+          17
+        ],
+        [
+          14,
+          61
+        ]
+      ]
+    },
+    "NeuralNetwork": {
+      "accuracy": 0.8475,
+      "precision": 0.7241,
+      "recall": 0.84,
+      "f1": 0.7778,
+      "roc_auc": 0.9389,
+      "confusion_matrix": [
+        [
+          137,
+          24
+        ],
+        [
+          12,
+          63
+        ]
+      ]
+    },
+    "Stacking": {
+      "accuracy": 0.8692,
+      "precision": 0.9245,
+      "recall": 0.6447,
+      "f1": 0.7597,
+      "roc_auc": 0.9477,
+      "confusion_matrix": [
+        [
+          157,
+          4
+        ],
+        [
+          27,
+          49
+        ]
+      ]
+    }
+  },
+  "test_metrics": {
+    "RandomForest": {
+      "accuracy": 0.8439,
+      "precision": 0.7349,
+      "recall": 0.8026,
+      "f1": 0.7673,
+      "roc_auc": 0.9302,
+      "confusion_matrix": [
+        [
+          139,
+          22
+        ],
+        [
+          15,
+          61
+        ]
+      ]
+    },
+    "XGBoost": {
+      "accuracy": 0.8354,
+      "precision": 0.7079,
+      "recall": 0.8289,
+      "f1": 0.7636,
+      "roc_auc": 0.9403,
+      "confusion_matrix": [
+        [
+          135,
+          26
+        ],
+        [
+          13,
+          63
+        ]
+      ]
+    },
+    "NeuralNetwork": {
+      "accuracy": 0.8481,
+      "precision": 0.7222,
+      "recall": 0.8553,
+      "f1": 0.7831,
+      "roc_auc": 0.9372,
+      "confusion_matrix": [
+        [
+          136,
+          25
+        ],
+        [
+          11,
+          65
+        ]
+      ]
+    },
+    "Stacking": {
+      "accuracy": 0.8692,
+      "precision": 0.9245,
+      "recall": 0.6447,
+      "f1": 0.7597,
+      "roc_auc": 0.948,
+      "confusion_matrix": [
+        [
+          157,
+          4
+        ],
+        [
+          27,
+          49
+        ]
+      ]
+    }
+  },
+  "best_model": "NeuralNetwork",
+  "kfold_folds": 5,
+  "optuna_trials": 40
+}

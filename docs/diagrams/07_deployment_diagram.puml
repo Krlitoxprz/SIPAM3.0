@@ -1,0 +1,111 @@
+@startuml SIPAM_Deployment_Diagram
+
+!theme plain
+skinparam backgroundColor #F5F2EA
+
+title SIPAM-USCO — Deployment Diagram (AWS EC2 + IoT)
+
+node "Users" as Users {
+    artifact "Web Browser" as Browser
+}
+
+node "IoT Field Device" as IoTDevice #4A90D9 {
+    artifact "ESP32 DevKit V1" as ESP32
+    artifact "NEO-6M GPS Module" as GPS
+    artifact "WiFi 802.11 b/g/n" as WiFi
+}
+
+cloud "Internet" as Internet
+
+node "GitHub.com" as GitHub {
+    artifact "SIPAM Repository\n(main branch)" as Repo
+}
+
+node "AWS Cloud (us-east-2)" as AWS {
+
+    node "EC2 Instance\nt2.micro | Ubuntu 22.04 LTS" as EC2 {
+        note right
+          IP: 18.222.152.152
+          vCPU: 1 | RAM: 1 GB
+          SSD: 29 GB
+          DNS: ec2-18-222-152-152
+               .us-east-2.compute.amazonaws.com
+        end note
+
+        node "Docker Engine 24.x\nDocker Compose v2" as Docker {
+
+            rectangle "frontend\n[Nginx:alpine + React Build]" #E8F5E9 {
+                [Nginx :80] as Nginx
+                artifact "React Static Files" as ReactBuild
+            }
+
+            rectangle "backend\n[python:3.11-slim]" #FFEBEE {
+                [FastAPI/Uvicorn :8000] as FastAPI
+                artifact "Routers: auth, convocatorias,\npostulaciones, iot, ocr, nlp" as Routers
+            }
+
+            rectangle "ai_service\n[python:3.11-slim (stub)]" #F3E5F5 {
+                [Flask :5001] as Flask
+                artifact "app_stub.py\n(course-compliant)" as StubApp
+            }
+
+            rectangle "db\n[postgres:16-alpine]" #E3F2FD {
+                [PostgreSQL :5432] as Postgres
+                database "Volume: postgres_data" as PGVol
+            }
+
+        }
+
+        rectangle "AWS Security Group" {
+            artifact "Port 22 (SSH): Admin only" as P22
+            artifact "Port 80 (HTTP): 0.0.0.0/0" as P80
+        }
+    }
+
+}
+
+' ===== CONNECTIONS =====
+
+Users --> Internet : HTTP
+IoTDevice --> Internet : WiFi HTTP POST\n(iot_device_key_12345)
+Internet --> Nginx : :80 → 18.222.152.152
+
+Nginx --> FastAPI : /api/v1/* (reverse proxy)
+FastAPI --> Postgres : SQLAlchemy ORM
+FastAPI --> Flask : HTTP /predict\n/ocr/extract\n/analyze_letter
+
+Postgres --> PGVol : persistence
+Flask --> StubApp
+
+GitHub --> Docker : git pull &&\ndocker compose up -d --build
+
+note bottom of IoTDevice
+  Hardware: ESP32 + NEO-6M
+  Firmware: Arduino C++
+  Protocol: HTTP/1.1 REST
+  Auth: X-Api-Key header
+  Interval: POST every 60s
+  Fields: lat, lng, alt, sats,
+          battery, rssi, speed
+end note
+
+note bottom of Flask
+  Stub mode deployed (AWS disk constraints)
+  Returns course-compliant JSON responses
+  CNN OCR: Conv2D architecture metadata
+  NLP: DistilBERT architecture metadata
+  Full model: available locally
+end note
+
+note right of FastAPI
+  Endpoints:
+  /api/v1/auth/
+  /api/v1/convocatorias/
+  /api/v1/postulaciones/
+  /api/v1/iot/          (NEW)
+  /api/v1/ocr/          (NEW)
+  /api/v1/nlp/          (NEW)
+  /docs (Swagger UI)
+end note
+
+@enduml

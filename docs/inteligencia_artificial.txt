@@ -1,0 +1,198 @@
+JUEVES 6:00 - 8:45 
+BEINSOF52 - 00 INTELIGENCIA ARTIFICIAL[189929] B-14 (CENTRAL - AULAS DOS) L-14-140 JUAN ANTONIO CASTRO SILVA
+
+JUEVES 9:00 - 11:45
+BEINSOF52 - 00 INTELIGENCIA ARTIFICIAL[189930] B-14 (CENTRAL - AULAS DOS) L-14-140 JUAN ANTONIO CASTRO SILVA
+
+======================================
+BEINSOF52 - 00 INTELIGENCIA ARTIFICIAL
+======================================
+
+Course Name: Artificial Intelligence (INTELIGENCIA ARTIFICIAL)
+Course Project Orientation: Invernaderos, Hipropónicos, Acuapónicos, Cria Pollos-Carne, Gallinas-Huevos, Cerdos, Ganado
+Email: juan.castro@usco.edu.co
+Contrato Académico: 4.2
+AIoT
+
+
+-------------
+Course Topics
+-------------
+
+Topic 1) Dataset Preparation
+-- dataset partition (70% train, 15% validation, 15% test) (Data leakage)
+-- reproducibility (save distributions in dataframe csv files)
+-- preprocessing
+-- data generator (load (feeding) data batch by batch to fit in memory) 
+-- GANs (Generative Adversarial Networks)
+
+
+
+Topic 2) Hyperparameter Tunning (Optimization)
+-- Hyperparameters (Learning Rate, Epochs, Batch Size, Model, etc) 
+-- Hyperband
+
+
+
+Topic 3) Cross Validation
+Cross validation is a technique used in machine learning to evaluate the performance of a model on unseen data.
+
+-- K-fold cross-validation (***)
+-- Hold-out cross-validation
+-- Stratified k-fold cross-validation
+-- Leave-p-out cross-validation
+-- Leave-one-out cross-validation
+-- Monte Carlo (shuffle-split)
+-- Time series (rolling cross-validation)
+
+Source: https://www.turing.com/kb/different-types-of-cross-validations-in-machine-learning-and-their-explanations
+Source: https://www.geeksforgeeks.org/cross-validation-machine-learning/
+
+
+
+Topic 4) AI Models
+-- CNN
+-- Transformers
+
+
+
+Topic 5) Ensembles
+-- Heterogeneous
+-- Homogeneous 
+-- Hibrid
+Heterogeneous ensembles are constituted of classifiers of diverse types, whereas homogeneous ensembles are made up of classifiers of the same type.
+
+
+
+Topic 6) IoT
+- IoT Fundamentals 
+- Sensores
+- Actuadores
+- Controladores (Arduino, ESP, Raspberry Pi, etc)
+- Comunicación (Serial, USB, Bluetooh, WIFI, Ethernet, ESPNow, ZigBee, Radio Frecuencia, etc)
+- Alimentacion de los dispositivos (Solar, Baterias, AC-DC, etc)
+- Plataformas (ESPHome, Home Assistant, etc)
+- Protocolos (MQTT, etc)
+
+
+Topic 7) AI for Agriculture
+
+
+Topic 8) AI for Heath
+-- 3D Data
+
+
+Topic 9) Individual Presentation
+-- 3D 3D image classification from CT scans
+-- Computer Vision (Image classification, Image segmentation, Object detection, etc)
+-- Video Classification
+-- Natural Language Processing
+-- Recommendation (A Transformer-based recommendation system)
+-- Timeseries classification (Electroencephalogram Signal Classification for action identification)
+-- Timeseries forecasting (Timeseries forecasting for weather prediction)
+-- Generative Deep Learning (Image generation) (GANs)
+-- Speech recognition
+-- Reinforcement Learning
+-- Graph Data
+-- Vision models interpretability
+-- AIoT Project Deployment
+
+
+Topic 10) Federated Learning and Distributed Learning
+
+Topic 11) Agentic AI
+
+
+====================
+Course Evaluation
+====================
+A) 20% - Topic Presentation (Individual) (Repositorio de Buenas Prácticas)
+B) 20% - Quices and Short Works
+C) 60% - Course Project
+
+
+
+---------------------------------------
+Course Project Evaluation Rubric
+---------------------------------------
+1) 10% - Presentacion en ingles
+2) 40% - Documentation en ingles:
+-- Introducción
+-- Problema
+-- Objetivos
+-- Estado del Arte-Fundamentacion y Trabajos Previos
+-- Requerimientos
+-- Casos de Uso-Historias de Usuario
+-- Diagramas de casos de uso
+-- Diccionario de datos y modelo entidad relación
+-- Diagramas de clases
+-- Diseño Interfaz Grafica de Usuario (GUI) - Mockups
+-- Catálogo Servicios Web y Documentacion APIs
+-- Pruebas (Unitarias, Funcionales, Integración)
+-- Gráfica arquitectura del modelo propuesto
+-- Resultados y Discusion
+-- Recomendaciones y Trabajos Futuros
+3) 5% - Modelo de Inteligencia Artificial (tarea de clasificación, segmentación, detección de objetos, identificación de objetos, predicción, etc)
+4) 10% - Demostración Buenas prácticas en el proceso (partición de los datos (70-15-15), Balanceo de clases, uso de varios modelos - algoritmos (minimo 3), uso de métricas apropiadas según tarea, serialización y carga del modelo, separación de los scripts de construcción del modelo y de inferencia, uso python, flask, tensor flow) 
+5) 10% - Back-End: Servicios web inteligentes (con Flask y Acceso a base de datos (postgresql y/o mongodb))
+6) 10% - Front-End: Cliente Web y Movil con React y/o React Native
+7) 5% - Despligue en la nube (AWS, Google Cloud, Oracle Cloud, Microsoft Azure, Heroku, OVH, etc)
+8) 10% - Uso IoT
+
+
+-------------------------------
+Teams and Leaders
+Bussiness modelling (modelamiento del negocio)
+
+Hipropónicos - Invernaderos
+
+
+
+
+
+
+1- Vision por Computador IA - Imagenes (libre) 
+Classificacion o Segmentacion
+Ingenieria de Software
+50%
+
+2- IA para Ingenieria de Software (libre)
+50%
+modelo local
+interface + terminal
+
+semana 16 
+grupo de 2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+https://stanford.edu/~shervine/blog/keras-how-to-generate-data-on-the-fly
+https://stanford.edu/~shervine/blog/keras-how-to-generate-data-on-the-fly
+
+
+66636958965
+
+
+
+
+import os
+import numpy as np
+import keras
+from keras import layers
+from tensorflow import data as tf_data
+import matplotlib.pyplot as plt
+
+
+
