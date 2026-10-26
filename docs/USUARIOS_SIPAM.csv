@@ -1,0 +1,655 @@
+codigo,nombres,apellidos,email,rol,activo,password
+Krlitoxprz,Administrador,SIPAM,admin.sipam@usco.edu.co,admin,si,Sasuke24 (= ADMIN_PASSWORD del .env)
+DECANO001,Álvaro Ernesto,Guzmán Rincón,alvaro.guzman@usco.edu.co,decano,si,sipam2025
+201811501004,Vanessa,Herrera,vanessa.herrera1004@usco.edu.co,estudiante,si,sipam2025
+201811501012,Ever,Ramos,ever.ramos1012@usco.edu.co,estudiante,si,sipam2025
+201811501020,Mario,Espinosa,mario.espinosa1020@usco.edu.co,estudiante,si,sipam2025
+201811501028,Alejandro,Naranjo,alejandro.naranjo1028@usco.edu.co,estudiante,si,sipam2025
+201811501036,Ivan,Valderrama,ivan.valderrama1036@usco.edu.co,estudiante,si,sipam2025
+201811501044,Rafael,Escobar,rafael.escobar1044@usco.edu.co,estudiante,si,sipam2025
+20181150500,Alejandro,Aguilar,alejandro.aguilar500@usco.edu.co,estudiante,si,sipam2025
+20181150508,Ivan,Ibáñez,ivan.ibañez508@usco.edu.co,estudiante,si,sipam2025
+20181150516,Rafael,Restrepo,rafael.restrepo516@usco.edu.co,estudiante,si,sipam2025
+20181150524,Zamira,Acosta,zamira.acosta524@usco.edu.co,estudiante,si,sipam2025
+20181150532,Ingrid,Jiménez,ingrid.jimenez532@usco.edu.co,estudiante,si,sipam2025
+20181150540,Rodrigo,Suárez,rodrigo.suarez540@usco.edu.co,estudiante,si,sipam2025
+20181150548,Edgar,Florez,edgar.florez548@usco.edu.co,estudiante,si,sipam2025
+20181150556,Manuel,Ospina,manuel.ospina556@usco.edu.co,estudiante,si,sipam2025
+20181150564,Vanessa,Wilches,vanessa.wilches564@usco.edu.co,estudiante,si,sipam2025
+20181150572,Ever,Fernández,ever.fernandez572@usco.edu.co,estudiante,si,sipam2025
+20181150580,Mario,Pineda,mario.pineda580@usco.edu.co,estudiante,si,sipam2025
+20181150588,Alejandro,Cárdenas,alejandro.cardenas588@usco.edu.co,estudiante,si,sipam2025
+20181150596,Ivan,Ladino,ivan.ladino596@usco.edu.co,estudiante,si,sipam2025
+20181150604,Rafael,Téllez,rafael.tellez604@usco.edu.co,estudiante,si,sipam2025
+20181150612,Zamira,Cortés,zamira.cortes612@usco.edu.co,estudiante,si,sipam2025
+20181150620,Ingrid,Medina,ingrid.medina620@usco.edu.co,estudiante,si,sipam2025
+20181150628,Rodrigo,Vargas,rodrigo.vargas628@usco.edu.co,estudiante,si,sipam2025
+20181150636,Edgar,Henao,edgar.henao636@usco.edu.co,estudiante,si,sipam2025
+20181150644,Manuel,Quintana,manuel.quintana644@usco.edu.co,estudiante,si,sipam2025
+20181150652,Vanessa,Zambrano,vanessa.zambrano652@usco.edu.co,estudiante,si,sipam2025
+20181150660,Ever,Herrera,ever.herrera660@usco.edu.co,estudiante,si,sipam2025
+20181150668,Mario,Ramos,mario.ramos668@usco.edu.co,estudiante,si,sipam2025
+20181150676,Alejandro,Espinosa,alejandro.espinosa676@usco.edu.co,estudiante,si,sipam2025
+20181150684,Ivan,Naranjo,ivan.naranjo684@usco.edu.co,estudiante,si,sipam2025
+20181150692,Rafael,Valderrama,rafael.valderrama692@usco.edu.co,estudiante,si,sipam2025
+20181150700,Zamira,Escobar,zamira.escobar700@usco.edu.co,estudiante,si,sipam2025
+20181150708,Ingrid,Ortega,ingrid.ortega708@usco.edu.co,estudiante,si,sipam2025
+20181150716,Rodrigo,Barrera,rodrigo.barrera716@usco.edu.co,estudiante,si,sipam2025
+20181150724,Edgar,Jaramillo,edgar.jaramillo724@usco.edu.co,estudiante,si,sipam2025
+20181150732,Manuel,Salazar,manuel.salazar732@usco.edu.co,estudiante,si,sipam2025
+20181150740,Vanessa,Buitrago,vanessa.buitrago740@usco.edu.co,estudiante,si,sipam2025
+20181150748,Ever,Lozano,ever.lozano748@usco.edu.co,estudiante,si,sipam2025
+20181150756,Mario,Torres,mario.torres756@usco.edu.co,estudiante,si,sipam2025
+20181150764,Alejandro,Guerrero,alejandro.guerrero764@usco.edu.co,estudiante,si,sipam2025
+20181150772,Ivan,Pardo,ivan.pardo772@usco.edu.co,estudiante,si,sipam2025
+20181150780,Rafael,Ynfante,rafael.ynfante780@usco.edu.co,estudiante,si,sipam2025
+20181150788,Zamira,Gómez,zamira.gomez788@usco.edu.co,estudiante,si,sipam2025
+20181150796,Ingrid,Quiroga,ingrid.quiroga796@usco.edu.co,estudiante,si,sipam2025
+20181150804,Rodrigo,Delgado,rodrigo.delgado804@usco.edu.co,estudiante,si,sipam2025
+20181150812,Edgar,Millán,edgar.millan812@usco.edu.co,estudiante,si,sipam2025
+20181150820,Manuel,Uribe,manuel.uribe820@usco.edu.co,estudiante,si,sipam2025
+20181150828,Vanessa,Durán,vanessa.duran828@usco.edu.co,estudiante,si,sipam2025
+20181150836,Ever,Niño,ever.niño836@usco.edu.co,estudiante,si,sipam2025
+20181150844,Mario,Aguilar,mario.aguilar844@usco.edu.co,estudiante,si,sipam2025
+20181150852,Alejandro,Ibáñez,alejandro.ibañez852@usco.edu.co,estudiante,si,sipam2025
+20181150860,Ivan,Restrepo,ivan.restrepo860@usco.edu.co,estudiante,si,sipam2025
+20181150868,Rafael,Acosta,rafael.acosta868@usco.edu.co,estudiante,si,sipam2025
+20181150876,Zamira,Jiménez,zamira.jimenez876@usco.edu.co,estudiante,si,sipam2025
+20181150884,Ingrid,Suárez,ingrid.suarez884@usco.edu.co,estudiante,si,sipam2025
+20181150892,Rodrigo,Florez,rodrigo.florez892@usco.edu.co,estudiante,si,sipam2025
+20181150900,Edgar,Ospina,edgar.ospina900@usco.edu.co,estudiante,si,sipam2025
+20181150908,Manuel,Wilches,manuel.wilches908@usco.edu.co,estudiante,si,sipam2025
+20181150916,Vanessa,Fernández,vanessa.fernandez916@usco.edu.co,estudiante,si,sipam2025
+20181150924,Ever,Pineda,ever.pineda924@usco.edu.co,estudiante,si,sipam2025
+20181150932,Mario,Cárdenas,mario.cardenas932@usco.edu.co,estudiante,si,sipam2025
+20181150940,Alejandro,Ladino,alejandro.ladino940@usco.edu.co,estudiante,si,sipam2025
+20181150948,Ivan,Téllez,ivan.tellez948@usco.edu.co,estudiante,si,sipam2025
+20181150956,Rafael,Cortés,rafael.cortes956@usco.edu.co,estudiante,si,sipam2025
+20181150964,Zamira,Medina,zamira.medina964@usco.edu.co,estudiante,si,sipam2025
+20181150972,Ingrid,Vargas,ingrid.vargas972@usco.edu.co,estudiante,si,sipam2025
+20181150980,Rodrigo,Henao,rodrigo.henao980@usco.edu.co,estudiante,si,sipam2025
+20181150988,Edgar,Quintana,edgar.quintana988@usco.edu.co,estudiante,si,sipam2025
+20181150996,Manuel,Zambrano,manuel.zambrano996@usco.edu.co,estudiante,si,sipam2025
+20191150005,Angela,Castillo Acosta,angela.castillo@usco.edu.co,estudiante,si,sipam2025
+20191150059,Oscar,Herrera Cruz,oscar.herrera@usco.edu.co,estudiante,si,sipam2025
+201911501005,Wilson,Jiménez,wilson.jimenez1005@usco.edu.co,estudiante,si,sipam2025
+201911501013,Fredy,Suárez,fredy.suarez1013@usco.edu.co,estudiante,si,sipam2025
+201911501021,Nathalia,Florez,nathalia.florez1021@usco.edu.co,estudiante,si,sipam2025
+201911501029,Brayan,Ospina,brayan.ospina1029@usco.edu.co,estudiante,si,sipam2025
+201911501037,Jairo,Wilches,jairo.wilches1037@usco.edu.co,estudiante,si,sipam2025
+201911501045,Sergio,Fernández,sergio.fernandez1045@usco.edu.co,estudiante,si,sipam2025
+20191150109,Valeria,Ruiz Vargas,valeria.ruiz@usco.edu.co,estudiante,si,sipam2025
+20191150124,Diego,Medina Jiménez,diego.medina@usco.edu.co,estudiante,si,sipam2025
+20191150154,Catalina,Lozano Ríos,catalina.lozano@usco.edu.co,estudiante,si,sipam2025
+20191150161,María,Muñoz Mora,maria.munoz@usco.edu.co,estudiante,si,sipam2025
+20191150166,Andrea,Bernal Ríos,andrea.bernal@usco.edu.co,estudiante,si,sipam2025
+20191150195,Luis,Pérez Morales,luis.perez@usco.edu.co,estudiante,si,sipam2025
+20191150261,Natalia,Ríos Rivera,natalia.rios@usco.edu.co,estudiante,si,sipam2025
+20191150277,Fabian,Cruz Sánchez,fabian.cruz@usco.edu.co,estudiante,si,sipam2025
+20191150284,Monica,González Ramos,monica.gonzalez@usco.edu.co,estudiante,si,sipam2025
+20191150292,Diana,Jiménez Ruiz,diana.jimenez@usco.edu.co,estudiante,si,sipam2025
+20191150501,Brayan,Barrera,brayan.barrera501@usco.edu.co,estudiante,si,sipam2025
+20191150509,Jairo,Jaramillo,jairo.jaramillo509@usco.edu.co,estudiante,si,sipam2025
+20191150517,Sergio,Salazar,sergio.salazar517@usco.edu.co,estudiante,si,sipam2025
+20191150525,Brenda,Buitrago,brenda.buitrago525@usco.edu.co,estudiante,si,sipam2025
+20191150533,Javier,Lozano,javier.lozano533@usco.edu.co,estudiante,si,sipam2025
+20191150541,Sandra,Torres,sandra.torres541@usco.edu.co,estudiante,si,sipam2025
+20191150549,Felipe,Guerrero,felipe.guerrero549@usco.edu.co,estudiante,si,sipam2025
+20191150557,Nelson,Pardo,nelson.pardo557@usco.edu.co,estudiante,si,sipam2025
+20191150565,Wilson,Ynfante,wilson.ynfante565@usco.edu.co,estudiante,si,sipam2025
+20191150573,Fredy,Gómez,fredy.gomez573@usco.edu.co,estudiante,si,sipam2025
+20191150581,Nathalia,Quiroga,nathalia.quiroga581@usco.edu.co,estudiante,si,sipam2025
+20191150589,Brayan,Delgado,brayan.delgado589@usco.edu.co,estudiante,si,sipam2025
+20191150597,Jairo,Millán,jairo.millan597@usco.edu.co,estudiante,si,sipam2025
+20191150605,Sergio,Uribe,sergio.uribe605@usco.edu.co,estudiante,si,sipam2025
+20191150613,Brenda,Durán,brenda.duran613@usco.edu.co,estudiante,si,sipam2025
+20191150621,Javier,Niño,javier.niño621@usco.edu.co,estudiante,si,sipam2025
+20191150629,Sandra,Aguilar,sandra.aguilar629@usco.edu.co,estudiante,si,sipam2025
+20191150637,Felipe,Ibáñez,felipe.ibañez637@usco.edu.co,estudiante,si,sipam2025
+20191150645,Nelson,Restrepo,nelson.restrepo645@usco.edu.co,estudiante,si,sipam2025
+20191150653,Wilson,Acosta,wilson.acosta653@usco.edu.co,estudiante,si,sipam2025
+20191150661,Fredy,Jiménez,fredy.jimenez661@usco.edu.co,estudiante,si,sipam2025
+20191150669,Nathalia,Suárez,nathalia.suarez669@usco.edu.co,estudiante,si,sipam2025
+20191150677,Brayan,Florez,brayan.florez677@usco.edu.co,estudiante,si,sipam2025
+20191150685,Jairo,Ospina,jairo.ospina685@usco.edu.co,estudiante,si,sipam2025
+20191150693,Sergio,Wilches,sergio.wilches693@usco.edu.co,estudiante,si,sipam2025
+20191150701,Brenda,Fernández,brenda.fernandez701@usco.edu.co,estudiante,si,sipam2025
+20191150709,Javier,Pineda,javier.pineda709@usco.edu.co,estudiante,si,sipam2025
+20191150717,Sandra,Cárdenas,sandra.cardenas717@usco.edu.co,estudiante,si,sipam2025
+20191150725,Felipe,Ladino,felipe.ladino725@usco.edu.co,estudiante,si,sipam2025
+20191150733,Nelson,Téllez,nelson.tellez733@usco.edu.co,estudiante,si,sipam2025
+20191150741,Wilson,Cortés,wilson.cortes741@usco.edu.co,estudiante,si,sipam2025
+20191150749,Fredy,Medina,fredy.medina749@usco.edu.co,estudiante,si,sipam2025
+20191150757,Nathalia,Vargas,nathalia.vargas757@usco.edu.co,estudiante,si,sipam2025
+20191150765,Brayan,Henao,brayan.henao765@usco.edu.co,estudiante,si,sipam2025
+20191150773,Jairo,Quintana,jairo.quintana773@usco.edu.co,estudiante,si,sipam2025
+20191150781,Sergio,Zambrano,sergio.zambrano781@usco.edu.co,estudiante,si,sipam2025
+20191150789,Brenda,Herrera,brenda.herrera789@usco.edu.co,estudiante,si,sipam2025
+20191150797,Javier,Ramos,javier.ramos797@usco.edu.co,estudiante,si,sipam2025
+20191150805,Sandra,Espinosa,sandra.espinosa805@usco.edu.co,estudiante,si,sipam2025
+20191150813,Felipe,Naranjo,felipe.naranjo813@usco.edu.co,estudiante,si,sipam2025
+20191150821,Nelson,Valderrama,nelson.valderrama821@usco.edu.co,estudiante,si,sipam2025
+20191150829,Wilson,Escobar,wilson.escobar829@usco.edu.co,estudiante,si,sipam2025
+20191150837,Fredy,Ortega,fredy.ortega837@usco.edu.co,estudiante,si,sipam2025
+20191150845,Nathalia,Barrera,nathalia.barrera845@usco.edu.co,estudiante,si,sipam2025
+20191150853,Brayan,Jaramillo,brayan.jaramillo853@usco.edu.co,estudiante,si,sipam2025
+20191150861,Jairo,Salazar,jairo.salazar861@usco.edu.co,estudiante,si,sipam2025
+20191150869,Sergio,Buitrago,sergio.buitrago869@usco.edu.co,estudiante,si,sipam2025
+20191150877,Brenda,Lozano,brenda.lozano877@usco.edu.co,estudiante,si,sipam2025
+20191150885,Javier,Torres,javier.torres885@usco.edu.co,estudiante,si,sipam2025
+20191150893,Sandra,Guerrero,sandra.guerrero893@usco.edu.co,estudiante,si,sipam2025
+20191150901,Felipe,Pardo,felipe.pardo901@usco.edu.co,estudiante,si,sipam2025
+20191150909,Nelson,Ynfante,nelson.ynfante909@usco.edu.co,estudiante,si,sipam2025
+20191150917,Wilson,Gómez,wilson.gomez917@usco.edu.co,estudiante,si,sipam2025
+20191150925,Fredy,Quiroga,fredy.quiroga925@usco.edu.co,estudiante,si,sipam2025
+20191150933,Nathalia,Delgado,nathalia.delgado933@usco.edu.co,estudiante,si,sipam2025
+20191150941,Brayan,Millán,brayan.millan941@usco.edu.co,estudiante,si,sipam2025
+20191150949,Jairo,Uribe,jairo.uribe949@usco.edu.co,estudiante,si,sipam2025
+20191150957,Sergio,Durán,sergio.duran957@usco.edu.co,estudiante,si,sipam2025
+20191150965,Brenda,Niño,brenda.niño965@usco.edu.co,estudiante,si,sipam2025
+20191150973,Javier,Aguilar,javier.aguilar973@usco.edu.co,estudiante,si,sipam2025
+20191150981,Sandra,Ibáñez,sandra.ibañez981@usco.edu.co,estudiante,si,sipam2025
+20191150989,Felipe,Restrepo,felipe.restrepo989@usco.edu.co,estudiante,si,sipam2025
+20191150997,Nelson,Acosta,nelson.acosta997@usco.edu.co,estudiante,si,sipam2025
+20201150035,Jorge,Perdomo López,jorge.perdomo@usco.edu.co,estudiante,si,sipam2025
+20201150036,Steven,Álvarez Aguilar,steven.alvarez@usco.edu.co,estudiante,si,sipam2025
+20201150082,Julián,Suárez Trujillo,julian.suarez@usco.edu.co,estudiante,si,sipam2025
+20201150084,Nicolás,Rivera Mora,nicolas.rivera@usco.edu.co,estudiante,si,sipam2025
+202011501006,Ximena,Lozano,ximena.lozano1006@usco.edu.co,estudiante,si,sipam2025
+202011501014,Gilberto,Torres,gilberto.torres1014@usco.edu.co,estudiante,si,sipam2025
+202011501022,Omar,Guerrero,omar.guerrero1022@usco.edu.co,estudiante,si,sipam2025
+202011501030,Camila,Pardo,camila.pardo1030@usco.edu.co,estudiante,si,sipam2025
+202011501038,Kevin,Ynfante,kevin.ynfante1038@usco.edu.co,estudiante,si,sipam2025
+202011501046,Tania,Gómez,tania.gomez1046@usco.edu.co,estudiante,si,sipam2025
+20201150136,Jessica,Valencia Castillo,jessica.valencia@usco.edu.co,estudiante,si,sipam2025
+20201150137,Camilo,Álvarez Romero,camilo.alvarez@usco.edu.co,estudiante,si,sipam2025
+20201150167,Yessica,Pineda Cruz,yessica.pineda@usco.edu.co,estudiante,si,sipam2025
+20201150236,Stephanie,Patiño Morales,stephanie.patino@usco.edu.co,estudiante,si,sipam2025
+20201150260,Sebastián,González Mora,sebastian.gonzalez@usco.edu.co,estudiante,si,sipam2025
+20201150277,Alejandra,Trujillo Quintero,alejandra.trujillo@usco.edu.co,estudiante,si,sipam2025
+20201150502,Camila,Cárdenas,camila.cardenas502@usco.edu.co,estudiante,si,sipam2025
+20201150510,Kevin,Ladino,kevin.ladino510@usco.edu.co,estudiante,si,sipam2025
+20201150518,Tania,Téllez,tania.tellez518@usco.edu.co,estudiante,si,sipam2025
+20201150526,Cesar,Cortés,cesar.cortes526@usco.edu.co,estudiante,si,sipam2025
+20201150534,Karen,Medina,karen.medina534@usco.edu.co,estudiante,si,sipam2025
+20201150542,Tatiana,Vargas,tatiana.vargas542@usco.edu.co,estudiante,si,sipam2025
+20201150550,Gabriela,Henao,gabriela.henao550@usco.edu.co,estudiante,si,sipam2025
+20201150558,Orlando,Quintana,orlando.quintana558@usco.edu.co,estudiante,si,sipam2025
+20201150566,Ximena,Zambrano,ximena.zambrano566@usco.edu.co,estudiante,si,sipam2025
+20201150574,Gilberto,Herrera,gilberto.herrera574@usco.edu.co,estudiante,si,sipam2025
+20201150582,Omar,Ramos,omar.ramos582@usco.edu.co,estudiante,si,sipam2025
+20201150590,Camila,Espinosa,camila.espinosa590@usco.edu.co,estudiante,si,sipam2025
+20201150598,Kevin,Naranjo,kevin.naranjo598@usco.edu.co,estudiante,si,sipam2025
+20201150606,Tania,Valderrama,tania.valderrama606@usco.edu.co,estudiante,si,sipam2025
+20201150614,Cesar,Escobar,cesar.escobar614@usco.edu.co,estudiante,si,sipam2025
+20201150622,Karen,Ortega,karen.ortega622@usco.edu.co,estudiante,si,sipam2025
+20201150630,Tatiana,Barrera,tatiana.barrera630@usco.edu.co,estudiante,si,sipam2025
+20201150638,Gabriela,Jaramillo,gabriela.jaramillo638@usco.edu.co,estudiante,si,sipam2025
+20201150646,Orlando,Salazar,orlando.salazar646@usco.edu.co,estudiante,si,sipam2025
+20201150654,Ximena,Buitrago,ximena.buitrago654@usco.edu.co,estudiante,si,sipam2025
+20201150662,Gilberto,Lozano,gilberto.lozano662@usco.edu.co,estudiante,si,sipam2025
+20201150670,Omar,Torres,omar.torres670@usco.edu.co,estudiante,si,sipam2025
+20201150678,Camila,Guerrero,camila.guerrero678@usco.edu.co,estudiante,si,sipam2025
+20201150686,Kevin,Pardo,kevin.pardo686@usco.edu.co,estudiante,si,sipam2025
+20201150694,Tania,Ynfante,tania.ynfante694@usco.edu.co,estudiante,si,sipam2025
+20201150702,Cesar,Gómez,cesar.gomez702@usco.edu.co,estudiante,si,sipam2025
+20201150710,Karen,Quiroga,karen.quiroga710@usco.edu.co,estudiante,si,sipam2025
+20201150718,Tatiana,Delgado,tatiana.delgado718@usco.edu.co,estudiante,si,sipam2025
+20201150726,Gabriela,Millán,gabriela.millan726@usco.edu.co,estudiante,si,sipam2025
+20201150734,Orlando,Uribe,orlando.uribe734@usco.edu.co,estudiante,si,sipam2025
+20201150742,Ximena,Durán,ximena.duran742@usco.edu.co,estudiante,si,sipam2025
+20201150750,Gilberto,Niño,gilberto.niño750@usco.edu.co,estudiante,si,sipam2025
+20201150758,Omar,Aguilar,omar.aguilar758@usco.edu.co,estudiante,si,sipam2025
+20201150766,Camila,Ibáñez,camila.ibañez766@usco.edu.co,estudiante,si,sipam2025
+20201150774,Kevin,Restrepo,kevin.restrepo774@usco.edu.co,estudiante,si,sipam2025
+20201150782,Tania,Acosta,tania.acosta782@usco.edu.co,estudiante,si,sipam2025
+20201150790,Cesar,Jiménez,cesar.jimenez790@usco.edu.co,estudiante,si,sipam2025
+20201150798,Karen,Suárez,karen.suarez798@usco.edu.co,estudiante,si,sipam2025
+20201150806,Tatiana,Florez,tatiana.florez806@usco.edu.co,estudiante,si,sipam2025
+20201150814,Gabriela,Ospina,gabriela.ospina814@usco.edu.co,estudiante,si,sipam2025
+20201150822,Orlando,Wilches,orlando.wilches822@usco.edu.co,estudiante,si,sipam2025
+20201150830,Ximena,Fernández,ximena.fernandez830@usco.edu.co,estudiante,si,sipam2025
+20201150838,Gilberto,Pineda,gilberto.pineda838@usco.edu.co,estudiante,si,sipam2025
+20201150846,Omar,Cárdenas,omar.cardenas846@usco.edu.co,estudiante,si,sipam2025
+20201150854,Camila,Ladino,camila.ladino854@usco.edu.co,estudiante,si,sipam2025
+20201150862,Kevin,Téllez,kevin.tellez862@usco.edu.co,estudiante,si,sipam2025
+20201150870,Tania,Cortés,tania.cortes870@usco.edu.co,estudiante,si,sipam2025
+20201150878,Cesar,Medina,cesar.medina878@usco.edu.co,estudiante,si,sipam2025
+20201150886,Karen,Vargas,karen.vargas886@usco.edu.co,estudiante,si,sipam2025
+20201150894,Tatiana,Henao,tatiana.henao894@usco.edu.co,estudiante,si,sipam2025
+20201150902,Gabriela,Quintana,gabriela.quintana902@usco.edu.co,estudiante,si,sipam2025
+20201150910,Orlando,Zambrano,orlando.zambrano910@usco.edu.co,estudiante,si,sipam2025
+20201150918,Ximena,Herrera,ximena.herrera918@usco.edu.co,estudiante,si,sipam2025
+20201150926,Gilberto,Ramos,gilberto.ramos926@usco.edu.co,estudiante,si,sipam2025
+20201150934,Omar,Espinosa,omar.espinosa934@usco.edu.co,estudiante,si,sipam2025
+20201150942,Camila,Naranjo,camila.naranjo942@usco.edu.co,estudiante,si,sipam2025
+20201150950,Kevin,Valderrama,kevin.valderrama950@usco.edu.co,estudiante,si,sipam2025
+20201150958,Tania,Escobar,tania.escobar958@usco.edu.co,estudiante,si,sipam2025
+20201150966,Cesar,Ortega,cesar.ortega966@usco.edu.co,estudiante,si,sipam2025
+20201150974,Karen,Barrera,karen.barrera974@usco.edu.co,estudiante,si,sipam2025
+20201150982,Tatiana,Jaramillo,tatiana.jaramillo982@usco.edu.co,estudiante,si,sipam2025
+20201150990,Gabriela,Salazar,gabriela.salazar990@usco.edu.co,estudiante,si,sipam2025
+20201150998,Orlando,Buitrago,orlando.buitrago998@usco.edu.co,estudiante,si,sipam2025
+20211150021,Ricardo,Martínez Medina,ricardo.martinez@usco.edu.co,estudiante,si,sipam2025
+20211150056,Camila,Ruiz Bermúdez,camila.ruiz@usco.edu.co,estudiante,si,sipam2025
+20211150081,Isabella,Jiménez Álvarez,isabella.jimenez@usco.edu.co,estudiante,si,sipam2025
+202111501007,Yolanda,Medina,yolanda.medina1007@usco.edu.co,estudiante,si,sipam2025
+202111501015,Hernando,Vargas,hernando.vargas1015@usco.edu.co,estudiante,si,sipam2025
+202111501023,Patricia,Henao,patricia.henao1023@usco.edu.co,estudiante,si,sipam2025
+202111501031,Daniel,Quintana,daniel.quintana1031@usco.edu.co,estudiante,si,sipam2025
+202111501039,Leidy,Zambrano,leidy.zambrano1039@usco.edu.co,estudiante,si,sipam2025
+202111501047,Ulises,Herrera,ulises.herrera1047@usco.edu.co,estudiante,si,sipam2025
+20211150223,Jhon,Ramos Ramírez,jhon.ramos@usco.edu.co,estudiante,si,sipam2025
+20211150233,Vanessa,García Mendoza,vanessa.garcia@usco.edu.co,estudiante,si,sipam2025
+20211150237,Daniela,Vega Gómez,daniela.vega@usco.edu.co,estudiante,si,sipam2025
+20211150259,Juliana,Reyes Correa,juliana.reyes@usco.edu.co,estudiante,si,sipam2025
+20211150503,Daniel,Delgado,daniel.delgado503@usco.edu.co,estudiante,si,sipam2025
+20211150511,Leidy,Millán,leidy.millan511@usco.edu.co,estudiante,si,sipam2025
+20211150519,Ulises,Uribe,ulises.uribe519@usco.edu.co,estudiante,si,sipam2025
+20211150527,Diana,Durán,diana.duran527@usco.edu.co,estudiante,si,sipam2025
+20211150535,Lorena,Niño,lorena.niño535@usco.edu.co,estudiante,si,sipam2025
+20211150543,Uriel,Aguilar,uriel.aguilar543@usco.edu.co,estudiante,si,sipam2025
+20211150551,Harold,Ibáñez,harold.ibañez551@usco.edu.co,estudiante,si,sipam2025
+20211150559,Pablo,Restrepo,pablo.restrepo559@usco.edu.co,estudiante,si,sipam2025
+20211150567,Yolanda,Acosta,yolanda.acosta567@usco.edu.co,estudiante,si,sipam2025
+20211150575,Hernando,Jiménez,hernando.jimenez575@usco.edu.co,estudiante,si,sipam2025
+20211150583,Patricia,Suárez,patricia.suarez583@usco.edu.co,estudiante,si,sipam2025
+20211150591,Daniel,Florez,daniel.florez591@usco.edu.co,estudiante,si,sipam2025
+20211150599,Leidy,Ospina,leidy.ospina599@usco.edu.co,estudiante,si,sipam2025
+20211150607,Ulises,Wilches,ulises.wilches607@usco.edu.co,estudiante,si,sipam2025
+20211150615,Diana,Fernández,diana.fernandez615@usco.edu.co,estudiante,si,sipam2025
+20211150623,Lorena,Pineda,lorena.pineda623@usco.edu.co,estudiante,si,sipam2025
+20211150631,Uriel,Cárdenas,uriel.cardenas631@usco.edu.co,estudiante,si,sipam2025
+20211150639,Harold,Ladino,harold.ladino639@usco.edu.co,estudiante,si,sipam2025
+20211150647,Pablo,Téllez,pablo.tellez647@usco.edu.co,estudiante,si,sipam2025
+20211150655,Yolanda,Cortés,yolanda.cortes655@usco.edu.co,estudiante,si,sipam2025
+20211150663,Hernando,Medina,hernando.medina663@usco.edu.co,estudiante,si,sipam2025
+20211150671,Patricia,Vargas,patricia.vargas671@usco.edu.co,estudiante,si,sipam2025
+20211150679,Daniel,Henao,daniel.henao679@usco.edu.co,estudiante,si,sipam2025
+20211150687,Leidy,Quintana,leidy.quintana687@usco.edu.co,estudiante,si,sipam2025
+20211150695,Ulises,Zambrano,ulises.zambrano695@usco.edu.co,estudiante,si,sipam2025
+20211150703,Diana,Herrera,diana.herrera703@usco.edu.co,estudiante,si,sipam2025
+20211150711,Lorena,Ramos,lorena.ramos711@usco.edu.co,estudiante,si,sipam2025
+20211150719,Uriel,Espinosa,uriel.espinosa719@usco.edu.co,estudiante,si,sipam2025
+20211150727,Harold,Naranjo,harold.naranjo727@usco.edu.co,estudiante,si,sipam2025
+20211150735,Pablo,Valderrama,pablo.valderrama735@usco.edu.co,estudiante,si,sipam2025
+20211150743,Yolanda,Escobar,yolanda.escobar743@usco.edu.co,estudiante,si,sipam2025
+20211150751,Hernando,Ortega,hernando.ortega751@usco.edu.co,estudiante,si,sipam2025
+20211150759,Patricia,Barrera,patricia.barrera759@usco.edu.co,estudiante,si,sipam2025
+20211150767,Daniel,Jaramillo,daniel.jaramillo767@usco.edu.co,estudiante,si,sipam2025
+20211150775,Leidy,Salazar,leidy.salazar775@usco.edu.co,estudiante,si,sipam2025
+20211150783,Ulises,Buitrago,ulises.buitrago783@usco.edu.co,estudiante,si,sipam2025
+20211150791,Diana,Lozano,diana.lozano791@usco.edu.co,estudiante,si,sipam2025
+20211150799,Lorena,Torres,lorena.torres799@usco.edu.co,estudiante,si,sipam2025
+20211150807,Uriel,Guerrero,uriel.guerrero807@usco.edu.co,estudiante,si,sipam2025
+20211150815,Harold,Pardo,harold.pardo815@usco.edu.co,estudiante,si,sipam2025
+20211150823,Pablo,Ynfante,pablo.ynfante823@usco.edu.co,estudiante,si,sipam2025
+20211150831,Yolanda,Gómez,yolanda.gomez831@usco.edu.co,estudiante,si,sipam2025
+20211150839,Hernando,Quiroga,hernando.quiroga839@usco.edu.co,estudiante,si,sipam2025
+20211150847,Patricia,Delgado,patricia.delgado847@usco.edu.co,estudiante,si,sipam2025
+20211150855,Daniel,Millán,daniel.millan855@usco.edu.co,estudiante,si,sipam2025
+20211150863,Leidy,Uribe,leidy.uribe863@usco.edu.co,estudiante,si,sipam2025
+20211150871,Ulises,Durán,ulises.duran871@usco.edu.co,estudiante,si,sipam2025
+20211150879,Diana,Niño,diana.niño879@usco.edu.co,estudiante,si,sipam2025
+20211150887,Lorena,Aguilar,lorena.aguilar887@usco.edu.co,estudiante,si,sipam2025
+20211150895,Uriel,Ibáñez,uriel.ibañez895@usco.edu.co,estudiante,si,sipam2025
+20211150903,Harold,Restrepo,harold.restrepo903@usco.edu.co,estudiante,si,sipam2025
+20211150911,Pablo,Acosta,pablo.acosta911@usco.edu.co,estudiante,si,sipam2025
+20211150919,Yolanda,Jiménez,yolanda.jimenez919@usco.edu.co,estudiante,si,sipam2025
+20211150927,Hernando,Suárez,hernando.suarez927@usco.edu.co,estudiante,si,sipam2025
+20211150935,Patricia,Florez,patricia.florez935@usco.edu.co,estudiante,si,sipam2025
+20211150943,Daniel,Ospina,daniel.ospina943@usco.edu.co,estudiante,si,sipam2025
+20211150951,Leidy,Wilches,leidy.wilches951@usco.edu.co,estudiante,si,sipam2025
+20211150959,Ulises,Fernández,ulises.fernandez959@usco.edu.co,estudiante,si,sipam2025
+20211150967,Diana,Pineda,diana.pineda967@usco.edu.co,estudiante,si,sipam2025
+20211150975,Lorena,Cárdenas,lorena.cardenas975@usco.edu.co,estudiante,si,sipam2025
+20211150983,Uriel,Ladino,uriel.ladino983@usco.edu.co,estudiante,si,sipam2025
+20211150991,Harold,Téllez,harold.tellez991@usco.edu.co,estudiante,si,sipam2025
+20211150999,Pablo,Cortés,pablo.cortes999@usco.edu.co,estudiante,si,sipam2025
+20221150013,Daniel,Rivera Gómez,daniel.rivera@usco.edu.co,estudiante,si,sipam2025
+20221150028,Karen,Vega Suárez,karen.vega@usco.edu.co,estudiante,si,sipam2025
+20221150041,Valentina,Mora Ramírez,valentina.mora@usco.edu.co,estudiante,si,sipam2025
+20221150047,Cristian,Torres Ospina,cristian.torres@usco.edu.co,estudiante,si,sipam2025
+20221150074,Miguel,Ruiz Lozano,miguel.ruiz@usco.edu.co,estudiante,si,sipam2025
+20221150080,Luisa,Cruz Trujillo,luisa.cruz@usco.edu.co,estudiante,si,sipam2025
+202211501000,Rafael,Durán,rafael.duran1000@usco.edu.co,estudiante,si,sipam2025
+202211501008,Zamira,Niño,zamira.niño1008@usco.edu.co,estudiante,si,sipam2025
+202211501016,Ingrid,Aguilar,ingrid.aguilar1016@usco.edu.co,estudiante,si,sipam2025
+202211501024,Rodrigo,Ibáñez,rodrigo.ibañez1024@usco.edu.co,estudiante,si,sipam2025
+202211501032,Edgar,Restrepo,edgar.restrepo1032@usco.edu.co,estudiante,si,sipam2025
+202211501040,Manuel,Acosta,manuel.acosta1040@usco.edu.co,estudiante,si,sipam2025
+202211501048,Vanessa,Jiménez,vanessa.jimenez1048@usco.edu.co,estudiante,si,sipam2025
+20221150142,Felipe,Pérez Perdomo,felipe.perez@usco.edu.co,estudiante,si,sipam2025
+20221150192,Santiago,Valencia Medina,santiago.valencia@usco.edu.co,estudiante,si,sipam2025
+20221150209,Tatiana,Patiño Jiménez,tatiana.patino@usco.edu.co,estudiante,si,sipam2025
+20221150247,Ivan,Rivera Suárez,ivan.rivera@usco.edu.co,estudiante,si,sipam2025
+20221150283,Andrés,Herrera Rivera,andres.herrera@usco.edu.co,estudiante,si,sipam2025
+20221150504,Edgar,Espinosa,edgar.espinosa504@usco.edu.co,estudiante,si,sipam2025
+20221150512,Manuel,Naranjo,manuel.naranjo512@usco.edu.co,estudiante,si,sipam2025
+20221150520,Vanessa,Valderrama,vanessa.valderrama520@usco.edu.co,estudiante,si,sipam2025
+20221150528,Ever,Escobar,ever.escobar528@usco.edu.co,estudiante,si,sipam2025
+20221150536,Mario,Ortega,mario.ortega536@usco.edu.co,estudiante,si,sipam2025
+20221150544,Alejandro,Barrera,alejandro.barrera544@usco.edu.co,estudiante,si,sipam2025
+20221150552,Ivan,Jaramillo,ivan.jaramillo552@usco.edu.co,estudiante,si,sipam2025
+20221150560,Rafael,Salazar,rafael.salazar560@usco.edu.co,estudiante,si,sipam2025
+20221150568,Zamira,Buitrago,zamira.buitrago568@usco.edu.co,estudiante,si,sipam2025
+20221150576,Ingrid,Lozano,ingrid.lozano576@usco.edu.co,estudiante,si,sipam2025
+20221150584,Rodrigo,Torres,rodrigo.torres584@usco.edu.co,estudiante,si,sipam2025
+20221150592,Edgar,Guerrero,edgar.guerrero592@usco.edu.co,estudiante,si,sipam2025
+20221150600,Manuel,Pardo,manuel.pardo600@usco.edu.co,estudiante,si,sipam2025
+20221150608,Vanessa,Ynfante,vanessa.ynfante608@usco.edu.co,estudiante,si,sipam2025
+20221150616,Ever,Gómez,ever.gomez616@usco.edu.co,estudiante,si,sipam2025
+20221150624,Mario,Quiroga,mario.quiroga624@usco.edu.co,estudiante,si,sipam2025
+20221150632,Alejandro,Delgado,alejandro.delgado632@usco.edu.co,estudiante,si,sipam2025
+20221150640,Ivan,Millán,ivan.millan640@usco.edu.co,estudiante,si,sipam2025
+20221150648,Rafael,Uribe,rafael.uribe648@usco.edu.co,estudiante,si,sipam2025
+20221150656,Zamira,Durán,zamira.duran656@usco.edu.co,estudiante,si,sipam2025
+20221150664,Ingrid,Niño,ingrid.niño664@usco.edu.co,estudiante,si,sipam2025
+20221150672,Rodrigo,Aguilar,rodrigo.aguilar672@usco.edu.co,estudiante,si,sipam2025
+20221150680,Edgar,Ibáñez,edgar.ibañez680@usco.edu.co,estudiante,si,sipam2025
+20221150688,Manuel,Restrepo,manuel.restrepo688@usco.edu.co,estudiante,si,sipam2025
+20221150696,Vanessa,Acosta,vanessa.acosta696@usco.edu.co,estudiante,si,sipam2025
+20221150704,Ever,Jiménez,ever.jimenez704@usco.edu.co,estudiante,si,sipam2025
+20221150712,Mario,Suárez,mario.suarez712@usco.edu.co,estudiante,si,sipam2025
+20221150720,Alejandro,Florez,alejandro.florez720@usco.edu.co,estudiante,si,sipam2025
+20221150728,Ivan,Ospina,ivan.ospina728@usco.edu.co,estudiante,si,sipam2025
+20221150736,Rafael,Wilches,rafael.wilches736@usco.edu.co,estudiante,si,sipam2025
+20221150744,Zamira,Fernández,zamira.fernandez744@usco.edu.co,estudiante,si,sipam2025
+20221150752,Ingrid,Pineda,ingrid.pineda752@usco.edu.co,estudiante,si,sipam2025
+20221150760,Rodrigo,Cárdenas,rodrigo.cardenas760@usco.edu.co,estudiante,si,sipam2025
+20221150768,Edgar,Ladino,edgar.ladino768@usco.edu.co,estudiante,si,sipam2025
+20221150776,Manuel,Téllez,manuel.tellez776@usco.edu.co,estudiante,si,sipam2025
+20221150784,Vanessa,Cortés,vanessa.cortes784@usco.edu.co,estudiante,si,sipam2025
+20221150792,Ever,Medina,ever.medina792@usco.edu.co,estudiante,si,sipam2025
+20221150800,Mario,Vargas,mario.vargas800@usco.edu.co,estudiante,si,sipam2025
+20221150808,Alejandro,Henao,alejandro.henao808@usco.edu.co,estudiante,si,sipam2025
+20221150816,Ivan,Quintana,ivan.quintana816@usco.edu.co,estudiante,si,sipam2025
+20221150824,Rafael,Zambrano,rafael.zambrano824@usco.edu.co,estudiante,si,sipam2025
+20221150832,Zamira,Herrera,zamira.herrera832@usco.edu.co,estudiante,si,sipam2025
+20221150840,Ingrid,Ramos,ingrid.ramos840@usco.edu.co,estudiante,si,sipam2025
+20221150848,Rodrigo,Espinosa,rodrigo.espinosa848@usco.edu.co,estudiante,si,sipam2025
+20221150856,Edgar,Naranjo,edgar.naranjo856@usco.edu.co,estudiante,si,sipam2025
+20221150864,Manuel,Valderrama,manuel.valderrama864@usco.edu.co,estudiante,si,sipam2025
+20221150872,Vanessa,Escobar,vanessa.escobar872@usco.edu.co,estudiante,si,sipam2025
+20221150880,Ever,Ortega,ever.ortega880@usco.edu.co,estudiante,si,sipam2025
+20221150888,Mario,Barrera,mario.barrera888@usco.edu.co,estudiante,si,sipam2025
+20221150896,Alejandro,Jaramillo,alejandro.jaramillo896@usco.edu.co,estudiante,si,sipam2025
+20221150904,Ivan,Salazar,ivan.salazar904@usco.edu.co,estudiante,si,sipam2025
+20221150912,Rafael,Buitrago,rafael.buitrago912@usco.edu.co,estudiante,si,sipam2025
+20221150920,Zamira,Lozano,zamira.lozano920@usco.edu.co,estudiante,si,sipam2025
+20221150928,Ingrid,Torres,ingrid.torres928@usco.edu.co,estudiante,si,sipam2025
+20221150936,Rodrigo,Guerrero,rodrigo.guerrero936@usco.edu.co,estudiante,si,sipam2025
+20221150944,Edgar,Pardo,edgar.pardo944@usco.edu.co,estudiante,si,sipam2025
+20221150952,Manuel,Ynfante,manuel.ynfante952@usco.edu.co,estudiante,si,sipam2025
+20221150960,Vanessa,Gómez,vanessa.gomez960@usco.edu.co,estudiante,si,sipam2025
+20221150968,Ever,Quiroga,ever.quiroga968@usco.edu.co,estudiante,si,sipam2025
+20221150976,Mario,Delgado,mario.delgado976@usco.edu.co,estudiante,si,sipam2025
+20221150984,Alejandro,Millán,alejandro.millan984@usco.edu.co,estudiante,si,sipam2025
+20221150992,Ivan,Uribe,ivan.uribe992@usco.edu.co,estudiante,si,sipam2025
+20231150019,Esteban,Pineda Flores,esteban.pineda@usco.edu.co,estudiante,si,sipam2025
+20231150033,Sara,Correa Vega,sara.correa@usco.edu.co,estudiante,si,sipam2025
+20231150065,Edward,González Acosta,edward.gonzalez@usco.edu.co,estudiante,si,sipam2025
+20231150080,Alejandro,Ramírez Sánchez,alejandro.ramirez@usco.edu.co,estudiante,si,sipam2025
+20231150092,Mateo,Bermúdez Herrera,mateo.bermudez@usco.edu.co,estudiante,si,sipam2025
+202311501001,Sergio,Escobar,sergio.escobar1001@usco.edu.co,estudiante,si,sipam2025
+202311501009,Brenda,Ortega,brenda.ortega1009@usco.edu.co,estudiante,si,sipam2025
+202311501017,Javier,Barrera,javier.barrera1017@usco.edu.co,estudiante,si,sipam2025
+20231150102,Paola,Perdomo Ospina,paola.perdomo@usco.edu.co,estudiante,si,sipam2025
+202311501025,Sandra,Jaramillo,sandra.jaramillo1025@usco.edu.co,estudiante,si,sipam2025
+202311501033,Felipe,Salazar,felipe.salazar1033@usco.edu.co,estudiante,si,sipam2025
+202311501041,Nelson,Buitrago,nelson.buitrago1041@usco.edu.co,estudiante,si,sipam2025
+202311501049,Wilson,Lozano,wilson.lozano1049@usco.edu.co,estudiante,si,sipam2025
+20231150209,David,Romero Bernal,david.romero@usco.edu.co,estudiante,si,sipam2025
+20231150217,Laura,Herrera Ríos,laura.herrera@usco.edu.co,estudiante,si,sipam2025
+20231150220,Sofía,Herrera Muñoz,sofia.herrera@usco.edu.co,estudiante,si,sipam2025
+20231150290,Kevin,Suárez Trujillo,kevin.suarez@usco.edu.co,estudiante,si,sipam2025
+20231150505,Felipe,Florez,felipe.florez505@usco.edu.co,estudiante,si,sipam2025
+20231150513,Nelson,Ospina,nelson.ospina513@usco.edu.co,estudiante,si,sipam2025
+20231150521,Wilson,Wilches,wilson.wilches521@usco.edu.co,estudiante,si,sipam2025
+20231150529,Fredy,Fernández,fredy.fernandez529@usco.edu.co,estudiante,si,sipam2025
+20231150537,Nathalia,Pineda,nathalia.pineda537@usco.edu.co,estudiante,si,sipam2025
+20231150545,Brayan,Cárdenas,brayan.cardenas545@usco.edu.co,estudiante,si,sipam2025
+20231150553,Jairo,Ladino,jairo.ladino553@usco.edu.co,estudiante,si,sipam2025
+20231150561,Sergio,Téllez,sergio.tellez561@usco.edu.co,estudiante,si,sipam2025
+20231150569,Brenda,Cortés,brenda.cortes569@usco.edu.co,estudiante,si,sipam2025
+20231150577,Javier,Medina,javier.medina577@usco.edu.co,estudiante,si,sipam2025
+20231150585,Sandra,Vargas,sandra.vargas585@usco.edu.co,estudiante,si,sipam2025
+20231150593,Felipe,Henao,felipe.henao593@usco.edu.co,estudiante,si,sipam2025
+20231150601,Nelson,Quintana,nelson.quintana601@usco.edu.co,estudiante,si,sipam2025
+20231150609,Wilson,Zambrano,wilson.zambrano609@usco.edu.co,estudiante,si,sipam2025
+20231150617,Fredy,Herrera,fredy.herrera617@usco.edu.co,estudiante,si,sipam2025
+20231150625,Nathalia,Ramos,nathalia.ramos625@usco.edu.co,estudiante,si,sipam2025
+20231150633,Brayan,Espinosa,brayan.espinosa633@usco.edu.co,estudiante,si,sipam2025
+20231150641,Jairo,Naranjo,jairo.naranjo641@usco.edu.co,estudiante,si,sipam2025
+20231150649,Sergio,Valderrama,sergio.valderrama649@usco.edu.co,estudiante,si,sipam2025
+20231150657,Brenda,Escobar,brenda.escobar657@usco.edu.co,estudiante,si,sipam2025
+20231150665,Javier,Ortega,javier.ortega665@usco.edu.co,estudiante,si,sipam2025
+20231150673,Sandra,Barrera,sandra.barrera673@usco.edu.co,estudiante,si,sipam2025
+20231150681,Felipe,Jaramillo,felipe.jaramillo681@usco.edu.co,estudiante,si,sipam2025
+20231150689,Nelson,Salazar,nelson.salazar689@usco.edu.co,estudiante,si,sipam2025
+20231150697,Wilson,Buitrago,wilson.buitrago697@usco.edu.co,estudiante,si,sipam2025
+20231150705,Fredy,Lozano,fredy.lozano705@usco.edu.co,estudiante,si,sipam2025
+20231150713,Nathalia,Torres,nathalia.torres713@usco.edu.co,estudiante,si,sipam2025
+20231150721,Brayan,Guerrero,brayan.guerrero721@usco.edu.co,estudiante,si,sipam2025
+20231150729,Jairo,Pardo,jairo.pardo729@usco.edu.co,estudiante,si,sipam2025
+20231150737,Sergio,Ynfante,sergio.ynfante737@usco.edu.co,estudiante,si,sipam2025
+20231150745,Brenda,Gómez,brenda.gomez745@usco.edu.co,estudiante,si,sipam2025
+20231150753,Javier,Quiroga,javier.quiroga753@usco.edu.co,estudiante,si,sipam2025
+20231150761,Sandra,Delgado,sandra.delgado761@usco.edu.co,estudiante,si,sipam2025
+20231150769,Felipe,Millán,felipe.millan769@usco.edu.co,estudiante,si,sipam2025
+20231150777,Nelson,Uribe,nelson.uribe777@usco.edu.co,estudiante,si,sipam2025
+20231150785,Wilson,Durán,wilson.duran785@usco.edu.co,estudiante,si,sipam2025
+20231150793,Fredy,Niño,fredy.niño793@usco.edu.co,estudiante,si,sipam2025
+20231150801,Nathalia,Aguilar,nathalia.aguilar801@usco.edu.co,estudiante,si,sipam2025
+20231150809,Brayan,Ibáñez,brayan.ibañez809@usco.edu.co,estudiante,si,sipam2025
+20231150817,Jairo,Restrepo,jairo.restrepo817@usco.edu.co,estudiante,si,sipam2025
+20231150825,Sergio,Acosta,sergio.acosta825@usco.edu.co,estudiante,si,sipam2025
+20231150833,Brenda,Jiménez,brenda.jimenez833@usco.edu.co,estudiante,si,sipam2025
+20231150841,Javier,Suárez,javier.suarez841@usco.edu.co,estudiante,si,sipam2025
+20231150849,Sandra,Florez,sandra.florez849@usco.edu.co,estudiante,si,sipam2025
+20231150857,Felipe,Ospina,felipe.ospina857@usco.edu.co,estudiante,si,sipam2025
+20231150865,Nelson,Wilches,nelson.wilches865@usco.edu.co,estudiante,si,sipam2025
+20231150873,Wilson,Fernández,wilson.fernandez873@usco.edu.co,estudiante,si,sipam2025
+20231150881,Fredy,Pineda,fredy.pineda881@usco.edu.co,estudiante,si,sipam2025
+20231150889,Nathalia,Cárdenas,nathalia.cardenas889@usco.edu.co,estudiante,si,sipam2025
+20231150897,Brayan,Ladino,brayan.ladino897@usco.edu.co,estudiante,si,sipam2025
+20231150905,Jairo,Téllez,jairo.tellez905@usco.edu.co,estudiante,si,sipam2025
+20231150913,Sergio,Cortés,sergio.cortes913@usco.edu.co,estudiante,si,sipam2025
+20231150921,Brenda,Medina,brenda.medina921@usco.edu.co,estudiante,si,sipam2025
+20231150929,Javier,Vargas,javier.vargas929@usco.edu.co,estudiante,si,sipam2025
+20231150937,Sandra,Henao,sandra.henao937@usco.edu.co,estudiante,si,sipam2025
+20231150945,Felipe,Quintana,felipe.quintana945@usco.edu.co,estudiante,si,sipam2025
+20231150953,Nelson,Zambrano,nelson.zambrano953@usco.edu.co,estudiante,si,sipam2025
+20231150961,Wilson,Herrera,wilson.herrera961@usco.edu.co,estudiante,si,sipam2025
+20231150969,Fredy,Ramos,fredy.ramos969@usco.edu.co,estudiante,si,sipam2025
+20231150977,Nathalia,Espinosa,nathalia.espinosa977@usco.edu.co,estudiante,si,sipam2025
+20231150985,Brayan,Naranjo,brayan.naranjo985@usco.edu.co,estudiante,si,sipam2025
+20231150993,Jairo,Valderrama,jairo.valderrama993@usco.edu.co,estudiante,si,sipam2025
+202411501002,Tania,Fernández,tania.fernandez1002@usco.edu.co,estudiante,si,sipam2025
+202411501010,Cesar,Pineda,cesar.pineda1010@usco.edu.co,estudiante,si,sipam2025
+202411501018,Karen,Cárdenas,karen.cardenas1018@usco.edu.co,estudiante,si,sipam2025
+202411501026,Tatiana,Ladino,tatiana.ladino1026@usco.edu.co,estudiante,si,sipam2025
+202411501034,Gabriela,Téllez,gabriela.tellez1034@usco.edu.co,estudiante,si,sipam2025
+202411501042,Orlando,Cortés,orlando.cortes1042@usco.edu.co,estudiante,si,sipam2025
+20241150506,Gabriela,Guerrero,gabriela.guerrero506@usco.edu.co,estudiante,si,sipam2025
+20241150514,Orlando,Pardo,orlando.pardo514@usco.edu.co,estudiante,si,sipam2025
+20241150522,Ximena,Ynfante,ximena.ynfante522@usco.edu.co,estudiante,si,sipam2025
+20241150530,Gilberto,Gómez,gilberto.gomez530@usco.edu.co,estudiante,si,sipam2025
+20241150538,Omar,Quiroga,omar.quiroga538@usco.edu.co,estudiante,si,sipam2025
+20241150546,Camila,Delgado,camila.delgado546@usco.edu.co,estudiante,si,sipam2025
+20241150554,Kevin,Millán,kevin.millan554@usco.edu.co,estudiante,si,sipam2025
+20241150562,Tania,Uribe,tania.uribe562@usco.edu.co,estudiante,si,sipam2025
+20241150570,Cesar,Durán,cesar.duran570@usco.edu.co,estudiante,si,sipam2025
+20241150578,Karen,Niño,karen.niño578@usco.edu.co,estudiante,si,sipam2025
+20241150586,Tatiana,Aguilar,tatiana.aguilar586@usco.edu.co,estudiante,si,sipam2025
+20241150594,Gabriela,Ibáñez,gabriela.ibañez594@usco.edu.co,estudiante,si,sipam2025
+20241150602,Orlando,Restrepo,orlando.restrepo602@usco.edu.co,estudiante,si,sipam2025
+20241150610,Ximena,Acosta,ximena.acosta610@usco.edu.co,estudiante,si,sipam2025
+20241150618,Gilberto,Jiménez,gilberto.jimenez618@usco.edu.co,estudiante,si,sipam2025
+20241150626,Omar,Suárez,omar.suarez626@usco.edu.co,estudiante,si,sipam2025
+20241150634,Camila,Florez,camila.florez634@usco.edu.co,estudiante,si,sipam2025
+20241150642,Kevin,Ospina,kevin.ospina642@usco.edu.co,estudiante,si,sipam2025
+20241150650,Tania,Wilches,tania.wilches650@usco.edu.co,estudiante,si,sipam2025
+20241150658,Cesar,Fernández,cesar.fernandez658@usco.edu.co,estudiante,si,sipam2025
+20241150666,Karen,Pineda,karen.pineda666@usco.edu.co,estudiante,si,sipam2025
+20241150674,Tatiana,Cárdenas,tatiana.cardenas674@usco.edu.co,estudiante,si,sipam2025
+20241150682,Gabriela,Ladino,gabriela.ladino682@usco.edu.co,estudiante,si,sipam2025
+20241150690,Orlando,Téllez,orlando.tellez690@usco.edu.co,estudiante,si,sipam2025
+20241150698,Ximena,Cortés,ximena.cortes698@usco.edu.co,estudiante,si,sipam2025
+20241150706,Gilberto,Medina,gilberto.medina706@usco.edu.co,estudiante,si,sipam2025
+20241150714,Omar,Vargas,omar.vargas714@usco.edu.co,estudiante,si,sipam2025
+20241150722,Camila,Henao,camila.henao722@usco.edu.co,estudiante,si,sipam2025
+20241150730,Kevin,Quintana,kevin.quintana730@usco.edu.co,estudiante,si,sipam2025
+20241150738,Tania,Zambrano,tania.zambrano738@usco.edu.co,estudiante,si,sipam2025
+20241150746,Cesar,Herrera,cesar.herrera746@usco.edu.co,estudiante,si,sipam2025
+20241150754,Karen,Ramos,karen.ramos754@usco.edu.co,estudiante,si,sipam2025
+20241150762,Tatiana,Espinosa,tatiana.espinosa762@usco.edu.co,estudiante,si,sipam2025
+20241150770,Gabriela,Naranjo,gabriela.naranjo770@usco.edu.co,estudiante,si,sipam2025
+20241150778,Orlando,Valderrama,orlando.valderrama778@usco.edu.co,estudiante,si,sipam2025
+20241150786,Ximena,Escobar,ximena.escobar786@usco.edu.co,estudiante,si,sipam2025
+20241150794,Gilberto,Ortega,gilberto.ortega794@usco.edu.co,estudiante,si,sipam2025
+20241150802,Omar,Barrera,omar.barrera802@usco.edu.co,estudiante,si,sipam2025
+20241150810,Camila,Jaramillo,camila.jaramillo810@usco.edu.co,estudiante,si,sipam2025
+20241150818,Kevin,Salazar,kevin.salazar818@usco.edu.co,estudiante,si,sipam2025
+20241150826,Tania,Buitrago,tania.buitrago826@usco.edu.co,estudiante,si,sipam2025
+20241150834,Cesar,Lozano,cesar.lozano834@usco.edu.co,estudiante,si,sipam2025
+20241150842,Karen,Torres,karen.torres842@usco.edu.co,estudiante,si,sipam2025
+20241150850,Tatiana,Guerrero,tatiana.guerrero850@usco.edu.co,estudiante,si,sipam2025
+20241150858,Gabriela,Pardo,gabriela.pardo858@usco.edu.co,estudiante,si,sipam2025
+20241150866,Orlando,Ynfante,orlando.ynfante866@usco.edu.co,estudiante,si,sipam2025
+20241150874,Ximena,Gómez,ximena.gomez874@usco.edu.co,estudiante,si,sipam2025
+20241150882,Gilberto,Quiroga,gilberto.quiroga882@usco.edu.co,estudiante,si,sipam2025
+20241150890,Omar,Delgado,omar.delgado890@usco.edu.co,estudiante,si,sipam2025
+20241150898,Camila,Millán,camila.millan898@usco.edu.co,estudiante,si,sipam2025
+20241150906,Kevin,Uribe,kevin.uribe906@usco.edu.co,estudiante,si,sipam2025
+20241150914,Tania,Durán,tania.duran914@usco.edu.co,estudiante,si,sipam2025
+20241150922,Cesar,Niño,cesar.niño922@usco.edu.co,estudiante,si,sipam2025
+20241150930,Karen,Aguilar,karen.aguilar930@usco.edu.co,estudiante,si,sipam2025
+20241150938,Tatiana,Ibáñez,tatiana.ibañez938@usco.edu.co,estudiante,si,sipam2025
+20241150946,Gabriela,Restrepo,gabriela.restrepo946@usco.edu.co,estudiante,si,sipam2025
+20241150954,Orlando,Acosta,orlando.acosta954@usco.edu.co,estudiante,si,sipam2025
+20241150962,Ximena,Jiménez,ximena.jimenez962@usco.edu.co,estudiante,si,sipam2025
+20241150970,Gilberto,Suárez,gilberto.suarez970@usco.edu.co,estudiante,si,sipam2025
+20241150978,Omar,Florez,omar.florez978@usco.edu.co,estudiante,si,sipam2025
+20241150986,Camila,Ospina,camila.ospina986@usco.edu.co,estudiante,si,sipam2025
+20241150994,Kevin,Wilches,kevin.wilches994@usco.edu.co,estudiante,si,sipam2025
+202511501003,Ulises,Gómez,ulises.gomez1003@usco.edu.co,estudiante,si,sipam2025
+202511501011,Diana,Quiroga,diana.quiroga1011@usco.edu.co,estudiante,si,sipam2025
+202511501019,Lorena,Delgado,lorena.delgado1019@usco.edu.co,estudiante,si,sipam2025
+202511501027,Uriel,Millán,uriel.millan1027@usco.edu.co,estudiante,si,sipam2025
+202511501035,Harold,Uribe,harold.uribe1035@usco.edu.co,estudiante,si,sipam2025
+202511501043,Pablo,Durán,pablo.duran1043@usco.edu.co,estudiante,si,sipam2025
+20251150507,Harold,Henao,harold.henao507@usco.edu.co,estudiante,si,sipam2025
+20251150515,Pablo,Quintana,pablo.quintana515@usco.edu.co,estudiante,si,sipam2025
+20251150523,Yolanda,Zambrano,yolanda.zambrano523@usco.edu.co,estudiante,si,sipam2025
+20251150531,Hernando,Herrera,hernando.herrera531@usco.edu.co,estudiante,si,sipam2025
+20251150539,Patricia,Ramos,patricia.ramos539@usco.edu.co,estudiante,si,sipam2025
+20251150547,Daniel,Espinosa,daniel.espinosa547@usco.edu.co,estudiante,si,sipam2025
+20251150555,Leidy,Naranjo,leidy.naranjo555@usco.edu.co,estudiante,si,sipam2025
+20251150563,Ulises,Valderrama,ulises.valderrama563@usco.edu.co,estudiante,si,sipam2025
+20251150571,Diana,Escobar,diana.escobar571@usco.edu.co,estudiante,si,sipam2025
+20251150579,Lorena,Ortega,lorena.ortega579@usco.edu.co,estudiante,si,sipam2025
+20251150587,Uriel,Barrera,uriel.barrera587@usco.edu.co,estudiante,si,sipam2025
+20251150595,Harold,Jaramillo,harold.jaramillo595@usco.edu.co,estudiante,si,sipam2025
+20251150603,Pablo,Salazar,pablo.salazar603@usco.edu.co,estudiante,si,sipam2025
+20251150611,Yolanda,Buitrago,yolanda.buitrago611@usco.edu.co,estudiante,si,sipam2025
+20251150619,Hernando,Lozano,hernando.lozano619@usco.edu.co,estudiante,si,sipam2025
+20251150627,Patricia,Torres,patricia.torres627@usco.edu.co,estudiante,si,sipam2025
+20251150635,Daniel,Guerrero,daniel.guerrero635@usco.edu.co,estudiante,si,sipam2025
+20251150643,Leidy,Pardo,leidy.pardo643@usco.edu.co,estudiante,si,sipam2025
+20251150651,Ulises,Ynfante,ulises.ynfante651@usco.edu.co,estudiante,si,sipam2025
+20251150659,Diana,Gómez,diana.gomez659@usco.edu.co,estudiante,si,sipam2025
+20251150667,Lorena,Quiroga,lorena.quiroga667@usco.edu.co,estudiante,si,sipam2025
+20251150675,Uriel,Delgado,uriel.delgado675@usco.edu.co,estudiante,si,sipam2025
+20251150683,Harold,Millán,harold.millan683@usco.edu.co,estudiante,si,sipam2025
+20251150691,Pablo,Uribe,pablo.uribe691@usco.edu.co,estudiante,si,sipam2025
+20251150699,Yolanda,Durán,yolanda.duran699@usco.edu.co,estudiante,si,sipam2025
+20251150707,Hernando,Niño,hernando.niño707@usco.edu.co,estudiante,si,sipam2025
+20251150715,Patricia,Aguilar,patricia.aguilar715@usco.edu.co,estudiante,si,sipam2025
+20251150723,Daniel,Ibáñez,daniel.ibañez723@usco.edu.co,estudiante,si,sipam2025
+20251150731,Leidy,Restrepo,leidy.restrepo731@usco.edu.co,estudiante,si,sipam2025
+20251150739,Ulises,Acosta,ulises.acosta739@usco.edu.co,estudiante,si,sipam2025
+20251150747,Diana,Jiménez,diana.jimenez747@usco.edu.co,estudiante,si,sipam2025
+20251150755,Lorena,Suárez,lorena.suarez755@usco.edu.co,estudiante,si,sipam2025
+20251150763,Uriel,Florez,uriel.florez763@usco.edu.co,estudiante,si,sipam2025
+20251150771,Harold,Ospina,harold.ospina771@usco.edu.co,estudiante,si,sipam2025
+20251150779,Pablo,Wilches,pablo.wilches779@usco.edu.co,estudiante,si,sipam2025
+20251150787,Yolanda,Fernández,yolanda.fernandez787@usco.edu.co,estudiante,si,sipam2025
+20251150795,Hernando,Pineda,hernando.pineda795@usco.edu.co,estudiante,si,sipam2025
+20251150803,Patricia,Cárdenas,patricia.cardenas803@usco.edu.co,estudiante,si,sipam2025
+20251150811,Daniel,Ladino,daniel.ladino811@usco.edu.co,estudiante,si,sipam2025
+20251150819,Leidy,Téllez,leidy.tellez819@usco.edu.co,estudiante,si,sipam2025
+20251150827,Ulises,Cortés,ulises.cortes827@usco.edu.co,estudiante,si,sipam2025
+20251150835,Diana,Medina,diana.medina835@usco.edu.co,estudiante,si,sipam2025
+20251150843,Lorena,Vargas,lorena.vargas843@usco.edu.co,estudiante,si,sipam2025
+20251150851,Uriel,Henao,uriel.henao851@usco.edu.co,estudiante,si,sipam2025
+20251150859,Harold,Quintana,harold.quintana859@usco.edu.co,estudiante,si,sipam2025
+20251150867,Pablo,Zambrano,pablo.zambrano867@usco.edu.co,estudiante,si,sipam2025
+20251150875,Yolanda,Herrera,yolanda.herrera875@usco.edu.co,estudiante,si,sipam2025
+20251150883,Hernando,Ramos,hernando.ramos883@usco.edu.co,estudiante,si,sipam2025
+20251150891,Patricia,Espinosa,patricia.espinosa891@usco.edu.co,estudiante,si,sipam2025
+20251150899,Daniel,Naranjo,daniel.naranjo899@usco.edu.co,estudiante,si,sipam2025
+20251150907,Leidy,Valderrama,leidy.valderrama907@usco.edu.co,estudiante,si,sipam2025
+20251150915,Ulises,Escobar,ulises.escobar915@usco.edu.co,estudiante,si,sipam2025
+20251150923,Diana,Ortega,diana.ortega923@usco.edu.co,estudiante,si,sipam2025
+20251150931,Lorena,Barrera,lorena.barrera931@usco.edu.co,estudiante,si,sipam2025
+20251150939,Uriel,Jaramillo,uriel.jaramillo939@usco.edu.co,estudiante,si,sipam2025
+20251150947,Harold,Salazar,harold.salazar947@usco.edu.co,estudiante,si,sipam2025
+20251150955,Pablo,Buitrago,pablo.buitrago955@usco.edu.co,estudiante,si,sipam2025
+20251150963,Yolanda,Lozano,yolanda.lozano963@usco.edu.co,estudiante,si,sipam2025
+20251150971,Hernando,Torres,hernando.torres971@usco.edu.co,estudiante,si,sipam2025
+20251150979,Patricia,Guerrero,patricia.guerrero979@usco.edu.co,estudiante,si,sipam2025
+20251150987,Daniel,Pardo,daniel.pardo987@usco.edu.co,estudiante,si,sipam2025
+20251150995,Leidy,Ynfante,leidy.ynfante995@usco.edu.co,estudiante,si,sipam2025
+JEFE001,Carlos Hernando,Ospina Toro,carlos.ospina@usco.edu.co,jefe_programa,si,sipam2025
+JEFE002,Luis Alfredo,Rubio Duarte,luis.rubio@usco.edu.co,jefe_programa,si,sipam2025
+JEFE003,Patricia,Rodríguez López,patricia.rodriguez@usco.edu.co,jefe_programa,si,sipam2025
+JEFE004,Germán,Acosta Ortiz,german.acosta@usco.edu.co,jefe_programa,si,sipam2025
+JEFE005,Andrés,Morales Rivera,andres.morales@usco.edu.co,jefe_programa,si,sipam2025
+PROF001,Andrea Elinor,Lara Sánchez,andrea.lara@usco.edu.co,profesor,si,sipam2025
+PROF002,Andrés Felipe,Bahamon Monje,andres.bahamon@usco.edu.co,profesor,si,sipam2025
+PROF003,Angélica María,Otero Paternina,angelica.otero@usco.edu.co,profesor,si,sipam2025
+PROF004,Beatriz Elena,Zapata Berruecos,beatriz.zapata@usco.edu.co,profesor,si,sipam2025
+PROF005,Eduardo,Pastrana Bonilla,eduardo.pastrana@usco.edu.co,profesor,si,sipam2025
+PROF006,Jaime Daniel,Bustos Vanegas,jaime.bustos@usco.edu.co,profesor,si,sipam2025
+PROF007,Laura Nathalia,Ochoa Ospitia,laura.ochoa@usco.edu.co,profesor,si,sipam2025
+PROF008,Natalia,Puentes,natalia.puentes@usco.edu.co,profesor,si,sipam2025
+PROF009,Arbey,Sánchez Rodríguez,arbey.sanchez@usco.edu.co,profesor,si,sipam2025
+PROF010,Carlos Alberto,Paloma,carlos.paloma@usco.edu.co,profesor,si,sipam2025
+PROF011,Damaris,Perdomo Medina,damaris.perdomo@usco.edu.co,profesor,si,sipam2025
+PROF012,Daniel Felipe,Fernández Reyes,daniel.fernandez@usco.edu.co,profesor,si,sipam2025
+PROF013,Dennis Milena,Villamil Ospina,dennis.villamil@usco.edu.co,profesor,si,sipam2025
+PROF014,Eddinson,Ortega Martínez,eddinson.ortega@usco.edu.co,profesor,si,sipam2025
+PROF015,Edinson,Mujica Rodríguez,edinson.mujica@usco.edu.co,profesor,si,sipam2025
+PROF016,Giovanni Andrés,Vargas Galván,giovanni.vargas@usco.edu.co,profesor,si,sipam2025
+PROF017,Héctor Jair,Beltrán Vargas,hector.beltran@usco.edu.co,profesor,si,sipam2025
+PROF018,Jairo,Murcia Leal,jairo.murcia@usco.edu.co,profesor,si,sipam2025
+PROF019,Javier Eduardo,Bonilla Perdomo,javier.bonilla@usco.edu.co,profesor,si,sipam2025
+PROF020,Jhon Jairo,Arévalo Hernández,jhon.arevalo@usco.edu.co,profesor,si,sipam2025
+PROF021,Jhon Jairo,Beltrán Díaz,jhon.beltran@usco.edu.co,profesor,si,sipam2025
+PROF022,Jhon Jairo,Vargas Hoyos,jhon.vargas@usco.edu.co,profesor,si,sipam2025
+PROF023,Johnny Mauricio,Gutiérrez Marroquín,johnny.gutierrez@usco.edu.co,profesor,si,sipam2025
+PROF024,José Daniel,Cardona Cárdenas,jose.cardona@usco.edu.co,profesor,si,sipam2025
+PROF025,Luisa Marcela,Cerquera Barrera,luisa.cerquera@usco.edu.co,profesor,si,sipam2025
+PROF026,Martha Lucía,Peña Quimbaya,martha.pena@usco.edu.co,profesor,si,sipam2025
+PROF027,Miguel Ángel,Díaz Herrera,miguel.diaz@usco.edu.co,profesor,si,sipam2025
+PROF028,Miyer Javier,Valdés Ortiz,miyer.valdes@usco.edu.co,profesor,si,sipam2025
+PROF029,Nadia Brigitte,Sanabria Méndez,nadia.sanabria@usco.edu.co,profesor,si,sipam2025
+PROF030,Oscar Eduardo,Gutiérrez Olaya,oscar.gutierrez@usco.edu.co,profesor,si,sipam2025
+PROF031,Oscar Fabián,Losada Gómez,oscar.losada@usco.edu.co,profesor,si,sipam2025
+PROF032,Oscar Mauricio,Barrera Bermeo,oscar.barrera@usco.edu.co,profesor,si,sipam2025
+PROF033,Silvia Cristina,Carrera Quintana,silvia.carrera@usco.edu.co,profesor,si,sipam2025
+PROF034,Victor Manuel,Martínez Castro,victor.martinez@usco.edu.co,profesor,si,sipam2025
+PROF035,Wilmer Licerio,Ladino Garzón,wilmer.ladino@usco.edu.co,profesor,si,sipam2025
+PROF036,Wilson Javier,Erazo Espinosa,wilson.erazo@usco.edu.co,profesor,si,sipam2025
+PROF037,Yanet Caridad,Apin Campos,yanet.apin@usco.edu.co,profesor,si,sipam2025
+PROF038,Yaneth Liliana,Ruíz Osorio,yaneth.ruiz@usco.edu.co,profesor,si,sipam2025
+PROF039,Yony Arley,Chavez Parra,yony.chavez@usco.edu.co,profesor,si,sipam2025
+PROF040,Isauro,Trujillo Vásquez,isauro.trujillo@usco.edu.co,profesor,si,sipam2025
+PROF041,Jaime,Izquierdo Bautista,jaime.izquierdo@usco.edu.co,profesor,si,sipam2025
+PROF042,Mario German,Trujillo Vela,mario.trujillo@usco.edu.co,profesor,si,sipam2025
+PROF043,Ingrid Natalia,Muñoz Quijano,ingrid.munoz@usco.edu.co,profesor,si,sipam2025
+PROF044,Jorge Orlando,Mayorga Bautista,jorge.mayorga@usco.edu.co,profesor,si,sipam2025
+PROF045,Roberto,Vargas Cuervo,roberto.vargas@usco.edu.co,profesor,si,sipam2025
+PROF046,Jorge Eliecer,Martínez Gaitán,jorge.martinez@usco.edu.co,profesor,si,sipam2025
+PROF047,Eurípides,Triana Tucuma,euripides.triana@usco.edu.co,profesor,si,sipam2025
