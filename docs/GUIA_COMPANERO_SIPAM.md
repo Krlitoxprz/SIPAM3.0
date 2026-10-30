@@ -63,7 +63,7 @@ La firma exige: práctica en estado `solicitada`/`pendiente_quorum`/aprobada*, *
 
 | Paso | Usuario |
 |---|---|
-| Activar modo de prueba (quita las restricciones de fechas/quórum) | **`Krlitoxprz`** → `PATCH /api/v1/sistema/testing-mode {"enabled": true}` o desde el panel de admin |
+| Activar modo de prueba (quita las restricciones de fechas/quórum) | **`Krlitoxprz`** → `PATCH /api/v1/auth/sistema/testing-mode {"enabled": true}` o desde el panel de admin |
 | Crear práctica con fechas futuras | `PROF001` (asignatura `IAGR-107`) |
 | **Firmar el consentimiento** | **`20231150092`** (Mateo) — matriculado en IAGR-107. Otros firmables: `20191150166` Andrea, `20191150005` Ángela, `20231150033` Sara, `20191150277` Fabián, `20201150502` Camila, `20231150505` Felipe, `20251150507` Harold (30 en total) |
 

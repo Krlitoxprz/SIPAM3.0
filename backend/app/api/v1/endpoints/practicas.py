@@ -833,18 +833,33 @@ def firmar_consentimiento(
             detail="No es posible firmar: la práctica ya inició, fue finalizada o fue rechazada.",
         )
 
-    # RF-PRA-TIME-02: no permitir firmar si la práctica ya finalizó
+    # El modo de prueba se evalúa antes de cualquier comparación temporal:
+    # en SQLite las fechas vuelven naive y compararlas con un datetime aware
+    # lanza TypeError (500) incluso cuando el modo prueba debería saltarlas.
+    modo_prueba = es_modo_prueba(db)
     hoy = datetime.now(timezone.utc)
-    if p.fecha_fin and p.fecha_fin.date() < hoy.date():
+    fecha_inicio = (
+        p.fecha_inicio.replace(tzinfo=timezone.utc)
+        if p.fecha_inicio and p.fecha_inicio.tzinfo is None
+        else p.fecha_inicio
+    )
+    fecha_fin = (
+        p.fecha_fin.replace(tzinfo=timezone.utc)
+        if p.fecha_fin and p.fecha_fin.tzinfo is None
+        else p.fecha_fin
+    )
+
+    # RF-PRA-TIME-02: no permitir firmar si la práctica ya finalizó
+    if not modo_prueba and fecha_fin and fecha_fin.date() < hoy.date():
         raise HTTPException(
             status_code=400,
             detail="No es posible firmar el consentimiento: la práctica ya fue realizada.",
         )
 
     # RF-PRA-TIME-03: ventana de consentimiento (D-10 a D-5 antes de fecha_inicio)
-    ventana_inicio = p.fecha_inicio - timedelta(days=DIAS_APERTURA_CONSENTIMIENTO)
-    ventana_fin = p.fecha_inicio - timedelta(days=DIAS_CIERRE_CONSENTIMIENTO)
-    if not (ventana_inicio <= hoy <= ventana_fin) and not es_modo_prueba(db):
+    ventana_inicio = fecha_inicio - timedelta(days=DIAS_APERTURA_CONSENTIMIENTO)
+    ventana_fin = fecha_inicio - timedelta(days=DIAS_CIERRE_CONSENTIMIENTO)
+    if not (ventana_inicio <= hoy <= ventana_fin) and not modo_prueba:
         if hoy < ventana_inicio:
             msg = (
                 f"La firma de consentimiento estará disponible a partir del "
