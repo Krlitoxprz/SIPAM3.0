@@ -553,7 +553,7 @@ def run(reset: bool = False):
         print(f"  Asignaturas : {len(asig_db)} | Convocatorias: {len(conv_db)}")
         print(f"  Matrículas  : {nuevos['mat'] or ya_mats} | Postulaciones: {nuevos['post'] or ya_posts}")
         print(f"\n  Contraseña universal de prueba : sipam2025")
-        print(f"  Admin                          : Krlitoxprz / Sasuke24")
+        print(f"  Admin                          : Krlitoxprz / <ADMIN_PASSWORD del .env al primer arranque>")
 
     except Exception as e:
         db.rollback()

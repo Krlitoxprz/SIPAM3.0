@@ -64,8 +64,8 @@ cd backend && .\venv\Scripts\python test_api_full.py
 | T-AUTH-N02 | Acceso a endpoint protegido sin token | Negativo | 401 | ✅ |
 | T-AUTH-N03 | Profesor intenta listar usuarios → sin permiso | Negativo | 403 | ✅ |
 | T-AUTH-N04 | Toggle desactivar la propia cuenta | Negativo | 400 | ✅ |
-| T-AUTH-N05 | `encargado_facultad` crea usuario con rol `admin` | Negativo | 403 | 🔄 |
-| T-AUTH-N06 | `encargado_facultad` crea usuario con rol `encargado_gastos` | Negativo | 403 | 🔄 |
+| T-AUTH-N05 | `jefe_programa` crea usuario con rol `admin` | Negativo | 403 | 🔄 |
+| T-AUTH-N06 | `jefe_programa` crea usuario con rol `decano` | Negativo | 403 | 🔄 |
 | T-AUTH-N07 | Crear usuario con código duplicado | Negativo | 400 | 🔄 |
 | T-AUTH-N08 | Crear usuario con email duplicado | Negativo | 400 | 🔄 |
 | T-AUTH-N09 | Crear usuario con cédula duplicada | Negativo | 400 | 🔄 |
@@ -216,7 +216,7 @@ cd backend && .\venv\Scripts\python test_api_full.py
 | ID | Caso de prueba | Tipo | HTTP esperado | Estado |
 |---|---|---|---|---|
 | T-PRES-01 | Obtener presupuesto actual | Positivo | 200 | ✅ |
-| T-PRES-02 | Encargado de gastos consulta presupuesto actual | Positivo | 200 | ✅ |
+| T-PRES-02 | administrador consulta presupuesto actual | Positivo | 200 | ✅ |
 | T-PRES-03 | Listar movimientos de un período | Positivo | 200 | ✅ |
 | T-PRES-04 | Crear nuevo presupuesto para un período | Positivo | 201 | 🔄 |
 | T-PRES-05 | Editar monto/descripción en estado `borrador` | Positivo | 200 | 🔄 |

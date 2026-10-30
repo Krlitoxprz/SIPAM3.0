@@ -291,7 +291,7 @@ async def calcular_ruta_endpoint(
             "costo_peajes_cop": costo_peajes_total,
             "total_estimado_cop": total,
         },
-        "nota": "Costos estimados basados en precios SICOM e INVIAS. Requieren aprobación del encargado de gastos.",
+        "nota": "Costos estimados basados en precios SICOM e INVIAS. Requieren aprobación del administrador.",
     }
 
 
@@ -502,7 +502,7 @@ async def calcular_costos_practica(
         },
         "total_estimado_cop": total,
         "distancias_auto": distancias_auto,
-        "nota": "Costos estimados. Requieren aprobación del encargado de gastos.",
+        "nota": "Costos estimados. Requieren aprobación del administrador.",
     }
 
 
