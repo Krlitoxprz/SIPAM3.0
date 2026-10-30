@@ -32,14 +32,24 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def _safe(fn):
-    """Ejecuta fn() dentro de un SAVEPOINT: ignora errores de 'ya existe'
-    (DB previamente endurecida) sin abortar la transacción en PostgreSQL."""
+    """Ejecuta fn() dentro de un SAVEPOINT ignorando SOLO errores de
+    idempotencia ('ya existe' / duplicados — DB previamente endurecida) sin
+    abortar la transacción en PostgreSQL. Errores de validación (p. ej. filas
+    existentes que violan un CHECK nuevo) se propagan para que la revisión
+    falle y pueda reintentarse tras corregir los datos."""
     sp = op.get_bind().begin_nested()
     try:
         fn()
         sp.commit()
-    except Exception:
+    except Exception as e:
         sp.rollback()
+        msg = str(e).lower()
+        if "already exists" not in msg and "duplicate" not in msg:
+            raise
+
+
+def _has_index(table: str, name: str) -> bool:
+    return any(i["name"] == name for i in sa.inspect(op.get_bind()).get_indexes(table))
 
 
 def upgrade() -> None:
@@ -61,7 +71,8 @@ def upgrade() -> None:
 
     # Drift: token_hash ya es unique=True en el modelo
     if 'refresh_tokens' in existing:
-        _safe(lambda: op.drop_index(op.f('ix_refresh_tokens_token_hash'), table_name='refresh_tokens'))
+        if _has_index('refresh_tokens', 'ix_refresh_tokens_token_hash'):
+            _safe(lambda: op.drop_index(op.f('ix_refresh_tokens_token_hash'), table_name='refresh_tokens'))
         _safe(lambda: op.create_index(op.f('ix_refresh_tokens_token_hash'), 'refresh_tokens', ['token_hash'], unique=True))
 
     # CheckConstraints — manuales (autogenerate no las emite sobre SQLite).
@@ -149,7 +160,8 @@ def downgrade() -> None:
         _safe(_drop)
 
     if 'refresh_tokens' in existing:
-        _safe(lambda: op.drop_index(op.f('ix_refresh_tokens_token_hash'), table_name='refresh_tokens'))
+        if _has_index('refresh_tokens', 'ix_refresh_tokens_token_hash'):
+            _safe(lambda: op.drop_index(op.f('ix_refresh_tokens_token_hash'), table_name='refresh_tokens'))
         _safe(lambda: op.create_index(op.f('ix_refresh_tokens_token_hash'), 'refresh_tokens', ['token_hash'], unique=False))
 
     # NOTA: no se eliminan los índices ix_* en downgrade. Pueden haber
