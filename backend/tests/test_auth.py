@@ -182,3 +182,33 @@ def test_fuerza_bruta_por_ip_e_identificador(client: TestClient, usuario_estudia
     assert r.status_code == 401
     logs = db.query(AuditLog).filter(AuditLog.accion == "login_fallido").all()
     assert all(l.ip_address is not None for l in logs)
+
+
+# ── PA-016: Creación de usuarios por jefe de programa (no debe dar 500) ───────
+def test_jefe_crea_profesor(client: TestClient, usuario_jefe):
+    token = get_token(client, usuario_jefe.codigo)
+    r = client.post("/api/v1/auth/usuarios", headers=auth(token), json={
+        "codigo": "TEST_PROF_NUEVO",
+        "nombres": "Profesor",
+        "apellidos": "Nuevo",
+        "email": "prof.nuevo.test@usco.edu.co",
+        "cedula": "10009991",
+        "password": PASSWORD,
+        "rol": "profesor",
+    })
+    assert r.status_code == 201, r.text
+    assert r.json()["rol"] == "profesor"
+
+
+def test_crear_usuario_admin_prohibido(client: TestClient, usuario_admin):
+    token = get_token(client, usuario_admin.codigo)
+    r = client.post("/api/v1/auth/usuarios", headers=auth(token), json={
+        "codigo": "TEST_ADMIN_NUEVO",
+        "nombres": "Admin",
+        "apellidos": "Nuevo",
+        "email": "admin.nuevo.test@usco.edu.co",
+        "cedula": "10009992",
+        "password": PASSWORD,
+        "rol": "admin",
+    })
+    assert r.status_code == 403

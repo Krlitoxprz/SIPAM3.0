@@ -414,8 +414,6 @@ def crear_usuario(
 ):
     if body.rol == RolEnum.admin:
         raise HTTPException(status_code=403, detail="No se pueden crear usuarios con rol administrador a través de esta interfaz.")
-    if body.rol in _DEPRECATED_ROLES:
-        raise HTTPException(status_code=400, detail=f"El rol '{body.rol.value}' está deshabilitado y no puede asignarse.")
     if current_user.rol in (RolEnum.jefe_programa, RolEnum.decano) and body.rol not in (RolEnum.estudiante, RolEnum.profesor):
         raise HTTPException(status_code=403, detail="El jefe de programa solo puede crear usuarios con rol estudiante o profesor.")
     if db.query(User).filter(User.codigo == body.codigo).first():
