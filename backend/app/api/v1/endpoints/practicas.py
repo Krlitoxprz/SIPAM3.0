@@ -7,7 +7,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Request, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import or_
+from sqlalchemy import or_, update, case
 
 from app.db.database import get_db
 from app.models.user import User, RolEnum
@@ -625,6 +625,71 @@ def actualizar_practica(
         .first()
     )
     return _enrich(p, testing_mode=es_modo_prueba(db))
+
+
+@router.delete("/{practica_id}", status_code=204)
+def eliminar_practica(
+    practica_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles(RolEnum.profesor, RolEnum.admin)),
+):
+    """Elimina una práctica y sus registros relacionados.
+
+    - profesor: solo sus propias prácticas en borrador, solicitada o rechazada
+    - admin: cualquier práctica que no esté en ejecución ni finalizada
+    """
+    p = db.query(Practica).filter(Practica.id == practica_id).first()
+    if not p:
+        raise HTTPException(status_code=404, detail="Práctica no encontrada")
+
+    if current_user.rol == RolEnum.profesor:
+        if p.profesor_id != current_user.id:
+            raise HTTPException(status_code=403, detail="Solo puede eliminar sus propias prácticas")
+        if p.estado not in [
+            EstadoPracticaEnum.borrador,
+            EstadoPracticaEnum.solicitada,
+            EstadoPracticaEnum.rechazada,
+        ]:
+            raise HTTPException(
+                status_code=400,
+                detail="Solo se pueden eliminar prácticas en borrador, solicitadas o rechazadas",
+            )
+    elif p.estado in [EstadoPracticaEnum.en_ejecucion, EstadoPracticaEnum.finalizada]:
+        raise HTTPException(
+            status_code=400,
+            detail="No se pueden eliminar prácticas en ejecución o finalizadas",
+        )
+
+    # Revertir el compromiso presupuestal antes de borrar los movimientos:
+    # aprobar_practica incrementó presupuesto.monto_comprometido y sin revertirlo
+    # quedaría un compromiso sin respaldo de ninguna práctica.
+    movimientos = db.query(MovimientoPresupuestal).filter(
+        MovimientoPresupuestal.practica_id == practica_id
+    ).all()
+    for mov in movimientos:
+        if mov.tipo == TipoMovimientoEnum.comprometido:
+            # UPDATE atómico (CASE para el clamp a 0): evita lost updates si dos
+            # borrados concurrentes tocan el mismo presupuesto.
+            db.execute(
+                update(Presupuesto)
+                .where(Presupuesto.id == mov.presupuesto_id)
+                .values(monto_comprometido=case(
+                    (Presupuesto.monto_comprometido - mov.monto > 0,
+                     Presupuesto.monto_comprometido - mov.monto),
+                    else_=0,
+                ))
+            )
+
+    # Registros relacionados sin cascade ORM
+    db.query(PagoViatico).filter(PagoViatico.practica_id == practica_id).delete()
+    db.query(MovimientoPresupuestal).filter(MovimientoPresupuestal.practica_id == practica_id).delete()
+    db.query(HistorialEstado).filter(
+        HistorialEstado.entidad == "practica",
+        HistorialEstado.entidad_id == practica_id,
+    ).delete()
+    # rutas, firmas y viáticos se eliminan por cascade="all, delete-orphan"
+    db.delete(p)
+    db.commit()
 
 
 @router.patch("/{practica_id}/solicitar", response_model=PracticaOut)

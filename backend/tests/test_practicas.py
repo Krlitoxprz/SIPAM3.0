@@ -274,3 +274,102 @@ def test_historial_practica(client: TestClient, usuario_profesor, asignatura, db
     r = client.get(f"/api/v1/practicas/{p.id}/historial", headers=auth(token))
     assert r.status_code == 200
     assert len(r.json()) >= 1
+
+
+# ── PP-012: Eliminar práctica (DELETE /practicas/{id}) ───────────────────────
+def _nueva_practica_db(db, asignatura, profesor_id, estado, periodo):
+    from app.models.practica import Practica
+    ahora = datetime.now(timezone.utc)
+    p = Practica(
+        nombre_practica="Práctica a eliminar",
+        asignatura_id=asignatura.id,
+        profesor_id=profesor_id,
+        estado=estado,
+        periodo_academico=periodo,
+        fecha_inicio=ahora + timedelta(days=35),
+        fecha_fin=ahora + timedelta(days=37),
+        duracion_dias=3,
+        num_alumnos=10,
+    )
+    db.add(p); db.commit(); db.refresh(p)
+    return p
+
+
+def test_eliminar_practica_borrador(client: TestClient, usuario_profesor, asignatura, db):
+    from app.models.practica import RutaPractica
+    token = get_token(client, usuario_profesor.codigo)
+    r = client.post("/api/v1/practicas/", headers=auth(token),
+                    json=_practica_payload(asignatura.id, "2099-1"))
+    assert r.status_code == 201
+    pid = r.json()["id"]
+
+    rd = client.delete(f"/api/v1/practicas/{pid}", headers=auth(token))
+    assert rd.status_code == 204
+    assert client.get(f"/api/v1/practicas/{pid}", headers=auth(token)).status_code == 404
+    # las rutas se eliminan por cascade ORM
+    assert db.query(RutaPractica).filter(RutaPractica.practica_id == pid).count() == 0
+
+
+def test_eliminar_practica_roles_denegados(client: TestClient, usuario_profesor, usuario_estudiante,
+                                           usuario_jefe, usuario_decano, asignatura, db):
+    p = _nueva_practica_db(db, asignatura, usuario_profesor.id,
+                           EstadoPracticaEnum.borrador, "2099-2")
+    for u in (usuario_estudiante, usuario_jefe, usuario_decano):
+        t = get_token(client, u.codigo)
+        r = client.delete(f"/api/v1/practicas/{p.id}", headers=auth(t))
+        assert r.status_code == 403
+
+
+def test_eliminar_practica_estados_no_permitidos(client: TestClient, usuario_profesor,
+                                                 usuario_admin, asignatura, db):
+    # profesor: solo borrador / solicitada / rechazada
+    p = _nueva_practica_db(db, asignatura, usuario_profesor.id,
+                           EstadoPracticaEnum.aprobada_curriculo, "2099-3")
+    tp = get_token(client, usuario_profesor.codigo)
+    assert client.delete(f"/api/v1/practicas/{p.id}", headers=auth(tp)).status_code == 400
+
+    # admin: no en ejecución ni finalizada
+    ta = get_token(client, usuario_admin.codigo)
+    for i, estado in enumerate([EstadoPracticaEnum.en_ejecucion, EstadoPracticaEnum.finalizada]):
+        p2 = _nueva_practica_db(db, asignatura, usuario_profesor.id, estado, f"2099-{i + 4}")
+        assert client.delete(f"/api/v1/practicas/{p2.id}", headers=auth(ta)).status_code == 400
+
+
+def test_eliminar_practica_limpia_relacionados(client: TestClient, usuario_profesor,
+                                               usuario_admin, asignatura, db):
+    from datetime import date
+    from app.models.historial_estado import HistorialEstado
+    from app.models.pago_viatico import PagoViatico
+    from app.models.presupuesto import Presupuesto, MovimientoPresupuestal, TipoMovimientoEnum
+    from app.models.practica import TarifaViatico, Viatico
+
+    p = _nueva_practica_db(db, asignatura, usuario_profesor.id,
+                           EstadoPracticaEnum.solicitada, "2099-6")
+    db.add(HistorialEstado(entidad="practica", entidad_id=p.id,
+                           estado_anterior="borrador", estado_nuevo="solicitada",
+                           usuario_id=usuario_profesor.id))
+    db.add(PagoViatico(practica_id=p.id, registrado_por_id=usuario_admin.id,
+                       monto_pagado=100000, fecha_pago=datetime.now(timezone.utc)))
+    pres = Presupuesto(periodo_academico="2099-6", monto_total_asignado=1000000,
+                       monto_comprometido=50000)
+    db.add(pres); db.flush()
+    db.add(MovimientoPresupuestal(presupuesto_id=pres.id, tipo=TipoMovimientoEnum.comprometido,
+                                monto=50000, concepto="Viáticos práctica", practica_id=p.id))
+    tarifa = TarifaViatico(descripcion="Urbano test", valor_dia=30000,
+                           aplica_desde=date(2025, 1, 1))
+    db.add(tarifa); db.flush()
+    db.add(Viatico(practica_id=p.id, tarifa_id=tarifa.id, num_dias=2,
+                   num_personas=10, valor_calculado=600000))
+    db.commit()
+
+    ta = get_token(client, usuario_admin.codigo)
+    assert client.delete(f"/api/v1/practicas/{p.id}", headers=auth(ta)).status_code == 204
+
+    assert db.query(HistorialEstado).filter(
+        HistorialEstado.entidad == "practica", HistorialEstado.entidad_id == p.id).count() == 0
+    assert db.query(PagoViatico).filter(PagoViatico.practica_id == p.id).count() == 0
+    assert db.query(MovimientoPresupuestal).filter(MovimientoPresupuestal.practica_id == p.id).count() == 0
+    assert db.query(Viatico).filter(Viatico.practica_id == p.id).count() == 0
+    # el compromiso de la práctica eliminada se revirtió en el presupuesto
+    db.refresh(pres)
+    assert float(pres.monto_comprometido) == 0.0
