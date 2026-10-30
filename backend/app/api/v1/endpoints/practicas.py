@@ -7,7 +7,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Request, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import or_
+from sqlalchemy import or_, update, case
 
 from app.db.database import get_db
 from app.models.user import User, RolEnum
@@ -668,11 +668,17 @@ def eliminar_practica(
     ).all()
     for mov in movimientos:
         if mov.tipo == TipoMovimientoEnum.comprometido:
-            presupuesto = db.query(Presupuesto).filter(Presupuesto.id == mov.presupuesto_id).first()
-            if presupuesto:
-                presupuesto.monto_comprometido = max(
-                    0.0, float(presupuesto.monto_comprometido) - float(mov.monto)
-                )
+            # UPDATE atómico (CASE para el clamp a 0): evita lost updates si dos
+            # borrados concurrentes tocan el mismo presupuesto.
+            db.execute(
+                update(Presupuesto)
+                .where(Presupuesto.id == mov.presupuesto_id)
+                .values(monto_comprometido=case(
+                    (Presupuesto.monto_comprometido - mov.monto > 0,
+                     Presupuesto.monto_comprometido - mov.monto),
+                    else_=0,
+                ))
+            )
 
     # Registros relacionados sin cascade ORM
     db.query(PagoViatico).filter(PagoViatico.practica_id == practica_id).delete()
