@@ -80,7 +80,7 @@ docker compose -f docker-compose.dev.yml up --build   # backend :8000 + frontend
 
 | Variable | Default | Para qué |
 |---|---|---|
-| `DATABASE_URL` | `sqlite:///./sipam_usco.db` | Postgres en prod: `postgresql://user:pass@host/db` |
+| `DATABASE_URL` | `sqlite:///./sipam_usco.db` | Postgres en prod: `postgresql+psycopg2://user:pass@host/db` |
 | `SECRET_KEY` | (vacío → aleatorio en dev) | Firma de JWT — **obligatorio en prod** |
 | `ADMIN_PASSWORD` | `Sasuke24` (`.env` dev) | Clave del admin `Krlitoxprz` al primer arranque — **obligatorio en prod** |
 | `AI_SERVICE_URL` | `http://localhost:5001` | En Docker: `http://ai_service:5001` |

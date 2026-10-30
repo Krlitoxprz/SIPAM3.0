@@ -1,3 +1,4 @@
+import json
 import os
 import secrets
 from pydantic_settings import BaseSettings
@@ -32,8 +33,22 @@ class Settings(BaseSettings):
     UPLOAD_DIR: str = "uploads"
     MAX_FILE_SIZE_MB: int = 5  # Reduced to 5 MB for security
 
-    # CORS origins - se sobreescribe en producción via CORS_ORIGINS env var
-    CORS_ORIGINS: List[str] = parse_cors_origins()
+    # CORS origins - se sobreescribe en producción via CORS_ORIGINS env var.
+    # Typed str (no List): pydantic-settings decodifica campos List como JSON y
+    # falla con valores separados por coma; cors_origin_list acepta ambos.
+    CORS_ORIGINS: str = ""
+
+    @property
+    def cors_origin_list(self) -> List[str]:
+        s = self.CORS_ORIGINS.strip()
+        if not s:
+            return ["http://localhost:5173", "http://127.0.0.1:5173"]
+        if s.startswith("["):
+            try:
+                return [str(o).strip() for o in json.loads(s)]
+            except (json.JSONDecodeError, TypeError):
+                pass
+        return [o.strip() for o in s.split(",") if o.strip()]
 
     ADMIN_PASSWORD: str = ""  # MUST be set in .env for production
     ORS_API_KEY: str = ""  # OpenRouteService — gratuito en openrouteservice.org

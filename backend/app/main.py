@@ -243,7 +243,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origins=settings.cors_origin_list,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type", "Accept", "X-Requested-With"],
@@ -259,7 +259,7 @@ async def csrf_origin_check(request: Request, call_next):
     if request.method in ("POST", "PUT", "PATCH", "DELETE"):
         if "authorization" not in request.headers:
             origin = request.headers.get("origin") or request.headers.get("referer")
-            if origin and not any(origin.startswith(o) for o in settings.CORS_ORIGINS):
+            if origin and not any(origin.startswith(o) for o in settings.cors_origin_list):
                 from fastapi.responses import JSONResponse
                 return JSONResponse(status_code=403, content={"detail": "Origen no permitido (CSRF)"})
     return await call_next(request)

@@ -71,3 +71,4 @@ ai_service/models/saved/*.keras
 *.key
 *.p12
 *.pfx
+uploads/
