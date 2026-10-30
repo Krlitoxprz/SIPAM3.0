@@ -10,10 +10,10 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session, joinedload
 
 from app.db.database import get_db
-from app.models.user import User
+from app.models.user import User, RolEnum
 from app.models.practica import Practica
 from app.models.transporte import PrecioCombustible, PeajeNacional
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, require_roles
 from app.services.ors_client import calcular_ruta, distancia_punto_a_ruta
 from app.services.geocoder_co import distancia_entre_municipios, geocode_local, haversine_km
 from app.services.colombia_geo import get_departamentos, get_municipios
@@ -28,6 +28,22 @@ RADIO_PEAJE_KM = 5.0             # Radio (km) para detectar peajes en la ruta
 
 
 # ─── Helpers ──────────────────────────────────────────────────────────────────
+
+_ROLES_GESTION_PRACTICA = (RolEnum.profesor, RolEnum.jefe_programa, RolEnum.decano, RolEnum.admin)
+
+
+def _verificar_acceso_practica(pr: Practica, user: User) -> None:
+    """Docente dueño, jefe del mismo programa, decano o admin."""
+    if user.rol in (RolEnum.admin, RolEnum.decano):
+        return
+    if user.rol == RolEnum.profesor and pr.profesor_id == user.id:
+        return
+    if user.rol == RolEnum.jefe_programa:
+        programa_practica = pr.asignatura.programa if pr.asignatura else None
+        if not user.programa or programa_practica == user.programa:
+            return
+    raise HTTPException(status_code=403, detail="No tiene permisos sobre esta práctica")
+
 
 def _precio_combustible_actual(db: Session, tipo: str = "diesel") -> tuple[float, str, str]:
     """Retorna (precio_litro, fuente, fecha) del combustible más reciente en DB."""
@@ -309,7 +325,7 @@ class CalcularDistanciasResponse(BaseModel):
 async def calcular_distancias_practica(
     practica_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    current_user: User = Depends(require_roles(*_ROLES_GESTION_PRACTICA)),
 ):
     """
     Geocodifica los municipios de cada segmento de ruta y calcula la distancia vial estimada.
@@ -321,6 +337,7 @@ async def calcular_distancias_practica(
     pr = db.query(Practica).options(joinedload(Practica.rutas)).filter(Practica.id == practica_id).first()
     if not pr:
         raise HTTPException(status_code=404, detail="Práctica no encontrada")
+    _verificar_acceso_practica(pr, current_user)
 
     rutas = sorted(pr.rutas, key=lambda r: r.orden)
     if not rutas:
@@ -400,39 +417,35 @@ async def calcular_costos_practica(
     categoria_peaje: int = 3,
     tipo_combustible: str = "",   # si viene vacío se auto-deriva del tipo_vehiculo
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    current_user: User = Depends(require_roles(*_ROLES_GESTION_PRACTICA)),
 ):
-    """Calcula el costo estimado de transporte para una práctica extramural registrada."""
-    from app.models.practica import RutaPractica
+    """Calcula el costo estimado de transporte para una práctica extramural registrada (solo lectura)."""
     pr = db.query(Practica).options(joinedload(Practica.rutas)).filter(Practica.id == practica_id).first()
     if not pr:
         raise HTTPException(status_code=404, detail="Práctica no encontrada")
+    _verificar_acceso_practica(pr, current_user)
 
     rutas = sorted(pr.rutas, key=lambda r: r.orden)
     if not rutas:
         raise HTTPException(status_code=422, detail="La práctica no tiene rutas registradas")
 
-    # ── Auto-calcular distancias faltantes con geocoder interno ───────────────
+    # ── Estimar distancias faltantes con geocoder interno (sin persistir) ─────
+    # Para guardarlas use POST /rutas/{practica_id}/calcular-distancias.
+    distancias = [float(r.distancia_km or 0) for r in rutas]
     distancias_auto = []
     for i in range(len(rutas) - 1):
         seg_a, seg_b = rutas[i], rutas[i + 1]
-        if seg_b.distancia_km is None or seg_b.distancia_km == 0:
+        if not distancias[i + 1]:
             ciudad_a = seg_a.municipio or seg_a.lugar or ""
             ciudad_b = seg_b.municipio or seg_b.lugar or ""
             dept_a = seg_a.departamento or ""
             dept_b = seg_b.departamento or ""
             km = distancia_entre_municipios(ciudad_a, ciudad_b, dept_a, dept_b)
             if km:
-                # Persistir para futuras consultas
-                db_ruta = db.query(RutaPractica).filter(RutaPractica.id == seg_b.id).first()
-                if db_ruta:
-                    db_ruta.distancia_km = km
-                    seg_b.distancia_km = km  # actualizar objeto en memoria
+                distancias[i + 1] = float(km)
                 distancias_auto.append(f"{ciudad_a}→{ciudad_b}: {km} km (auto)")
-    if distancias_auto:
-        db.commit()
 
-    km_total_ida = sum(float(r.distancia_km or 0) for r in rutas)
+    km_total_ida = sum(distancias)
 
     if km_total_ida == 0:
         raise HTTPException(
