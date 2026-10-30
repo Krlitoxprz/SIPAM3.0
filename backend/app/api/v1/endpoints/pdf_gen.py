@@ -7,6 +7,7 @@ Cada PDF incluye pie de verificación con código QR y hash SHA-256 del contenid
 """
 import base64
 import hashlib
+import hmac
 import io
 import json
 import os
@@ -93,15 +94,20 @@ def _render_pdf(template_name: str, context: dict) -> bytes:
 def _verification_ctx(doc_label: str, ref_id: str, context: dict) -> dict:
     """Genera el bloque de verificación documental para el pie del PDF.
 
-    El QR codifica `SIPAM-USCO|<doc>|<ref>|sha256:<digest>` y el hash SHA-256
-    se calcula sobre el contexto del documento serializado (contenido canónico),
-    de modo que cualquier alteración del documento invalida el hash.
+    El QR codifica `SIPAM-USCO|<doc>|<ref>|hmac-sha256:<digest>` y el digest es
+    HMAC-SHA256 del contexto serializado (contenido canónico) firmado con
+    SECRET_KEY, de modo que nadie puede forjar un hash válido para un
+    documento alterado sin conocer la clave del servidor.
     """
     import qrcode
 
     canonical = json.dumps(context, sort_keys=True, default=str, ensure_ascii=False)
-    digest = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
-    payload = f"SIPAM-USCO|{doc_label}|{ref_id}|sha256:{digest}"
+    digest = hmac.new(
+        settings.SECRET_KEY.encode("utf-8"),
+        canonical.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+    payload = f"SIPAM-USCO|{doc_label}|{ref_id}|hmac-sha256:{digest}"
 
     img = qrcode.make(payload)
     buf = io.BytesIO()
@@ -483,6 +489,7 @@ def pdf_fo05(
     n_part = len(participantes)
     part_pages = max(1, math.ceil(n_part / 16)) if n_part else 1
     total_pag = 4 + part_pages
+    part_chunks = [participantes[i:i + 16] for i in range(0, n_part, 16)] or [[]]
     now = datetime.now()
     duracion = pr["duracion_dias"] or 0
 
@@ -511,6 +518,7 @@ def pdf_fo05(
         "sitio_descanso": f"{destino['lugar']}{' – ' + destino['municipio'] if destino['municipio'] else ''}" if destino else "—",
         "sitio_pernoctar": (destino["lugar"] if destino else "—") if duracion > 1 else "No aplica",
         "participantes": participantes,
+        "part_chunks": part_chunks,
         "total_pag": str(total_pag),
     }
 
@@ -611,11 +619,15 @@ def pdf_fo15_consolidado(
     practicas = practicas_por_programa(programa, periodo, db, current_user)
 
     facultad = practicas[0]["facultad"] if practicas and practicas[0].get("facultad") else "—"
-    programa_out = (
-        current_user.programa
-        if current_user.rol == RolEnum.jefe_programa and current_user.programa
-        else programa or (practicas[0]["programa"] if practicas else "—")
-    )
+    if current_user.rol == RolEnum.jefe_programa and current_user.programa:
+        programa_out = current_user.programa
+    elif programa:
+        programa_out = programa
+    else:
+        programas = sorted({p["programa"] for p in practicas if p.get("programa")})
+        programa_out = programas[0] if len(programas) == 1 else (
+            "Todos los programas" if programas else "—"
+        )
     periodos = sorted({p["periodo_academico"] for p in practicas if p.get("periodo_academico")})
     now = datetime.now()
 

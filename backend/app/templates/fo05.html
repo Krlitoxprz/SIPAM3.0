@@ -258,8 +258,10 @@ Bajo la gravedad de juramento doy fe que los datos y documentos suministrados so
 <div class="nota">Vigilada Mineducación · www.usco.edu.co</div>
 
 {# ══════════════════ PÁGINA 4+ (LANDSCAPE) — LISTADO DE PERSONAL ══════════════════ #}
+{% set ns = namespace(num=0) %}
+{% for chunk in part_chunks %}
 <div class="landscape">
-{{ fo05_header('4') }}
+{{ fo05_header(4 + loop.index0) }}
 
 <div class="band-title">ESTAMENTO — DATOS DE CONTACTO</div>
 <table>
@@ -285,9 +287,10 @@ Bajo la gravedad de juramento doy fe que los datos y documentos suministrados so
   </tr>
   </thead>
   <tbody>
-  {% for p in participantes %}
+  {% for p in chunk %}
+  {% set ns.num = ns.num + 1 %}
   <tr {% if loop.index is even %}class="alt"{% endif %}>
-    <td style="text-align:center;">{{ loop.index }}</td>
+    <td style="text-align:center;">{{ ns.num }}</td>
     <td>{{ p.nombres }}</td>
     <td>{{ p.cedula }}</td>
     <td>{{ p.codigo }}</td>
@@ -307,6 +310,7 @@ Bajo la gravedad de juramento doy fe que los datos y documentos suministrados so
 
 <div class="nota">D= Docente  A= Administrativo  TO= Trabajador Oficial  CO= Contratista  EST.PRE= Estudiante Pregrado  EST.POS= Estudiante Posgrado  P= Particular  |  Vigilada Mineducación</div>
 </div>
+{% endfor %}
 
 {# ══════════════════ ÚLTIMA PÁGINA — ACTA DE CONSENTIMIENTO ══════════════════ #}
 <div class="page-break"></div>

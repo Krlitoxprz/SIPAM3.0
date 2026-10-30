@@ -32,11 +32,14 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def _safe(fn):
-    """Ejecuta fn() ignorando errores de 'ya existe' (DB previamente endurecida)."""
+    """Ejecuta fn() dentro de un SAVEPOINT: ignora errores de 'ya existe'
+    (DB previamente endurecida) sin abortar la transacción en PostgreSQL."""
+    sp = op.get_bind().begin_nested()
     try:
         fn()
+        sp.commit()
     except Exception:
-        pass
+        sp.rollback()
 
 
 def upgrade() -> None:
@@ -149,14 +152,6 @@ def downgrade() -> None:
         _safe(lambda: op.drop_index(op.f('ix_refresh_tokens_token_hash'), table_name='refresh_tokens'))
         _safe(lambda: op.create_index(op.f('ix_refresh_tokens_token_hash'), 'refresh_tokens', ['token_hash'], unique=False))
 
-    indexes = [
-        ('ix_tarifas_is_active', 'tarifas_viaticos'),
-        ('ix_presupuestos_estado', 'presupuestos'),
-        ('ix_practicas_fecha_inicio', 'practicas'),
-        ('ix_practicas_asig_periodo', 'practicas'),
-        ('ix_postulaciones_estado', 'postulaciones'),
-        ('ix_plantillas_tipo', 'monitoria_plantillas'),
-    ]
-    for name, table in indexes:
-        if table in existing:
-            _safe(lambda n=name, t=table: op.drop_index(n, table_name=t))
+    # NOTA: no se eliminan los índices ix_* en downgrade. Pueden haber
+    # preexistido a esta revisión (DB endurecida a mano) y solo afectan
+    # rendimiento, no el esquema.

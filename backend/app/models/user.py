@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Boolean, Enum, DateTime, Date, Float, Numeric, Index, CheckConstraint, Text
 from sqlalchemy.orm import relationship
-from sqlalchemy.sql import func
+from sqlalchemy.sql import expression, func
 import enum
 
 from app.db.database import Base
@@ -25,7 +25,7 @@ class User(Base):
     cedula = Column(String(20), unique=True, nullable=False)
     hashed_password = Column(String(255), nullable=False)
     rol = Column(Enum(RolEnum), nullable=False)
-    is_active = Column(Boolean, default=True, server_default="true")
+    is_active = Column(Boolean, default=True, server_default=expression.true())
     promedio = Column(Numeric(4, 2), nullable=True)
     porcentaje_creditos = Column(Numeric(5, 2), nullable=True)
     programa = Column(String(150), nullable=True)

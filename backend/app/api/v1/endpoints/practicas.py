@@ -638,9 +638,22 @@ def eliminar_practica(
     - profesor: solo sus propias prácticas en borrador, solicitada o rechazada
     - admin: cualquier práctica que no esté en ejecución ni finalizada
     """
-    p = db.query(Practica).filter(Practica.id == practica_id).first()
+    # Lock de fila: un borrado concurrente espera y luego ve 404, así la
+    # reversa del compromiso presupuestal no se aplica dos veces.
+    p = (
+        db.query(Practica)
+        .filter(Practica.id == practica_id)
+        .with_for_update()
+        .first()
+    )
     if not p:
         raise HTTPException(status_code=404, detail="Práctica no encontrada")
+
+    if db.query(PagoViatico).filter(PagoViatico.practica_id == practica_id).first():
+        raise HTTPException(
+            status_code=400,
+            detail="No se puede eliminar: la práctica tiene pagos de viáticos registrados",
+        )
 
     if current_user.rol == RolEnum.profesor:
         if p.profesor_id != current_user.id:
@@ -681,7 +694,6 @@ def eliminar_practica(
             )
 
     # Registros relacionados sin cascade ORM
-    db.query(PagoViatico).filter(PagoViatico.practica_id == practica_id).delete()
     db.query(MovimientoPresupuestal).filter(MovimientoPresupuestal.practica_id == practica_id).delete()
     db.query(HistorialEstado).filter(
         HistorialEstado.entidad == "practica",
