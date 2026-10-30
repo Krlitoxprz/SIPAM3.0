@@ -454,6 +454,11 @@ def crear_practica(
     asig = db.query(Asignatura).filter(Asignatura.id == body.asignatura_id).first()
     if not asig:
         raise HTTPException(status_code=404, detail="Asignatura no encontrada")
+    if asig.profesor_id != current_user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="Solo puede crear prácticas para asignaturas que usted dicta.",
+        )
 
     # RF-PRA-UNI-01: una sola práctica activa por asignatura + período + docente
     duplicada = (
