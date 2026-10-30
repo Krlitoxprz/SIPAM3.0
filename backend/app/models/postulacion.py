@@ -54,6 +54,11 @@ class Postulacion(Base):
             "promedio_estudiante IS NULL OR (promedio_estudiante >= 0 AND promedio_estudiante <= 5)",
             name="ck_postulacion_promedio",
         ),
+        CheckConstraint(
+            "puntaje_final IS NULL OR (puntaje_final >= 0 AND puntaje_final <= 5)",
+            name="ck_postulacion_puntaje",
+        ),
+        Index("ix_postulaciones_estado", "estado"),
         Index("ix_postulaciones_convocatoria_estado", "convocatoria_id", "estado"),
         Index("ix_postulaciones_estudiante", "estudiante_id"),
     )

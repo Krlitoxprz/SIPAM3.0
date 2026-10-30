@@ -59,8 +59,8 @@ class Practica(Base):
     duracion_dias = Column(Integer, nullable=False)
     num_alumnos = Column(Integer, nullable=False)
     total_firmas_requeridas = Column(Integer, nullable=True)
-    total_firmas_obtenidas = Column(Integer, default=0)
-    quorum_alcanzado = Column(Boolean, default=False)
+    total_firmas_obtenidas = Column(Integer, default=0, server_default="0")
+    quorum_alcanzado = Column(Boolean, default=False, server_default="false")
     tipo_docente = Column(Enum(TipoDocenteEnum), nullable=True)
     observaciones = Column(Text, nullable=True)
     observaciones_jefe = Column(Text, nullable=True)  # motivo de rechazo o comentarios del jefe
@@ -93,7 +93,10 @@ class Practica(Base):
         CheckConstraint("num_alumnos > 0", name="ck_practica_num_alumnos"),
         CheckConstraint("duracion_dias > 0", name="ck_practica_duracion"),
         CheckConstraint("fecha_fin >= fecha_inicio", name="ck_practica_fechas"),
+        CheckConstraint("total_firmas_obtenidas >= 0", name="ck_practica_firmas_obtenidas"),
         Index("ix_practicas_estado", "estado"),
+        Index("ix_practicas_asig_periodo", "asignatura_id", "periodo_academico"),
+        Index("ix_practicas_fecha_inicio", "fecha_inicio"),
         Index("ix_practicas_periodo_profesor", "periodo_academico", "profesor_id"),
         Index("ix_practicas_asignatura", "asignatura_id"),
         Index("ix_practicas_profesor", "profesor_id"),
@@ -122,6 +125,10 @@ class RutaPractica(Base):
 
     __table_args__ = (
         UniqueConstraint("practica_id", "orden", name="uq_ruta_orden"),
+        CheckConstraint(
+            "distancia_km IS NULL OR distancia_km >= 0",
+            name="ck_ruta_distancia",
+        ),
         Index("ix_rutas_practica", "practica_id"),
     )
 
@@ -157,6 +164,11 @@ class TarifaViatico(Base):
     aplica_desde = Column(Date, nullable=False)
     aplica_hasta = Column(Date, nullable=True)
     is_active = Column(Boolean, default=True)
+
+    __table_args__ = (
+        CheckConstraint("valor_dia > 0", name="ck_tarifa_valor_dia"),
+        Index("ix_tarifas_is_active", "is_active"),
+    )
 
 
 class Viatico(Base):

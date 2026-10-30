@@ -25,7 +25,7 @@ class User(Base):
     cedula = Column(String(20), unique=True, nullable=False)
     hashed_password = Column(String(255), nullable=False)
     rol = Column(Enum(RolEnum), nullable=False)
-    is_active = Column(Boolean, default=True)
+    is_active = Column(Boolean, default=True, server_default="true")
     promedio = Column(Numeric(4, 2), nullable=True)
     porcentaje_creditos = Column(Numeric(5, 2), nullable=True)
     programa = Column(String(150), nullable=True)

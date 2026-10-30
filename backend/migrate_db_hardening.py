@@ -1,4 +1,9 @@
 """
+DEPRECADO — este script manual fue reemplazado por la revisión Alembic
+`a240a12162b2_add_check_constraints` y por los `__table_args__` de los modelos.
+Se conserva solo como referencia histórica; ejecutar `alembic upgrade head`
+en su lugar.
+
 Migración: Fortalecimiento y optimización del esquema PostgreSQL.
 
 Cambios:

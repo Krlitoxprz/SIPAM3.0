@@ -58,6 +58,14 @@ class Convocatoria(Base):
         CheckConstraint("promedio_minimo >= 0 AND promedio_minimo <= 5", name="ck_convocatoria_promedio"),
         CheckConstraint("horas_semana > 0", name="ck_convocatoria_horas_semana"),
         CheckConstraint("horas_semestre > 0", name="ck_convocatoria_horas_semestre"),
+        CheckConstraint(
+            "fecha_fin_postulacion > fecha_inicio_postulacion",
+            name="ck_convocatoria_fechas",
+        ),
+        CheckConstraint(
+            "creditos_minimo_pct IS NULL OR (creditos_minimo_pct >= 0 AND creditos_minimo_pct <= 100)",
+            name="ck_convocatoria_creditos_pct",
+        ),
         CheckConstraint("num_monitores_requeridos > 0", name="ck_convocatoria_monitores"),
         Index("ix_convocatorias_estado", "estado"),
         Index("ix_convocatorias_periodo", "periodo_academico"),
@@ -118,8 +126,16 @@ class MonitoriaPlantilla(Base):
     caracter_curso = Column(String(30), nullable=True)
 
     __table_args__ = (
+        CheckConstraint("horas_semana > 0", name="ck_plantilla_horas_semana"),
+        CheckConstraint("horas_semestre > 0", name="ck_plantilla_horas_semestre"),
+        CheckConstraint("num_monitores_sugerido > 0", name="ck_plantilla_monitores"),
+        CheckConstraint(
+            "promedio_minimo >= 0 AND promedio_minimo <= 5",
+            name="ck_plantilla_promedio",
+        ),
         Index("ix_monitoria_plantillas_programa", "programa"),
         Index("ix_monitoria_plantillas_asig", "asignatura_id"),
+        Index("ix_plantillas_tipo", "tipo_monitoria"),
     )
 
     asignatura_rel = relationship("Asignatura", foreign_keys=[asignatura_id])

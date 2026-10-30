@@ -48,6 +48,7 @@ class Presupuesto(Base):
         CheckConstraint("monto_total_asignado >= 0", name="ck_presupuesto_monto"),
         CheckConstraint("monto_ejecutado >= 0", name="ck_presupuesto_ejecutado"),
         CheckConstraint("monto_comprometido >= 0", name="ck_presupuesto_comprometido"),
+        Index("ix_presupuestos_estado", "estado"),
     )
 
     movimientos = relationship("MovimientoPresupuestal", back_populates="presupuesto", cascade="all, delete-orphan")
