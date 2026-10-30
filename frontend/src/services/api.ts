@@ -237,12 +237,9 @@ export const reportesService = {
   getFO14: (convocatoriaId: number) => api.get(`/reportes/fo14/${convocatoriaId}`),
   getFO16: (practicaId: number) => api.get(`/reportes/fo16/${practicaId}`),
   getFO15: (practicaId: number) => api.get(`/reportes/fo15/${practicaId}`),
-  getConsentimiento: (practicaId: number) => api.get(`/reportes/consentimiento/${practicaId}`),
-  getFO46: (convocatoriaId: number) => api.get(`/reportes/fo46/${convocatoriaId}`),
-  getFO05: (practicaId: number) => api.get(`/reportes/fo05/${practicaId}`),
+  // getConsentimiento/getFO46/getFO05/getFO15Programa eliminados:
+  // los PDFs ahora se generan server-side vía pdfService (/pdf/*).
   getPracticasPrograma: (params?: { programa?: string; periodo?: string }) =>
-    api.get('/reportes/practicas-programa', { params }),
-  getFO15Programa: (params?: { periodo?: string }) =>
     api.get('/reportes/practicas-programa', { params }),
 };
 
@@ -417,6 +414,14 @@ export const pdfService = {
     api.get(`/pdf/fo15/${practicaId}`, { responseType: 'blob' }),
   fo16: (practicaId: number) =>
     api.get(`/pdf/fo16/${practicaId}`, { responseType: 'blob' }),
+  fo46: (convocatoriaId: number) =>
+    api.get(`/pdf/fo46/${convocatoriaId}`, { responseType: 'blob' }),
+  fo05: (practicaId: number) =>
+    api.get(`/pdf/fo05/${practicaId}`, { responseType: 'blob' }),
+  consentimiento: (practicaId: number) =>
+    api.get(`/pdf/consentimiento/${practicaId}`, { responseType: 'blob' }),
+  fo15Consolidado: (params?: { programa?: string; periodo?: string }) =>
+    api.get('/pdf/fo15-consolidado', { params, responseType: 'blob' }),
 };
 
 export function downloadBlob(blob: Blob, filename: string) {

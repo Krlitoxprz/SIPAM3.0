@@ -6,8 +6,7 @@ import {
   Download,
 } from 'lucide-react';
 import type { Convocatoria, EstadoConvocatoria, Postulacion, Asignatura, ArchivoAdjunto } from '../types';
-import { convocatoriasService, postulacionesService, seleccionService, reportesService, iaService, pdfService, archivosService, downloadBlob } from '../services/api';
-import { generarFO46 } from '../utils/pdfForms';
+import { convocatoriasService, postulacionesService, seleccionService, iaService, pdfService, archivosService, downloadBlob } from '../services/api';
 import { useAuthContext } from '../hooks/useAuthContext';
 import { useSystemContext } from '../hooks/useSystemContext';
 
@@ -616,8 +615,9 @@ function ModalDetalle({
               <button
                 onClick={async () => {
                   try {
-                    const r = await reportesService.getFO46(convocatoria.id);
-                    generarFO46(r.data);
+                    const r = await pdfService.fo46(convocatoria.id);
+                    downloadBlob(new Blob([r.data], { type: 'application/pdf' }),
+                      `FO-46_Convocatoria_${convocatoria.id}_${convocatoria.periodo_academico}.pdf`);
                   } catch { /* silencioso */ }
                 }}
                 className="flex items-center gap-2 text-xs font-semibold text-usco-gris border border-gray-200 hover:text-usco-vinotinto hover:border-usco-vinotinto/30 px-3 py-2 rounded-lg transition-colors">

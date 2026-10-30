@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<style>
+  @page { size: A4 portrait; margin: 14mm 14mm 18mm 14mm;
+    @bottom-center {
+      content: "Universidad Surcolombiana — Vicerrectoría Académica · Pág. " counter(page) " de " counter(pages);
+      font-size: 6.5pt; color: #999; font-family: Arial, sans-serif;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; font-size: 9pt; color: #1a1a1a; }
+  .header { display: flex; border: 1.2px solid #8D191D; margin-bottom: 6pt; }
+  .header-logo { width: 38mm; border-right: 1.2px solid #8D191D; padding: 5pt 7pt; }
+  .header-logo .univ { font-size: 8.5pt; font-weight: bold; color: #8D191D; line-height: 1.4; }
+  .header-logo .sub  { font-size: 6.5pt; color: #4E6470; margin-top: 2pt; }
+  .header-title {
+    flex: 1; background: #F5F2EA; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; padding: 4pt 8pt;
+    border-right: 1.2px solid #8D191D;
+  }
+  .header-title .main { font-size: 10pt; font-weight: bold; color: #8D191D; text-align: center; }
+  .header-title .sub  { font-size: 7pt; color: #4E6470; text-align: center; margin-top: 2pt; }
+  .header-meta { width: 38mm; padding: 5pt 7pt; font-size: 7.5pt; }
+  .header-meta div { margin-bottom: 3pt; }
+  .header-meta b { color: #333; }
+  .ref-box {
+    background: #F5F2EA; border: 1px solid #C8B99B; padding: 4pt 8pt;
+    font-size: 7.5pt; color: #644614; margin-bottom: 6pt;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .ref-box .nota { font-style: italic; color: #999; max-width: 60%; text-align: right; }
+  .section-title { background: #8D191D; color: #fff; font-size: 8pt; font-weight: bold; padding: 3pt 6pt; text-transform: uppercase; margin: 6pt 0 2pt; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 4pt; }
+  td, th { border: 1px solid #CCC; padding: 3.5pt 5pt; font-size: 8.5pt; vertical-align: top; }
+  th { background: #4E6470; color: #fff; font-weight: bold; text-align: center; font-size: 8pt; }
+  td.lbl { background: #F5F2EA; font-weight: bold; color: #3C3C3C; }
+  tr.alt td { background: #F9F9F9; }
+  .declaracion {
+    border: 1px solid #8D191D; border-left: 4pt solid #8D191D;
+    background: #FCFAF8; padding: 8pt 10pt; font-size: 8.5pt; margin-bottom: 5pt;
+    page-break-inside: avoid;
+  }
+  .declaracion ol { padding-left: 14pt; }
+  .declaracion ol li { margin-bottom: 3pt; }
+  .firmas { display: flex; gap: 6pt; margin-top: 10pt; }
+  .firma-box { flex: 1; border: 1px solid #BBB; text-align: center; page-break-inside: avoid; }
+  .firma-box .ft { background: #F5F2EA; font-weight: bold; font-size: 7pt; color: #8D191D; padding: 3pt; text-transform: uppercase; }
+  .firma-box .fm { height: 24pt; }
+  .firma-box .linea { border-top: 1px solid #999; margin: 0 8pt; }
+  .firma-box .fn { font-size: 7.5pt; font-weight: bold; padding: 2pt; }
+  .firma-box .fd { font-size: 6.5pt; color: #777; padding-bottom: 3pt; }
+  .nota-legal {
+    background: #F5F5F5; border: 1px solid #DDD; padding: 4pt 8pt;
+    font-size: 6.5pt; font-style: italic; color: #777; margin-top: 10pt; line-height: 1.6;
+  }
+  .gen { font-size: 7pt; color: #999; text-align: right; margin-bottom: 4pt; }
+</style>
+</head>
+<body>
+
+<div class="gen">Documento generado: {{ fecha_hoy }}</div>
+
+<div class="header">
+  <div class="header-logo">
+    <div class="univ">UNIVERSIDAD<br>SURCOLOMBIANA</div>
+    <div class="sub">Neiva · Huila · Colombia<br>www.usco.edu.co</div>
+  </div>
+  <div class="header-title">
+    <div class="main">CONSENTIMIENTO INFORMADO — PRÁCTICA EXTRAMURAL</div>
+    <div class="sub">MI-FOR-FO-15-C · Acuerdo 003/2012 USCO</div>
+  </div>
+  <div class="header-meta">
+    <div><b>Código:</b> MI-FOR-FO-15-C</div>
+    <div><b>Versión:</b> 1</div>
+    <div><b>Ref:</b> {{ doc_ref_corto }}</div>
+  </div>
+</div>
+
+<div class="ref-box">
+  <span><b>N° Referencia:</b> {{ doc_ref_corto }}</span>
+  <span class="nota">Este documento certifica que el/la estudiante ha otorgado su consentimiento informado para participar en la práctica extramural.</span>
+</div>
+
+<div class="section-title">1. Identificación del Estudiante</div>
+<table>
+  <tr>
+    <td class="lbl" style="width:22%">Nombre completo</td>
+    <td style="width:32%; font-weight:bold;">{{ estudiante.nombres }}</td>
+    <td class="lbl" style="width:22%">Código estudiantil</td>
+    <td>{{ estudiante.codigo }}</td>
+  </tr>
+  <tr>
+    <td class="lbl">Cédula de ciudadanía</td>
+    <td>{{ estudiante.cedula }}</td>
+    <td class="lbl">Programa académico</td>
+    <td>{{ estudiante.programa }}</td>
+  </tr>
+</table>
+
+<div class="section-title">2. Información de la Práctica Extramural</div>
+<table>
+  <tr>
+    <td class="lbl" style="width:22%">Nombre de la práctica</td>
+    <td style="width:32%; font-weight:bold;">{{ practica.nombre }}</td>
+    <td class="lbl" style="width:22%">Período académico</td>
+    <td>{{ practica.periodo_academico }}</td>
+  </tr>
+  <tr>
+    <td class="lbl">Asignatura</td>
+    <td>{{ asignatura.nombre }}</td>
+    <td class="lbl">Código asignatura</td>
+    <td>{{ asignatura.codigo }}</td>
+  </tr>
+  <tr>
+    <td class="lbl">Facultad</td>
+    <td>{{ asignatura.facultad or '—' }}</td>
+    <td class="lbl">Docente responsable</td>
+    <td>{{ docente.nombres }}</td>
+  </tr>
+</table>
+
+<div class="section-title">3. Fechas y Lugar de la Práctica</div>
+<table>
+  <tr>
+    <td class="lbl" style="width:22%">Fecha de inicio</td>
+    <td style="width:32%">{{ practica.fecha_inicio_fmt }}</td>
+    <td class="lbl" style="width:22%">Fecha de finalización</td>
+    <td>{{ practica.fecha_fin_fmt }}</td>
+  </tr>
+  <tr>
+    <td class="lbl">Duración</td>
+    <td>{{ practica.duracion_dias }} día(s)</td>
+    <td class="lbl">N° de participantes</td>
+    <td>{{ practica.num_alumnos }}</td>
+  </tr>
+  <tr>
+    <td class="lbl">Lugar de origen</td>
+    <td>{{ origen_str }}</td>
+    <td class="lbl">Lugar de destino</td>
+    <td>{{ destino_str }}</td>
+  </tr>
+</table>
+
+{% if rutas %}
+<div class="section-title">4. Itinerario de la Práctica</div>
+<table>
+  <tr>
+    <th style="width:8%">#</th>
+    <th style="width:20%; text-align:left;">Tipo de Punto</th>
+    <th style="text-align:left;">Lugar / Sitio</th>
+    <th style="width:22%; text-align:left;">Municipio</th>
+    <th style="width:14%; text-align:right;">Distancia</th>
+  </tr>
+  {% for r in rutas %}
+  <tr {% if loop.index is even %}class="alt"{% endif %}>
+    <td style="text-align:center;">{{ r.orden }}</td>
+    <td>{{ r.tipo_label }}</td>
+    <td>{{ r.lugar }}</td>
+    <td>{{ r.municipio or '—' }}</td>
+    <td style="text-align:right;">{{ r.distancia_fmt }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endif %}
+
+<div class="section-title">5. Declaración de Consentimiento</div>
+<div class="declaracion">
+  <p>
+    Yo, <b>{{ estudiante.nombres }}</b>, identificado(a) con cédula de ciudadanía
+    N° <b>{{ estudiante.cedula }}</b>, estudiante del programa de
+    <b>{{ estudiante.programa }}</b> de la Universidad Surcolombiana, en pleno uso
+    de mis facultades y de manera libre y voluntaria,
+  </p>
+  <p style="margin-top:6pt; font-weight:bold; color:#8D191D;">MANIFIESTO Y CONSIENTO:</p>
+  <ol style="margin-top:4pt;">
+    <li>Fui debidamente informado(a) sobre los objetivos, actividades, itinerario y condiciones de la práctica extramural.</li>
+    <li>Conozco los lugares, fechas y medios de transporte que se utilizarán durante la práctica.</li>
+    <li>Acepto participar voluntariamente y me comprometo a cumplir las normas de seguridad y convivencia.</li>
+    <li>Autorizo a la Universidad Surcolombiana el registro de actividades académicas con fines institucionales.</li>
+    <li>En caso de emergencia, autorizo al docente responsable a tomar decisiones pertinentes para mi seguridad.</li>
+  </ol>
+</div>
+
+<div class="section-title">6. Registro de Firma Digital</div>
+<table>
+  <tr>
+    <td class="lbl" style="width:22%">Método de firma</td>
+    <td style="width:32%">Firma electrónica — Sistema SIPAM-USCO</td>
+    <td class="lbl" style="width:22%">Documento de referencia</td>
+    <td style="font-weight:bold;">{{ doc_ref_corto }}</td>
+  </tr>
+  <tr>
+    <td class="lbl">Fecha y hora de firma</td>
+    <td style="font-weight:bold;">{{ fecha_firma or 'No registrada' }}</td>
+    <td class="lbl">Dirección IP registrada</td>
+    <td>{{ ip_firma or '—' }}</td>
+  </tr>
+  <tr>
+    <td class="lbl">Validez legal</td>
+    <td colspan="3" style="font-style:italic; color:#555;">
+      Conforme al Art. 7 de la Ley 527 de 1999 — Firma Electrónica con plena validez jurídica
+    </td>
+  </tr>
+</table>
+
+<div class="section-title">7. Firmas</div>
+<div class="firmas">
+  <div class="firma-box">
+    <div class="ft">Estudiante</div>
+    <div class="fm"></div>
+    <div class="linea"></div>
+    <div class="fn">{{ estudiante.nombres }}</div>
+    <div class="fd">Cód. {{ estudiante.codigo }}</div>
+  </div>
+  <div class="firma-box">
+    <div class="ft">Docente Responsable</div>
+    <div class="fm"></div>
+    <div class="linea"></div>
+    <div class="fn">{{ docente.nombres }}</div>
+    <div class="fd">{{ docente.email }}</div>
+  </div>
+  <div class="firma-box">
+    <div class="ft">Coordinador de Práctica</div>
+    <div class="fm"></div>
+    <div class="linea"></div>
+    <div class="fn">___________________________</div>
+    <div class="fd">Cargo / Firma</div>
+  </div>
+</div>
+
+<div class="nota-legal">
+  Documento generado por el Sistema de Información de Prácticas y Monitorías (SIPAM-USCO).
+  Conservar original firmado en la carpeta de la asignatura.<br/>
+  Resolución Rectoría N° 0142-2019 — Ley 527/1999 Art. 7 — Acuerdo 003/2012 USCO
+</div>
+
+{% include "_verification.html" %}
+
+</body>
+</html>

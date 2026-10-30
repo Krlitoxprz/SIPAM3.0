@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<style>
+  @page { size: A4 portrait; margin: 14mm 14mm 16mm 14mm; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; font-size: 9pt; color: #1a1a1a; }
+  .header { display: flex; border: 1.2px solid #8D191D; margin-bottom: 6pt; }
+  .header-logo { width: 38mm; border-right: 1.2px solid #8D191D; padding: 5pt 7pt; }
+  .header-logo .univ { font-size: 8.5pt; font-weight: bold; color: #8D191D; line-height: 1.4; }
+  .header-logo .sub  { font-size: 6.5pt; color: #4E6470; margin-top: 2pt; }
+  .header-title {
+    flex: 1; background: #F5F2EA; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; padding: 4pt 8pt;
+    border-right: 1.2px solid #8D191D;
+  }
+  .header-title .main { font-size: 11pt; font-weight: bold; color: #8D191D; text-align: center; }
+  .header-title .sub  { font-size: 7pt; color: #4E6470; text-align: center; margin-top: 2pt; }
+  .header-meta { width: 38mm; padding: 5pt 7pt; font-size: 7.5pt; }
+  .header-meta div { margin-bottom: 3pt; }
+  .header-meta b { color: #333; }
+  .periodo-banner {
+    background: #8D191D; color: #fff; font-size: 9.5pt; font-weight: bold;
+    padding: 4pt 8pt; margin-bottom: 5pt;
+  }
+  .conv-title {
+    background: #F5F2EA; border: 1px solid #8D191D; padding: 8pt 10pt;
+    font-size: 13pt; font-weight: bold; color: #8D191D; text-align: center;
+    margin-bottom: 7pt;
+  }
+  .section-title { background: #8D191D; color: #fff; font-size: 8pt; font-weight: bold; padding: 3pt 6pt; text-transform: uppercase; margin: 6pt 0 2pt; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 4pt; }
+  td, th { border: 1px solid #CCC; padding: 3.5pt 5pt; font-size: 8.5pt; vertical-align: top; }
+  th { background: #4E6470; color: #fff; font-weight: bold; text-align: left; font-size: 8pt; }
+  td.lbl { background: #F5F2EA; font-weight: bold; color: #3C3C3C; }
+  tr.alt td { background: #F9F9F9; }
+  .text-block {
+    border: 1px solid #C8B99B; background: #FCFAF8; padding: 6pt 8pt;
+    font-size: 8.5pt; margin-bottom: 5pt; white-space: pre-wrap;
+  }
+  .firma-center { margin: 20pt auto 0; width: 55%; text-align: center; page-break-inside: avoid; }
+  .firma-center .linea { border-top: 1px solid #999; padding-top: 4pt; }
+  .firma-center .nombre { font-weight: bold; font-size: 8pt; }
+  .firma-center .detalle { font-size: 7.5pt; color: #666; }
+  .norm-footer {
+    background: #F5F5F5; border-top: 1px solid #ddd; padding: 4pt 6pt;
+    font-size: 6.5pt; font-style: italic; color: #777;
+    display: flex; justify-content: space-between; margin-top: 12pt;
+  }
+  .gen { font-size: 7pt; color: #999; text-align: right; margin-bottom: 4pt; }
+</style>
+</head>
+<body>
+
+<div class="gen">Documento generado: {{ fecha_hoy }}</div>
+
+<div class="header">
+  <div class="header-logo">
+    <div class="univ">UNIVERSIDAD<br>SURCOLOMBIANA</div>
+    <div class="sub">Neiva · Huila · Colombia<br>www.usco.edu.co</div>
+  </div>
+  <div class="header-title">
+    <div class="main">CONVOCATORIA PARA MONITORES</div>
+    <div class="sub">MI-FOR-FO-46 · Acuerdo 012/2023 USCO</div>
+  </div>
+  <div class="header-meta">
+    <div><b>Código:</b> MI-FOR-FO-46</div>
+    <div><b>Versión:</b> 1</div>
+    <div><b>Período:</b> {{ convocatoria.periodo_academico }}</div>
+  </div>
+</div>
+
+<div class="periodo-banner">
+  PERÍODO ACADÉMICO {{ convocatoria.periodo_academico }} · {{ asignatura.programa }}
+</div>
+
+<div class="conv-title">{{ convocatoria.titulo }}</div>
+
+<div class="section-title">1. Información Institucional</div>
+<table>
+  <tr>
+    <td class="lbl" style="width:22%">Facultad</td>
+    <td style="width:28%">{{ asignatura.facultad or 'Facultad de Ingeniería' }}</td>
+    <td class="lbl" style="width:18%">Programa</td>
+    <td>{{ asignatura.programa }}</td>
+  </tr>
+  <tr>
+    <td class="lbl">Asignatura</td>
+    <td style="font-weight:bold;">{{ asignatura.nombre }}</td>
+    <td class="lbl">Código</td>
+    <td>{{ asignatura.codigo }}</td>
+  </tr>
+  <tr>
+    <td class="lbl">Semestre</td>
+    <td>{{ asignatura.semestre }}° semestre</td>
+    <td class="lbl">Créditos</td>
+    <td>{{ asignatura.creditos }}</td>
+  </tr>
+  <tr>
+    <td class="lbl">Docente responsable</td>
+    <td style="font-weight:bold;">{{ docente.nombres }}</td>
+    <td class="lbl">Correo</td>
+    <td>{{ docente.email }}</td>
+  </tr>
+</table>
+
+<div class="section-title">2. Tipo de Monitoría y Condiciones</div>
+<table>
+  <tr>
+    <td class="lbl" style="width:24%">Tipo de monitoría</td>
+    <td colspan="3" style="font-weight:bold;">{{ tipo_monitoria_label }}</td>
+  </tr>
+  <tr>
+    <td class="lbl">Horas / semana</td>
+    <td style="width:22%">{{ convocatoria.horas_semana }}</td>
+    <td class="lbl" style="width:24%">Horas / semestre</td>
+    <td>{{ convocatoria.horas_semestre }}</td>
+  </tr>
+  <tr>
+    <td class="lbl">N° monitores requeridos</td>
+    <td>{{ convocatoria.num_monitores_requeridos or 1 }}</td>
+    <td class="lbl">Sede</td>
+    <td>{{ convocatoria.sede or 'Neiva' }}</td>
+  </tr>
+</table>
+
+<div class="section-title">3. Requisitos del Candidato — Acuerdo 012/2023</div>
+<table>
+  <tr>
+    <td class="lbl" style="width:30%">Promedio acumulado mínimo</td>
+    <td style="width:20%; font-weight:bold;">{{ '%.2f' % convocatoria.promedio_minimo }}</td>
+    <td class="lbl" style="width:30%">% créditos aprobados mínimo</td>
+    <td style="font-weight:bold;">{{ '%.1f' % convocatoria.creditos_minimo_pct }}%</td>
+  </tr>
+  <tr>
+    <td class="lbl">Nota aprobatoria en la asignatura</td>
+    <td>≥ 3.0 (requerida)</td>
+    <td class="lbl">Sin sanción disciplinaria vigente</td>
+    <td>Obligatorio (Art. 4.c)</td>
+  </tr>
+</table>
+
+<div class="section-title">4. Período de Postulación</div>
+<table>
+  <tr>
+    <td class="lbl" style="width:30%">Apertura de postulaciones</td>
+    <td style="width:20%; font-weight:bold;">{{ convocatoria.fecha_inicio_fmt }}</td>
+    <td class="lbl" style="width:30%">Cierre de postulaciones</td>
+    <td style="font-weight:bold;">{{ convocatoria.fecha_fin_fmt }}</td>
+  </tr>
+</table>
+
+{% if convocatoria.descripcion_actividades %}
+<div class="section-title">5. Actividades y Compromisos del Monitor</div>
+<div class="text-block">{{ convocatoria.descripcion_actividades }}</div>
+{% endif %}
+
+<div class="section-title">6. Criterios de Selección — RF-MON-05</div>
+<table>
+  <tr>
+    <th>Criterio</th>
+    <th style="width:25%; text-align:center;">Ponderación</th>
+  </tr>
+  <tr><td>Nota obtenida en la asignatura</td><td style="text-align:center;">30%</td></tr>
+  <tr class="alt"><td>Promedio académico acumulado</td><td style="text-align:center;">30%</td></tr>
+  <tr><td>Resultado de entrevista</td><td style="text-align:center;">40%</td></tr>
+</table>
+
+<div class="section-title">7. Documentos Requeridos</div>
+<table>
+  <tr><td style="width:8%; text-align:center;">1.</td><td>Fotocopia de cédula de ciudadanía</td></tr>
+  <tr><td style="text-align:center;">2.</td><td>Certificado bancario (cuenta de ahorros activa)</td></tr>
+  <tr><td style="text-align:center;">3.</td><td>RUT — Registro Único Tributario</td></tr>
+  <tr><td style="text-align:center;">4.</td><td>Paz y salvo académico y financiero</td></tr>
+</table>
+
+<div class="firma-center">
+  <div class="linea"></div>
+  <div class="nombre">Docente Responsable</div>
+  <div class="nombre" style="font-weight:normal;">{{ docente.nombres }}</div>
+  <div class="detalle">C.C. {{ docente.cedula }} · {{ docente.email }}</div>
+</div>
+
+<div class="norm-footer">
+  <span>MI-FOR-FO-46 · Acuerdo 012/2023 USCO — Sistema SIPAM-USCO</span>
+  <span>{{ fecha_hoy }}</span>
+</div>
+
+{% include "_verification.html" %}
+
+</body>
+</html>
