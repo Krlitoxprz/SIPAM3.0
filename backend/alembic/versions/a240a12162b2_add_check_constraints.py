@@ -48,6 +48,10 @@ def _safe(fn):
             raise
 
 
+def _has_index(table: str, name: str) -> bool:
+    return any(i["name"] == name for i in sa.inspect(op.get_bind()).get_indexes(table))
+
+
 def upgrade() -> None:
     """Upgrade schema."""
     existing = set(sa.inspect(op.get_bind()).get_table_names())
@@ -67,7 +71,8 @@ def upgrade() -> None:
 
     # Drift: token_hash ya es unique=True en el modelo
     if 'refresh_tokens' in existing:
-        _safe(lambda: op.drop_index(op.f('ix_refresh_tokens_token_hash'), table_name='refresh_tokens'))
+        if _has_index('refresh_tokens', 'ix_refresh_tokens_token_hash'):
+            _safe(lambda: op.drop_index(op.f('ix_refresh_tokens_token_hash'), table_name='refresh_tokens'))
         _safe(lambda: op.create_index(op.f('ix_refresh_tokens_token_hash'), 'refresh_tokens', ['token_hash'], unique=True))
 
     # CheckConstraints — manuales (autogenerate no las emite sobre SQLite).
@@ -155,7 +160,8 @@ def downgrade() -> None:
         _safe(_drop)
 
     if 'refresh_tokens' in existing:
-        _safe(lambda: op.drop_index(op.f('ix_refresh_tokens_token_hash'), table_name='refresh_tokens'))
+        if _has_index('refresh_tokens', 'ix_refresh_tokens_token_hash'):
+            _safe(lambda: op.drop_index(op.f('ix_refresh_tokens_token_hash'), table_name='refresh_tokens'))
         _safe(lambda: op.create_index(op.f('ix_refresh_tokens_token_hash'), 'refresh_tokens', ['token_hash'], unique=False))
 
     # NOTA: no se eliminan los índices ix_* en downgrade. Pueden haber
