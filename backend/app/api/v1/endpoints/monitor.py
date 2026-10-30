@@ -44,6 +44,15 @@ def _log(db: Session, usuario_id: int, accion: str, entidad: str, entidad_id: Op
     db.flush()
 
 
+def _convocatoria_accesible(db: Session, conv_id: int, current_user: User) -> Convocatoria:
+    conv = db.query(Convocatoria).filter(Convocatoria.id == conv_id).first()
+    if not conv:
+        raise HTTPException(status_code=404, detail="Convocatoria no encontrada")
+    if current_user.rol == RolEnum.profesor and conv.profesor_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Solo puede consultar horas de sus propias convocatorias")
+    return conv
+
+
 # ── Estudiante: registrar horas propias ──────────────────────────────────────
 
 @router.post("/registrar-horas", status_code=201)
@@ -116,6 +125,7 @@ def horas_por_convocatoria(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_roles(RolEnum.profesor, RolEnum.jefe_programa, RolEnum.decano)),
 ):
+    _convocatoria_accesible(db, conv_id, current_user)
     posts = (
         db.query(Postulacion)
         .options(joinedload(Postulacion.estudiante))
@@ -376,6 +386,7 @@ def exportar_horas_csv(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_roles(RolEnum.profesor, RolEnum.jefe_programa, RolEnum.decano)),
 ):
+    _convocatoria_accesible(db, conv_id, current_user)
     posts = (
         db.query(Postulacion)
         .options(joinedload(Postulacion.estudiante))
