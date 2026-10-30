@@ -2,6 +2,7 @@
 Módulo de Prácticas Extramuros — RF-PRA-01 a RF-PRA-07
 """
 import math
+from decimal import Decimal
 from datetime import datetime, timedelta, timezone, date
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Request, Query
@@ -800,7 +801,14 @@ def aprobar_practica(
         RolEnum.jefe_programa, RolEnum.decano, RolEnum.admin,
     )),
 ):
-    p = db.query(Practica).options(joinedload(Practica.viaticos)).filter(Practica.id == practica_id).first()
+    # Lock de fila: dos aprobaciones concurrentes de la misma práctica se
+    # serializan y la segunda ve el estado ya avanzado (no compromete dos veces).
+    p = (
+        db.query(Practica)
+        .filter(Practica.id == practica_id)
+        .with_for_update()
+        .first()
+    )
     if not p:
         raise HTTPException(status_code=404, detail="Práctica no encontrada")
 
@@ -863,24 +871,41 @@ def aprobar_practica(
                 status_code=400,
                 detail="La Vicerrectoría solo puede dar aprobación final a prácticas avaladas por el Consejo de Facultad.",
             )
-        registrar_historial(db, "practica", practica_id, p.estado, EstadoPracticaEnum.aprobado_transporte, current_user.id)
-        p.estado = EstadoPracticaEnum.aprobado_transporte
 
-        total_viaticos = sum(v.valor_calculado for v in p.viaticos) if p.viaticos else 0.0
+        total_viaticos = sum((v.valor_calculado for v in p.viaticos), Decimal("0"))
         if total_viaticos > 0:
-            presupuesto = db.query(Presupuesto).filter(
+            presupuesto_id = db.query(Presupuesto.id).filter(
                 Presupuesto.periodo_academico == p.periodo_academico
-            ).first()
-            if presupuesto:
-                presupuesto.monto_comprometido += total_viaticos
+            ).scalar()
+            if presupuesto_id is not None:
+                # UPDATE atómico y condicionado a fondos disponibles: evita lost
+                # updates entre aprobaciones concurrentes y el sobregiro.
+                comprometido = db.execute(
+                    update(Presupuesto)
+                    .where(
+                        Presupuesto.id == presupuesto_id,
+                        Presupuesto.monto_total_asignado
+                        - Presupuesto.monto_ejecutado
+                        - Presupuesto.monto_comprometido >= total_viaticos,
+                    )
+                    .values(monto_comprometido=Presupuesto.monto_comprometido + total_viaticos)
+                    .execution_options(synchronize_session=False)
+                )
+                if comprometido.rowcount == 0:
+                    raise HTTPException(
+                        status_code=409,
+                        detail="Fondos insuficientes: el presupuesto del período no cubre los viáticos de esta práctica.",
+                    )
                 db.add(MovimientoPresupuestal(
-                    presupuesto_id=presupuesto.id,
+                    presupuesto_id=presupuesto_id,
                     tipo=TipoMovimientoEnum.comprometido,
                     monto=total_viaticos,
                     concepto=f"Compromiso viáticos: {p.nombre_practica}",
                     practica_id=p.id,
                     responsable_id=current_user.id,
                 ))
+        registrar_historial(db, "practica", practica_id, p.estado, EstadoPracticaEnum.aprobado_transporte, current_user.id)
+        p.estado = EstadoPracticaEnum.aprobado_transporte
         if p.profesor_id:
             _notif(db, p.profesor_id, "practica_aprobada",
                    f"Práctica '{p.nombre_practica}' APROBADA por Vicerrectoría ✅",

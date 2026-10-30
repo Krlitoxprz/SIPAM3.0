@@ -416,3 +416,63 @@ def test_eliminar_practica_con_pagos_bloqueada(client: TestClient, usuario_profe
     assert client.delete(f"/api/v1/practicas/{p.id}", headers=auth(ta)).status_code == 400
     assert db.query(Practica).filter(Practica.id == p.id).count() == 1
     assert db.query(PagoViatico).filter(PagoViatico.practica_id == p.id).count() == 1
+
+
+def _practica_con_viaticos(db, asignatura, profesor_id, periodo, valor_viaticos):
+    from datetime import date
+    from app.models.practica import TarifaViatico, Viatico
+
+    p = _nueva_practica_db(db, asignatura, profesor_id,
+                           EstadoPracticaEnum.aprobada_facultad, periodo)
+    tarifa = TarifaViatico(descripcion=f"Tarifa {periodo}", valor_dia=30000,
+                           aplica_desde=date(2025, 1, 1))
+    db.add(tarifa); db.flush()
+    db.add(Viatico(practica_id=p.id, tarifa_id=tarifa.id, num_dias=2,
+                   num_personas=10, valor_calculado=valor_viaticos))
+    db.commit()
+    return p
+
+
+def test_admin_aprueba_compromete_viaticos(client: TestClient, usuario_profesor,
+                                           usuario_admin, asignatura, db):
+    from app.models.presupuesto import Presupuesto, MovimientoPresupuestal, TipoMovimientoEnum
+
+    pres = Presupuesto(periodo_academico="2098-1", monto_total_asignado=1000000,
+                       monto_ejecutado=100000, monto_comprometido=200000)
+    db.add(pres); db.commit()
+    p = _practica_con_viaticos(db, asignatura, usuario_profesor.id, "2098-1", 600000)
+
+    ta = get_token(client, usuario_admin.codigo)
+    r = client.patch(f"/api/v1/practicas/{p.id}/aprobar", headers=auth(ta))
+    assert r.status_code == 200
+    assert r.json()["estado"] == "aprobado_transporte"
+
+    db.refresh(pres)
+    assert float(pres.monto_comprometido) == 800000.0
+    movs = db.query(MovimientoPresupuestal).filter(MovimientoPresupuestal.practica_id == p.id).all()
+    assert len(movs) == 1
+    assert movs[0].tipo == TipoMovimientoEnum.comprometido
+    assert float(movs[0].monto) == 600000.0
+
+
+def test_admin_aprueba_sin_fondos_rechaza(client: TestClient, usuario_profesor,
+                                          usuario_admin, asignatura, db):
+    from app.models.historial_estado import HistorialEstado
+    from app.models.presupuesto import Presupuesto, MovimientoPresupuestal
+
+    # disponible = 1.000.000 - 100.000 - 400.000 = 500.000 < 600.000
+    pres = Presupuesto(periodo_academico="2098-2", monto_total_asignado=1000000,
+                       monto_ejecutado=100000, monto_comprometido=400000)
+    db.add(pres); db.commit()
+    p = _practica_con_viaticos(db, asignatura, usuario_profesor.id, "2098-2", 600000)
+
+    ta = get_token(client, usuario_admin.codigo)
+    r = client.patch(f"/api/v1/practicas/{p.id}/aprobar", headers=auth(ta))
+    assert r.status_code == 409
+
+    db.refresh(pres); db.refresh(p)
+    assert float(pres.monto_comprometido) == 400000.0
+    assert p.estado == EstadoPracticaEnum.aprobada_facultad
+    assert db.query(MovimientoPresupuestal).filter(MovimientoPresupuestal.practica_id == p.id).count() == 0
+    assert db.query(HistorialEstado).filter(
+        HistorialEstado.entidad == "practica", HistorialEstado.entidad_id == p.id).count() == 0
