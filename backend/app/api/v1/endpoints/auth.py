@@ -329,6 +329,8 @@ def reset_password(
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    if current_user.rol in (RolEnum.jefe_programa, RolEnum.decano) and user.rol not in (RolEnum.estudiante, RolEnum.profesor):
+        raise HTTPException(status_code=403, detail="Solo puedes restablecer contraseñas de usuarios con rol estudiante o profesor.")
     auto_generada = not bool(body.nueva_password)
     if body.nueva_password:
         if len(body.nueva_password) < PASSWORD_MIN_LEN:
