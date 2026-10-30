@@ -130,6 +130,7 @@ export const practicasService = {
   getById: (id: number) => api.get(`/practicas/${id}`),
   create: (data: unknown) => api.post('/practicas/', data),
   update: (id: number, data: unknown) => api.put(`/practicas/${id}`, data),
+  remove: (id: number) => api.delete(`/practicas/${id}`),
   solicitar: (id: number) => api.patch(`/practicas/${id}/solicitar`),
   aprobar: (id: number) => api.patch(`/practicas/${id}/aprobar`),
   rechazar: (id: number, observaciones_jefe?: string) =>

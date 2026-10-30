@@ -1376,7 +1376,7 @@ export function Practicas() {
   const [editarPractica, setEditarPractica] = useState<Practica | null>(null);
   const [viaticosModal, setViaticosModal] = useState<number | null>(null);
   const [flash, setFlash] = useState<{ tipo: 'ok' | 'err'; texto: string } | null>(null);
-  const [accionId, setAccionId] = useState<{ tipo: 'aprobar' | 'rechazar' | 'firmar' | 'iniciar'; id: number } | null>(null);
+  const [accionId, setAccionId] = useState<{ tipo: 'aprobar' | 'rechazar' | 'firmar' | 'iniciar' | 'eliminar'; id: number } | null>(null);
   const [accionLoading, setAccionLoading] = useState(false);
   const [motivoRechazo, setMotivoRechazo] = useState('');
   const [transporteModal, setTransporteModal] = useState<number | null>(null);
@@ -1424,6 +1424,9 @@ export function Practicas() {
       } else if (accionId.tipo === 'iniciar') {
         await practicasService.iniciar(accionId.id);
         showFlash('ok', 'Práctica marcada en ejecución. ¡Buen viaje!');
+      } else if (accionId.tipo === 'eliminar') {
+        await practicasService.remove(accionId.id);
+        showFlash('ok', 'Práctica eliminada correctamente.');
       } else {
         await practicasService.firmarConsentimiento(accionId.id);
         showFlash('ok', 'Consentimiento firmado correctamente.');
@@ -1474,6 +1477,7 @@ export function Practicas() {
     rechazar: { titulo: 'Rechazar práctica', mensaje: '¿Estás seguro de que deseas rechazar esta práctica? Esta acción no se puede deshacer.', colorBtn: 'bg-red-600' },
     iniciar: { titulo: 'Confirmar inicio de práctica', mensaje: 'Al confirmar declaras que la práctica inició el día programado. El estado cambiará a «En Ejecución».', colorBtn: 'bg-indigo-600' },
     firmar: { titulo: 'Firmar consentimiento', mensaje: 'Al confirmar aceptas participar en la práctica extramural y das tu consentimiento. Se registrará tu IP y la fecha.', colorBtn: 'bg-usco-gris' },
+    eliminar: { titulo: 'Eliminar práctica', mensaje: '¿Eliminar esta práctica y todos sus registros relacionados (rutas, firmas de consentimiento, viáticos y pagos)? Esta acción no se puede deshacer.', colorBtn: 'bg-red-600' },
   }[accionId.tipo] : null;
 
   return (
@@ -1742,6 +1746,15 @@ export function Practicas() {
                     <button onClick={() => setEditarPractica(p)}
                       className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-usco-vinotinto border border-gray-200 px-3 py-1.5 rounded-lg transition-colors">
                       <Edit2 size={13} /> Editar
+                    </button>
+                  )}
+
+                  {/* Eliminar práctica */}
+                  {((user?.rol === 'profesor' && p.profesor_id === user.id && ['borrador', 'solicitada', 'rechazada'].includes(p.estado)) ||
+                    (user?.rol === 'admin' && !['en_ejecucion', 'finalizada'].includes(p.estado))) && (
+                    <button onClick={() => setAccionId({ tipo: 'eliminar', id: p.id })}
+                      className="flex items-center gap-1.5 text-xs font-semibold text-red-500 hover:text-red-700 border border-red-200 px-3 py-1.5 rounded-lg transition-colors">
+                      <Trash2 size={13} /> Eliminar
                     </button>
                   )}
 
