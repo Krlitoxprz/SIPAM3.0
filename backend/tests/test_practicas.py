@@ -416,3 +416,61 @@ def test_eliminar_practica_con_pagos_bloqueada(client: TestClient, usuario_profe
     assert client.delete(f"/api/v1/practicas/{p.id}", headers=auth(ta)).status_code == 400
     assert db.query(Practica).filter(Practica.id == p.id).count() == 1
     assert db.query(PagoViatico).filter(PagoViatico.practica_id == p.id).count() == 1
+
+
+def _practica_con_viaticos(db, asignatura, profesor_id, periodo, valor):
+    from datetime import date
+    from app.models.practica import TarifaViatico, Viatico
+
+    p = _nueva_practica_db(db, asignatura, profesor_id,
+                           EstadoPracticaEnum.aprobada_facultad, periodo)
+    tarifa = TarifaViatico(descripcion=f"Tarifa {periodo}", valor_dia=30000,
+                           aplica_desde=date(2025, 1, 1))
+    db.add(tarifa); db.flush()
+    db.add(Viatico(practica_id=p.id, tarifa_id=tarifa.id, num_dias=2,
+                   num_personas=10, valor_calculado=valor))
+    db.commit()
+    return p
+
+
+def test_admin_aprueba_compromete_presupuesto(client: TestClient, usuario_profesor,
+                                              usuario_admin, asignatura, db):
+    from app.models.presupuesto import Presupuesto, MovimientoPresupuestal, TipoMovimientoEnum
+
+    pres = Presupuesto(periodo_academico="2098-1", monto_total_asignado=1000000,
+                       monto_comprometido=300000, monto_ejecutado=100000)
+    db.add(pres); db.commit()
+    # 300.000 + 100.000 + 600.000 = 1.000.000: justo en el tope, se permite
+    p = _practica_con_viaticos(db, asignatura, usuario_profesor.id, "2098-1", 600000)
+
+    ta = get_token(client, usuario_admin.codigo)
+    r = client.patch(f"/api/v1/practicas/{p.id}/aprobar", headers=auth(ta))
+    assert r.status_code == 200
+    assert r.json()["estado"] == "aprobado_transporte"
+
+    db.refresh(pres)
+    assert float(pres.monto_comprometido) == 900000.0
+    mov = db.query(MovimientoPresupuestal).filter(MovimientoPresupuestal.practica_id == p.id).one()
+    assert mov.tipo == TipoMovimientoEnum.comprometido
+    assert float(mov.monto) == 600000.0
+
+
+def test_admin_aprueba_rechaza_si_excede_presupuesto(client: TestClient, usuario_profesor,
+                                                     usuario_admin, asignatura, db):
+    from app.models.presupuesto import Presupuesto, MovimientoPresupuestal
+    from app.models.practica import Practica
+
+    pres = Presupuesto(periodo_academico="2098-2", monto_total_asignado=1000000,
+                       monto_comprometido=500000)
+    db.add(pres); db.commit()
+    p = _practica_con_viaticos(db, asignatura, usuario_profesor.id, "2098-2", 600000)
+
+    ta = get_token(client, usuario_admin.codigo)
+    r = client.patch(f"/api/v1/practicas/{p.id}/aprobar", headers=auth(ta))
+    assert r.status_code == 400
+    assert "Presupuesto insuficiente" in r.json()["detail"]
+
+    db.expire_all()
+    assert float(db.get(Presupuesto, pres.id).monto_comprometido) == 500000.0
+    assert db.get(Practica, p.id).estado == EstadoPracticaEnum.aprobada_facultad
+    assert db.query(MovimientoPresupuestal).filter(MovimientoPresupuestal.practica_id == p.id).count() == 0
