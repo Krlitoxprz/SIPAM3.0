@@ -416,3 +416,74 @@ def test_eliminar_practica_con_pagos_bloqueada(client: TestClient, usuario_profe
     assert client.delete(f"/api/v1/practicas/{p.id}", headers=auth(ta)).status_code == 400
     assert db.query(Practica).filter(Practica.id == p.id).count() == 1
     assert db.query(PagoViatico).filter(PagoViatico.practica_id == p.id).count() == 1
+
+
+# ── Pago de viáticos: mueve comprometido → ejecutado (SF-09) ──────────────────
+
+def _practica_con_compromiso(db, asignatura, profesor_id, periodo, comprometido=200000):
+    from app.models.presupuesto import Presupuesto, MovimientoPresupuestal, TipoMovimientoEnum
+    p = _nueva_practica_db(db, asignatura, profesor_id,
+                           EstadoPracticaEnum.aprobado_transporte, periodo)
+    pres = Presupuesto(periodo_academico=periodo, monto_total_asignado=1000000,
+                       monto_comprometido=comprometido)
+    db.add(pres); db.flush()
+    db.add(MovimientoPresupuestal(presupuesto_id=pres.id, tipo=TipoMovimientoEnum.comprometido,
+                                  monto=comprometido, concepto="Compromiso viáticos",
+                                  practica_id=p.id))
+    db.commit(); db.refresh(pres)
+    return p, pres
+
+
+def _pagar(client, token, practica_id, monto):
+    return client.post(
+        f"/api/v1/practicas/{practica_id}/registrar-pago", headers=auth(token),
+        json={"monto_pagado": monto, "fecha_pago": datetime.now(timezone.utc).isoformat()},
+    )
+
+
+def test_registrar_pago_mueve_comprometido_a_ejecutado(client: TestClient, usuario_profesor,
+                                                        usuario_admin, asignatura, db):
+    from app.models.presupuesto import MovimientoPresupuestal, TipoMovimientoEnum
+    p, pres = _practica_con_compromiso(db, asignatura, usuario_profesor.id, "2097-1")
+    ta = get_token(client, usuario_admin.codigo)
+
+    r = _pagar(client, ta, p.id, 150000)
+    assert r.status_code == 201, r.text
+    db.refresh(pres)
+    assert float(pres.monto_comprometido) == 50000.0
+    assert float(pres.monto_ejecutado) == 150000.0
+    movs = db.query(MovimientoPresupuestal).filter(
+        MovimientoPresupuestal.practica_id == p.id,
+        MovimientoPresupuestal.tipo == TipoMovimientoEnum.ejecucion).all()
+    assert len(movs) == 1 and float(movs[0].monto) == 150000.0
+
+    # El resto del compromiso se puede pagar; nada más allá
+    assert _pagar(client, ta, p.id, 50000).status_code == 201
+    db.refresh(pres)
+    assert float(pres.monto_comprometido) == 0.0
+    assert float(pres.monto_ejecutado) == 200000.0
+
+
+def test_registrar_pago_rechaza_sobrepago(client: TestClient, usuario_profesor,
+                                          usuario_admin, asignatura, db):
+    from app.models.pago_viatico import PagoViatico
+    p, pres = _practica_con_compromiso(db, asignatura, usuario_profesor.id, "2097-2")
+    ta = get_token(client, usuario_admin.codigo)
+
+    assert _pagar(client, ta, p.id, 200000.01).status_code == 400
+    assert _pagar(client, ta, p.id, 120000).status_code == 201
+    assert _pagar(client, ta, p.id, 90000).status_code == 400
+    db.refresh(pres)
+    assert float(pres.monto_comprometido) == 80000.0
+    assert float(pres.monto_ejecutado) == 120000.0
+    assert db.query(PagoViatico).filter(PagoViatico.practica_id == p.id).count() == 1
+
+
+def test_registrar_pago_sin_compromiso_rechazado(client: TestClient, usuario_profesor,
+                                                 usuario_admin, asignatura, db):
+    from app.models.pago_viatico import PagoViatico
+    p = _nueva_practica_db(db, asignatura, usuario_profesor.id,
+                           EstadoPracticaEnum.aprobado_transporte, "2097-3")
+    ta = get_token(client, usuario_admin.codigo)
+    assert _pagar(client, ta, p.id, 1000).status_code == 400
+    assert db.query(PagoViatico).filter(PagoViatico.practica_id == p.id).count() == 0
