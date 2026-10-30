@@ -55,7 +55,7 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     environment:
-      DB_URL:     postgresql+psycopg2://postgres:postgres_dev_password@db:5432/sipam_db_dev
+      DB_URL:     postgresql://postgres:postgres_dev_password@db:5432/sipam_db_dev
       AI_PORT:    "5001"
       PGCLIENTENCODING: utf8
     volumes:
