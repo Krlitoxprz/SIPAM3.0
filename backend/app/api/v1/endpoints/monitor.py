@@ -44,6 +44,16 @@ def _log(db: Session, usuario_id: int, accion: str, entidad: str, entidad_id: Op
     db.flush()
 
 
+def _verificar_titular_convocatoria(db: Session, conv_id: int, current_user: User) -> None:
+    if current_user.rol != RolEnum.profesor:
+        return
+    conv = db.query(Convocatoria).filter(Convocatoria.id == conv_id).first()
+    if not conv:
+        raise HTTPException(status_code=404, detail="Convocatoria no encontrada")
+    if conv.profesor_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Solo puede consultar horas de sus propias convocatorias")
+
+
 # ── Estudiante: registrar horas propias ──────────────────────────────────────
 
 @router.post("/registrar-horas", status_code=201)
@@ -116,6 +126,7 @@ def horas_por_convocatoria(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_roles(RolEnum.profesor, RolEnum.jefe_programa, RolEnum.decano)),
 ):
+    _verificar_titular_convocatoria(db, conv_id, current_user)
     posts = (
         db.query(Postulacion)
         .options(joinedload(Postulacion.estudiante))
@@ -290,6 +301,12 @@ def get_evaluacion(
         ).first()
         if not post:
             raise HTTPException(status_code=403, detail="No tienes acceso a esta evaluación")
+    elif current_user.rol == RolEnum.profesor:
+        post = db.query(Postulacion).options(joinedload(Postulacion.convocatoria)).filter(
+            Postulacion.id == post_id
+        ).first()
+        if not post or post.convocatoria.profesor_id != current_user.id:
+            raise HTTPException(status_code=403, detail="Solo puede consultar evaluaciones de sus propias convocatorias")
     return {
         "id": ev.id,
         "postulacion_id": ev.postulacion_id,
@@ -376,6 +393,7 @@ def exportar_horas_csv(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_roles(RolEnum.profesor, RolEnum.jefe_programa, RolEnum.decano)),
 ):
+    _verificar_titular_convocatoria(db, conv_id, current_user)
     posts = (
         db.query(Postulacion)
         .options(joinedload(Postulacion.estudiante))
