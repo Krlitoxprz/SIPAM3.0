@@ -14,6 +14,12 @@ from app.api.deps import get_current_user, require_roles
 router = APIRouter()
 
 
+def _verificar_titular(current_user: User, profesor_id: Optional[int]) -> None:
+    """Un profesor solo puede consultar formularios de prácticas/convocatorias propias."""
+    if current_user.rol == RolEnum.profesor and profesor_id != current_user.id:
+        raise HTTPException(status_code=403, detail="No eres el docente titular de este recurso")
+
+
 @router.get("/resumen")
 def resumen_general(
     db: Session = Depends(get_db),
@@ -122,7 +128,7 @@ def resumen_general(
 def datos_fo14(
     convocatoria_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles(RolEnum.jefe_programa, RolEnum.decano, RolEnum.admin, RolEnum.profesor)),
+    current_user: User = Depends(require_roles(RolEnum.jefe_programa, RolEnum.decano, RolEnum.admin, RolEnum.profesor)),
 ):
     """Datos completos para generar el formulario MI-FOR-FO-14 (Requerimiento Monitores)."""
     conv = db.query(Convocatoria).options(
@@ -132,6 +138,7 @@ def datos_fo14(
     ).filter(Convocatoria.id == convocatoria_id).first()
     if not conv:
         raise HTTPException(status_code=404, detail="Convocatoria no encontrada")
+    _verificar_titular(current_user, conv.profesor_id)
 
     monitor = next(
         (p for p in conv.postulaciones if p.estado == EstadoPostulacionEnum.seleccionado), None
@@ -182,7 +189,7 @@ def datos_fo14(
 def datos_fo15(
     practica_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles(RolEnum.jefe_programa, RolEnum.decano, RolEnum.admin, RolEnum.profesor)),
+    current_user: User = Depends(require_roles(RolEnum.jefe_programa, RolEnum.decano, RolEnum.admin, RolEnum.profesor)),
 ):
     """Datos completos para generar el formulario MI-FOR-FO-15 (Requerimiento Prácticas Extramuros)."""
     pr = db.query(Practica).options(
@@ -194,6 +201,7 @@ def datos_fo15(
     ).filter(Practica.id == practica_id).first()
     if not pr:
         raise HTTPException(status_code=404, detail="Práctica no encontrada")
+    _verificar_titular(current_user, pr.profesor_id)
 
     rutas = sorted(pr.rutas, key=lambda r: r.orden)
     firmas = sorted(pr.firmas, key=lambda f: f.signed_at or f.id)
@@ -266,7 +274,7 @@ def datos_fo15(
 def datos_fo16(
     practica_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles(RolEnum.jefe_programa, RolEnum.decano, RolEnum.admin, RolEnum.profesor)),
+    current_user: User = Depends(require_roles(RolEnum.jefe_programa, RolEnum.decano, RolEnum.admin, RolEnum.profesor)),
 ):
     """Datos completos para generar el formulario MI-FOR-FO-16 (Justificación Prácticas Extramuros)."""
     pr = db.query(Practica).options(
@@ -276,6 +284,7 @@ def datos_fo16(
     ).filter(Practica.id == practica_id).first()
     if not pr:
         raise HTTPException(status_code=404, detail="Práctica no encontrada")
+    _verificar_titular(current_user, pr.profesor_id)
 
     rutas = sorted(pr.rutas, key=lambda r: r.orden)
 
@@ -403,7 +412,7 @@ def datos_consentimiento(
 def datos_fo46(
     convocatoria_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles(RolEnum.jefe_programa, RolEnum.decano, RolEnum.admin, RolEnum.profesor)),
+    current_user: User = Depends(require_roles(RolEnum.jefe_programa, RolEnum.decano, RolEnum.admin, RolEnum.profesor)),
 ):
     """Datos para MI-FOR-FO-46 — Convocatoria para Monitores (cartel público)."""
     conv = db.query(Convocatoria).options(
@@ -412,6 +421,7 @@ def datos_fo46(
     ).filter(Convocatoria.id == convocatoria_id).first()
     if not conv:
         raise HTTPException(status_code=404, detail="Convocatoria no encontrada")
+    _verificar_titular(current_user, conv.profesor_id)
 
     return {
         "convocatoria": {
@@ -451,7 +461,7 @@ def datos_fo46(
 def datos_fo05(
     practica_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles(RolEnum.jefe_programa, RolEnum.decano, RolEnum.admin, RolEnum.profesor)),
+    current_user: User = Depends(require_roles(RolEnum.jefe_programa, RolEnum.decano, RolEnum.admin, RolEnum.profesor)),
 ):
     """Datos para AP-INF-FO-05 — Solicitud de Desplazamiento Vial."""
     pr = db.query(Practica).options(
@@ -462,6 +472,7 @@ def datos_fo05(
     ).filter(Practica.id == practica_id).first()
     if not pr:
         raise HTTPException(status_code=404, detail="Práctica no encontrada")
+    _verificar_titular(current_user, pr.profesor_id)
 
     rutas = sorted(pr.rutas, key=lambda r: r.orden)
     participantes = [
