@@ -27,6 +27,7 @@ build/
 
 # ── Base de datos SQLite ──────────────────────────────────────────────────────
 *.db
+*.db-*
 *.sqlite
 *.sqlite3
 

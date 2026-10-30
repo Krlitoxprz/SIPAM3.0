@@ -348,8 +348,6 @@ def test_eliminar_practica_limpia_relacionados(client: TestClient, usuario_profe
     db.add(HistorialEstado(entidad="practica", entidad_id=p.id,
                            estado_anterior="borrador", estado_nuevo="solicitada",
                            usuario_id=usuario_profesor.id))
-    db.add(PagoViatico(practica_id=p.id, registrado_por_id=usuario_admin.id,
-                       monto_pagado=100000, fecha_pago=datetime.now(timezone.utc)))
     pres = Presupuesto(periodo_academico="2099-6", monto_total_asignado=1000000,
                        monto_comprometido=50000)
     db.add(pres); db.flush()
@@ -367,9 +365,25 @@ def test_eliminar_practica_limpia_relacionados(client: TestClient, usuario_profe
 
     assert db.query(HistorialEstado).filter(
         HistorialEstado.entidad == "practica", HistorialEstado.entidad_id == p.id).count() == 0
-    assert db.query(PagoViatico).filter(PagoViatico.practica_id == p.id).count() == 0
     assert db.query(MovimientoPresupuestal).filter(MovimientoPresupuestal.practica_id == p.id).count() == 0
     assert db.query(Viatico).filter(Viatico.practica_id == p.id).count() == 0
     # el compromiso de la práctica eliminada se revirtió en el presupuesto
     db.refresh(pres)
     assert float(pres.monto_comprometido) == 0.0
+
+
+def test_eliminar_practica_con_pagos_bloqueada(client: TestClient, usuario_profesor,
+                                               usuario_admin, asignatura, db):
+    from app.models.pago_viatico import PagoViatico
+    from app.models.practica import Practica
+
+    p = _nueva_practica_db(db, asignatura, usuario_profesor.id,
+                           EstadoPracticaEnum.aprobado_transporte, "2099-7")
+    db.add(PagoViatico(practica_id=p.id, registrado_por_id=usuario_admin.id,
+                       monto_pagado=100000, fecha_pago=datetime.now(timezone.utc)))
+    db.commit()
+
+    ta = get_token(client, usuario_admin.codigo)
+    assert client.delete(f"/api/v1/practicas/{p.id}", headers=auth(ta)).status_code == 400
+    assert db.query(Practica).filter(Practica.id == p.id).count() == 1
+    assert db.query(PagoViatico).filter(PagoViatico.practica_id == p.id).count() == 1

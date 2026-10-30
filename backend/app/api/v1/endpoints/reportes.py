@@ -122,7 +122,7 @@ def resumen_general(
 def datos_fo14(
     convocatoria_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles(RolEnum.jefe_programa, RolEnum.decano, RolEnum.profesor)),
+    _: User = Depends(require_roles(RolEnum.jefe_programa, RolEnum.decano, RolEnum.admin, RolEnum.profesor)),
 ):
     """Datos completos para generar el formulario MI-FOR-FO-14 (Requerimiento Monitores)."""
     conv = db.query(Convocatoria).options(
@@ -182,7 +182,7 @@ def datos_fo14(
 def datos_fo15(
     practica_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles(RolEnum.jefe_programa, RolEnum.decano, RolEnum.profesor)),
+    _: User = Depends(require_roles(RolEnum.jefe_programa, RolEnum.decano, RolEnum.admin, RolEnum.profesor)),
 ):
     """Datos completos para generar el formulario MI-FOR-FO-15 (Requerimiento Prácticas Extramuros)."""
     pr = db.query(Practica).options(
@@ -266,7 +266,7 @@ def datos_fo15(
 def datos_fo16(
     practica_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles(RolEnum.jefe_programa, RolEnum.decano, RolEnum.profesor)),
+    _: User = Depends(require_roles(RolEnum.jefe_programa, RolEnum.decano, RolEnum.admin, RolEnum.profesor)),
 ):
     """Datos completos para generar el formulario MI-FOR-FO-16 (Justificación Prácticas Extramuros)."""
     pr = db.query(Practica).options(
@@ -403,7 +403,7 @@ def datos_consentimiento(
 def datos_fo46(
     convocatoria_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles(RolEnum.jefe_programa, RolEnum.decano, RolEnum.profesor)),
+    _: User = Depends(require_roles(RolEnum.jefe_programa, RolEnum.decano, RolEnum.admin, RolEnum.profesor)),
 ):
     """Datos para MI-FOR-FO-46 — Convocatoria para Monitores (cartel público)."""
     conv = db.query(Convocatoria).options(
@@ -451,7 +451,7 @@ def datos_fo46(
 def datos_fo05(
     practica_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles(RolEnum.jefe_programa, RolEnum.decano, RolEnum.profesor)),
+    _: User = Depends(require_roles(RolEnum.jefe_programa, RolEnum.decano, RolEnum.admin, RolEnum.profesor)),
 ):
     """Datos para AP-INF-FO-05 — Solicitud de Desplazamiento Vial."""
     pr = db.query(Practica).options(

@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text, Index
 from sqlalchemy.orm import relationship
-from sqlalchemy.sql import func
+from sqlalchemy.sql import expression, func
 
 from app.db.database import Base
 
@@ -13,7 +13,7 @@ class Notificacion(Base):
     tipo = Column(String(60), nullable=False)
     titulo = Column(String(200), nullable=False)
     mensaje = Column(Text, nullable=False)
-    leida = Column(Boolean, default=False, server_default="false", nullable=False)
+    leida = Column(Boolean, default=False, server_default=expression.false(), nullable=False)
     url = Column(String(300), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 

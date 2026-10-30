@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Enum, DateTime, Float, Numeric, ForeignKey, Text, Boolean, Date, Time, Index, UniqueConstraint, CheckConstraint
 from sqlalchemy.orm import relationship
-from sqlalchemy.sql import func
+from sqlalchemy.sql import expression, func
 import enum
 
 from app.db.database import Base
@@ -60,7 +60,7 @@ class Practica(Base):
     num_alumnos = Column(Integer, nullable=False)
     total_firmas_requeridas = Column(Integer, nullable=True)
     total_firmas_obtenidas = Column(Integer, default=0, server_default="0")
-    quorum_alcanzado = Column(Boolean, default=False, server_default="false")
+    quorum_alcanzado = Column(Boolean, default=False, server_default=expression.false())
     tipo_docente = Column(Enum(TipoDocenteEnum), nullable=True)
     observaciones = Column(Text, nullable=True)
     observaciones_jefe = Column(Text, nullable=True)  # motivo de rechazo o comentarios del jefe
