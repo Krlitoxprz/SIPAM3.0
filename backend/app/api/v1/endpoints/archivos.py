@@ -56,9 +56,14 @@ async def descargar_archivo(
             detail="No tienes permiso para acceder a este archivo"
         )
 
-    # Profesores solo pueden acceder si es su archivo
+    # Profesores: archivos propios o de postulaciones a sus convocatorias
     elif current_user.rol == RolEnum.profesor:
-        if archivo.usuario_id != current_user.id:
+        es_convocatoria_suya = (
+            archivo.postulacion
+            and archivo.postulacion.convocatoria
+            and archivo.postulacion.convocatoria.profesor_id == current_user.id
+        )
+        if archivo.usuario_id != current_user.id and not es_convocatoria_suya:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="No tienes permiso para acceder a este archivo"
@@ -71,7 +76,7 @@ async def descargar_archivo(
         )
 
     # Verificar que el archivo existe físicamente
-    ruta_archivo = archivo.ruta_completa if archivo.ruta_completa else archivo.ruta_archivo
+    ruta_archivo = archivo.ruta_completa if archivo.ruta_completa else os.path.join(settings.UPLOAD_DIR, archivo.ruta_archivo)
     if not os.path.exists(ruta_archivo):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

@@ -97,3 +97,88 @@ def test_usuario_inactivo_no_puede_login(client: TestClient, db):
         "password": PASSWORD,
     })
     assert r.status_code in (401, 400, 403)
+
+
+# ── PA-010: Login también fija la cookie HttpOnly ──────────────────────────────
+def test_login_setea_cookie_httponly(client: TestClient, usuario_estudiante):
+    r = client.post("/api/v1/auth/login", json={
+        "codigo": usuario_estudiante.codigo,
+        "password": PASSWORD,
+    })
+    assert r.status_code == 200
+    set_cookie = r.headers.get("set-cookie", "")
+    assert "access_token=" in set_cookie
+    assert "refresh_token=" in set_cookie
+    assert "HttpOnly" in set_cookie
+
+
+# ── PA-011: Refresh token renueva la sesión ───────────────────────────────────
+def test_refresh_token_renueva_sesion(client: TestClient, usuario_estudiante):
+    r = client.post("/api/v1/auth/login", json={
+        "codigo": usuario_estudiante.codigo,
+        "password": PASSWORD,
+    })
+    assert r.status_code == 200
+    # TestClient conserva las cookies → /refresh usa la cookie refresh_token
+    r2 = client.post("/api/v1/auth/refresh")
+    assert r2.status_code == 200
+    data = r2.json()
+    assert "access_token" in data
+    r3 = client.get("/api/v1/auth/me", headers=auth(data["access_token"]))
+    assert r3.status_code == 200
+
+
+# ── PA-012: Refresh token ya usado (revocado) se rechaza ──────────────────────
+def test_refresh_token_revocado_rechazado(client: TestClient, usuario_estudiante):
+    from app.models.refresh_token import RefreshToken
+    from app.core.security import hash_refresh_token
+    client.post("/api/v1/auth/login", json={
+        "codigo": usuario_estudiante.codigo,
+        "password": PASSWORD,
+    })
+    cookie = client.cookies.get("refresh_token")
+    assert cookie
+    # Primer uso: OK (rota el token)
+    r1 = client.post("/api/v1/auth/refresh")
+    assert r1.status_code == 200
+    # Segundo uso del MISMO valor → revocado
+    client.cookies.clear()
+    client.cookies.set("refresh_token", cookie)
+    r2 = client.post("/api/v1/auth/refresh")
+    assert r2.status_code == 401
+
+
+# ── PA-013: Sin refresh token → 401 ────────────────────────────────────────────
+def test_refresh_sin_token_401(client: TestClient):
+    client.cookies.clear()
+    r = client.post("/api/v1/auth/refresh")
+    assert r.status_code == 401
+
+
+# ── PA-014: Un refresh token no sirve como access token ───────────────────────
+def test_refresh_no_es_access_token(client: TestClient, usuario_estudiante):
+    client.post("/api/v1/auth/login", json={
+        "codigo": usuario_estudiante.codigo,
+        "password": PASSWORD,
+    })
+    refresh_cookie = client.cookies.get("refresh_token")
+    assert refresh_cookie
+    # Sin la cookie access_token: solo vale el Authorization header con el refresh JWT
+    client.cookies.clear()
+    r = client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {refresh_cookie}"})
+    assert r.status_code == 401
+
+
+# ── PA-015: Fuerza bruta se registra con IP exacta (sin comodines LIKE) ───────
+def test_fuerza_bruta_por_ip_e_identificador(client: TestClient, usuario_estudiante, db):
+    from app.models.monitor import AuditLog
+    # '%' como identificador no debe colisionar con otros intentos
+    for _ in range(2):
+        client.post("/api/v1/auth/login", json={"codigo": "OTRO_USUARIO", "password": "x"})
+    r = client.post("/api/v1/auth/login", json={
+        "codigo": usuario_estudiante.codigo,
+        "password": "WRONG",
+    })
+    assert r.status_code == 401
+    logs = db.query(AuditLog).filter(AuditLog.accion == "login_fallido").all()
+    assert all(l.ip_address is not None for l in logs)

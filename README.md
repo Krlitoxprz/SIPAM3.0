@@ -221,8 +221,9 @@ COOKIE_DOMAIN=.usco.edu.co
 - **ESP32 Tracker:** Tracking GPS en tiempo real de estudiantes en prácticas
 - **Simulador Python:** Pruebas sin hardware real
 - **Endpoints:**
-  - `POST /iot/gps/update` - Recibir coordenadas GPS
-  - `GET /iot/locations/{practica_id}` - Ver ruta de práctica
+  - `POST /api/v1/iot/tracking/` - Recibir puntos GPS del dispositivo (header `X-API-Key`)
+  - `GET /api/v1/iot/tracking/{practice_id}` - Puntos reales de la ruta de práctica
+  - `GET /api/v1/iot/tracking/{practice_id}/map` - GeoJSON para visualización en mapa
 
 ### 📄 PDF Generation (Backend)
 - **WeasyPrint:** Generación de PDFs en el servidor (no en cliente)
@@ -270,10 +271,11 @@ docker compose exec backend python -c "from app.db.database import init_db; init
 - [x] ✅ Integración Alembic para migraciones
 - [x] ✅ PostgreSQL en Docker para desarrollo
 - [x] ✅ Tabla de auditoría inmutable
-- [ ] 🔄 Cookies HttpOnly para JWT (frontend)
+- [x] ✅ Cookies HttpOnly para JWT + protección CSRF por Origin
+- [x] ✅ Refresh Tokens completos (rotación, revocación, hash en BD)
+- [x] ✅ Subida de archivos: solo `uploads/fotos_perfil` público; documentos vía `/api/v1/archivos/{id}` con RBAC
 - [ ] 🔄 RBAC estricto en todos los endpoints
 - [ ] 🔄 GitHub Actions para CI/CD
-- [ ] 🔄 Implementación completa de Refresh Tokens
 
 ---
 

@@ -10,7 +10,11 @@ from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.models.user import User, RolEnum
 from app.models.monitor import AuditLog
-from app.core.security import verify_password, create_access_token
+from app.models.refresh_token import RefreshToken
+from app.core.security import (
+    verify_password, create_access_token, create_refresh_token,
+    verify_token, hash_refresh_token,
+)
 from app.schemas.user import LoginRequest, Token, UserOut, UserCreate, ValidacionAcademicaOut
 from app.api.deps import get_current_user, require_roles
 from app.core.security import get_password_hash
@@ -22,15 +26,21 @@ PASSWORD_MIN_LEN = 8
 _MAX_ATTEMPTS = 5
 _WINDOW = timedelta(minutes=15)
 
-def _check_brute_force(identifier: str, db: Session) -> None:
-    """Lanza 429 si el identificador tiene ≥5 login_fallido en los últimos 15 min (BD)."""
+def _check_brute_force(identifier: str, ip_address: str, db: Session) -> None:
+    """Lanza 429 si el par (identificador, IP) tiene ≥5 login_fallido en 15 min.
+
+    Comparación exacta de `detalle` (sin comodines LIKE) e inclusión de la IP
+    del cliente: así un atacante no puede bloquear la cuenta de otro usuario
+    desde una IP distinta, ni un identificador como '%' casa con todo.
+    """
     from sqlalchemy import func as sa_func
     window_start = datetime.now(timezone.utc) - _WINDOW
     count = (
         db.query(sa_func.count(AuditLog.id))
         .filter(
             AuditLog.accion == "login_fallido",
-            AuditLog.detalle.like(f"%{identifier}%"),
+            AuditLog.detalle == f"Intento fallido para {identifier}",
+            AuditLog.ip_address == ip_address,
             AuditLog.created_at >= window_start,
         )
         .scalar() or 0
@@ -42,12 +52,13 @@ def _check_brute_force(identifier: str, db: Session) -> None:
         )
 
 
-def _register_failed(identifier: str, db: Session, user_id: Optional[int] = None) -> None:
+def _register_failed(identifier: str, db: Session, user_id: Optional[int] = None, ip_address: str = "") -> None:
     db.add(AuditLog(
         usuario_id=user_id,
         accion="login_fallido",
         entidad="auth",
         detalle=f"Intento fallido para {identifier}",
+        ip_address=ip_address,
     ))
     db.commit()
 
@@ -59,53 +70,109 @@ def _clear_attempts(_identifier: str, _db: Session) -> None:
 router = APIRouter()
 
 
-@router.post("/login", response_model=UserOut)
-def login(body: LoginRequest, response: Response, db: Session = Depends(get_db)):
-    _check_brute_force(body.codigo, db)
+def _cookie_opts() -> dict:
+    """Opciones compartidas para set_cookie/delete_cookie (mismas opciones = borrado real)."""
+    return {
+        "httponly": True,
+        "secure": settings.COOKIE_SECURE,
+        "samesite": settings.COOKIE_SAMESITE,
+        "domain": settings.COOKIE_DOMAIN if settings.COOKIE_DOMAIN else None,
+    }
+
+
+def _issue_tokens(user: User, response: Response, db: Session) -> str:
+    """Emite access + refresh token (cookie HttpOnly cada uno) y persiste el hash del refresh. Devuelve el access token."""
+    access_token = create_access_token(subject=str(user.id))
+    raw_refresh = create_refresh_token(subject=str(user.id))
+    db.add(RefreshToken(
+        usuario_id=user.id,
+        token_hash=hash_refresh_token(raw_refresh),
+        expires_at=datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
+    ))
+    db.commit()
+
+    opts = _cookie_opts()
+    response.set_cookie(
+        key="access_token", value=access_token,
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60, **opts,
+    )
+    response.set_cookie(
+        key="refresh_token", value=raw_refresh,
+        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 3600, **opts,
+    )
+    return access_token
+
+
+@router.post("/login", response_model=Token)
+def login(body: LoginRequest, request: Request, response: Response, db: Session = Depends(get_db)):
+    client_ip = request.client.host if request.client else ""
+    _check_brute_force(body.codigo, client_ip, db)
     user = db.query(User).filter(User.codigo == body.codigo).first()
     if not user:
         user = db.query(User).filter(User.cedula == body.codigo).first()
     if not user or not verify_password(body.password, user.hashed_password):
-        _register_failed(body.codigo, db, user_id=user.id if user else None)
+        _register_failed(body.codigo, db, user_id=user.id if user else None, ip_address=client_ip)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Código, cédula o contraseña incorrectos",
         )
     if not user.is_active:
-        _register_failed(body.codigo, db, user_id=user.id)
+        _register_failed(body.codigo, db, user_id=user.id, ip_address=client_ip)
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Usuario inactivo. Contacte al administrador.",
         )
     _clear_attempts(body.codigo, db)
-    db.add(AuditLog(usuario_id=user.id, accion="login_exitoso", entidad="auth", detalle=f"Login desde rol {user.rol.value}"))
+    db.add(AuditLog(usuario_id=user.id, accion="login_exitoso", entidad="auth", detalle=f"Login desde rol {user.rol.value}", ip_address=client_ip))
     db.commit()
-    token = create_access_token(subject=str(user.id))
+    token = _issue_tokens(user, response, db)
 
-    # Set HttpOnly cookie for JWT
-    response.set_cookie(
-        key="access_token",
-        value=token,
-        httponly=True,
-        secure=settings.COOKIE_SECURE,
-        samesite=settings.COOKIE_SAMESITE,
-        domain=settings.COOKIE_DOMAIN if settings.COOKIE_DOMAIN else None,
-        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
-    )
+    # El token también se devuelve en el JSON: la cookie HttpOnly cubre el navegador
+    # y el cuerpo cubre clientes sin cookies (tests, apps móviles, curl).
+    return Token(access_token=token, user=UserOut.model_validate(user))
 
-    return UserOut.model_validate(user)
+
+@router.post("/refresh", response_model=Token)
+def refresh(request: Request, response: Response, db: Session = Depends(get_db)):
+    """Renueva el access token usando la cookie `refresh_token`.
+
+    Rotación: el refresh anterior se revoca y se emite uno nuevo; un token
+    revocado/expirado desconocido invalida la sesión (reuso detectado).
+    """
+    raw = request.cookies.get("refresh_token")
+    if not raw:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="No hay refresh token")
+    user_id = verify_token(raw, token_type="refresh")
+    stored = db.query(RefreshToken).filter(
+        RefreshToken.token_hash == hash_refresh_token(raw),
+        RefreshToken.revoked == False,
+        RefreshToken.expires_at > datetime.now(timezone.utc),
+    ).first()
+    user = db.query(User).filter(User.id == int(user_id)).first() if user_id else None
+    if not user_id or not stored or not user or not user.is_active:
+        if stored:
+            stored.revoked = True
+            db.commit()
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token inválido o expirado")
+    stored.revoked = True
+    db.add(AuditLog(usuario_id=user.id, accion="refresh_token", entidad="auth", detalle="Token renovado"))
+    db.commit()
+    token = _issue_tokens(user, response, db)
+    return Token(access_token=token, user=UserOut.model_validate(user))
 
 
 @router.post("/logout")
-def logout(response: Response, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Logout endpoint that clears the HttpOnly cookie."""
+def logout(request: Request, response: Response, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Logout: revoca el refresh token y borra ambas cookies HttpOnly."""
+    raw = request.cookies.get("refresh_token")
+    if raw:
+        db.query(RefreshToken).filter(RefreshToken.token_hash == hash_refresh_token(raw)).update({"revoked": True})
     db.add(AuditLog(usuario_id=current_user.id, accion="logout", entidad="auth", detalle=f"Logout de {current_user.codigo}"))
     db.commit()
 
-    response.delete_cookie(
-        key="access_token",
-        domain=settings.COOKIE_DOMAIN if settings.COOKIE_DOMAIN else None
-    )
+    opts = _cookie_opts()
+    response.delete_cookie(key="access_token", **opts)
+    response.delete_cookie(key="refresh_token", **opts)
     return {"message": "Logged out successfully"}
 
 
