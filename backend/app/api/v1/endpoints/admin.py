@@ -18,7 +18,9 @@ from app.models.presupuesto import ConfiguracionCalendario
 from app.models.convocatoria import Convocatoria, EstadoConvocatoriaEnum, Asignatura
 from app.models.postulacion import Postulacion
 from app.models.practica import Practica, EstadoPracticaEnum
+from app.models.pago_viatico import PagoViatico
 from app.api.deps import require_roles
+from app.api.v1.endpoints.practicas import eliminar_practica_y_dependencias
 
 router = APIRouter()
 
@@ -364,9 +366,22 @@ def eliminar_practica_admin(
     db: Session = Depends(get_db),
     _: User = _ADMIN,
 ):
-    """Elimina una práctica y todos sus datos asociados (acción irreversible)."""
-    p = db.query(Practica).filter(Practica.id == practica_id).first()
+    """Elimina una práctica y todos sus datos asociados (acción irreversible).
+
+    Revierte el monto comprometido en el presupuesto; se rechaza si la
+    práctica ya tiene pagos de viáticos registrados.
+    """
+    p = (
+        db.query(Practica)
+        .filter(Practica.id == practica_id)
+        .with_for_update()
+        .first()
+    )
     if not p:
         raise HTTPException(404, "Práctica no encontrada")
-    db.delete(p)
+    if db.query(PagoViatico).filter(PagoViatico.practica_id == practica_id).first():
+        raise HTTPException(
+            400, "No se puede eliminar: la práctica tiene pagos de viáticos registrados"
+        )
+    eliminar_practica_y_dependencias(db, p)
     db.commit()

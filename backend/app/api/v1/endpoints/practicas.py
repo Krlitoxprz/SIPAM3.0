@@ -632,6 +632,40 @@ def actualizar_practica(
     return _enrich(p, testing_mode=es_modo_prueba(db))
 
 
+def eliminar_practica_y_dependencias(db: Session, p: Practica) -> None:
+    """Borra la práctica y sus registros dependientes revirtiendo su compromiso
+    presupuestal. No hace commit. El llamador debe haber bloqueado la fila
+    (with_for_update) y verificado que no tenga pagos de viáticos."""
+    # Revertir el compromiso presupuestal antes de borrar los movimientos:
+    # aprobar_practica incrementó presupuesto.monto_comprometido y sin revertirlo
+    # quedaría un compromiso sin respaldo de ninguna práctica.
+    movimientos = db.query(MovimientoPresupuestal).filter(
+        MovimientoPresupuestal.practica_id == p.id
+    ).all()
+    for mov in movimientos:
+        if mov.tipo == TipoMovimientoEnum.comprometido:
+            # UPDATE atómico (CASE para el clamp a 0): evita lost updates si dos
+            # borrados concurrentes tocan el mismo presupuesto.
+            db.execute(
+                update(Presupuesto)
+                .where(Presupuesto.id == mov.presupuesto_id)
+                .values(monto_comprometido=case(
+                    (Presupuesto.monto_comprometido - mov.monto > 0,
+                     Presupuesto.monto_comprometido - mov.monto),
+                    else_=0,
+                ))
+            )
+
+    # Registros relacionados sin cascade ORM
+    db.query(MovimientoPresupuestal).filter(MovimientoPresupuestal.practica_id == p.id).delete()
+    db.query(HistorialEstado).filter(
+        HistorialEstado.entidad == "practica",
+        HistorialEstado.entidad_id == p.id,
+    ).delete()
+    # rutas, firmas y viáticos se eliminan por cascade="all, delete-orphan"
+    db.delete(p)
+
+
 @router.delete("/{practica_id}", status_code=204)
 def eliminar_practica(
     practica_id: int,
@@ -678,34 +712,7 @@ def eliminar_practica(
             detail="No se pueden eliminar prácticas en ejecución o finalizadas",
         )
 
-    # Revertir el compromiso presupuestal antes de borrar los movimientos:
-    # aprobar_practica incrementó presupuesto.monto_comprometido y sin revertirlo
-    # quedaría un compromiso sin respaldo de ninguna práctica.
-    movimientos = db.query(MovimientoPresupuestal).filter(
-        MovimientoPresupuestal.practica_id == practica_id
-    ).all()
-    for mov in movimientos:
-        if mov.tipo == TipoMovimientoEnum.comprometido:
-            # UPDATE atómico (CASE para el clamp a 0): evita lost updates si dos
-            # borrados concurrentes tocan el mismo presupuesto.
-            db.execute(
-                update(Presupuesto)
-                .where(Presupuesto.id == mov.presupuesto_id)
-                .values(monto_comprometido=case(
-                    (Presupuesto.monto_comprometido - mov.monto > 0,
-                     Presupuesto.monto_comprometido - mov.monto),
-                    else_=0,
-                ))
-            )
-
-    # Registros relacionados sin cascade ORM
-    db.query(MovimientoPresupuestal).filter(MovimientoPresupuestal.practica_id == practica_id).delete()
-    db.query(HistorialEstado).filter(
-        HistorialEstado.entidad == "practica",
-        HistorialEstado.entidad_id == practica_id,
-    ).delete()
-    # rutas, firmas y viáticos se eliminan por cascade="all, delete-orphan"
-    db.delete(p)
+    eliminar_practica_y_dependencias(db, p)
     db.commit()
 
 
