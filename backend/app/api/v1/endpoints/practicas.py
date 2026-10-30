@@ -850,7 +850,8 @@ def firmar_consentimiento(
     )
 
     # RF-PRA-TIME-02: no permitir firmar si la práctica ya finalizó
-    if not modo_prueba and fecha_fin and fecha_fin.date() < hoy.date():
+    # (independiente del modo prueba: una firma posterior a la actividad no es válida)
+    if fecha_fin and fecha_fin.date() < hoy.date():
         raise HTTPException(
             status_code=400,
             detail="No es posible firmar el consentimiento: la práctica ya fue realizada.",
