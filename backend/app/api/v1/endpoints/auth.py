@@ -22,6 +22,15 @@ from app.core.config import settings
 
 PASSWORD_MIN_LEN = 8
 
+_ROLES_GESTIONABLES_POR_JEFE = (RolEnum.estudiante, RolEnum.profesor)
+
+
+def _verificar_puede_gestionar(current_user: User, user: User) -> None:
+    """jefe_programa/decano solo gestionan estudiantes y profesores (403 si no)."""
+    if current_user.rol in (RolEnum.jefe_programa, RolEnum.decano) and user.rol not in _ROLES_GESTIONABLES_POR_JEFE:
+        raise HTTPException(status_code=403, detail="Solo puedes gestionar usuarios con rol estudiante o profesor.")
+
+
 # ── Protección fuerza bruta (DB-backed — multi-worker safe) ─────────────────
 _MAX_ATTEMPTS = 5
 _WINDOW = timedelta(minutes=15)
@@ -248,6 +257,7 @@ def toggle_activo(
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     if user.id == current_user.id:
         raise HTTPException(status_code=400, detail="No puedes desactivar tu propia cuenta")
+    _verificar_puede_gestionar(current_user, user)
     user.is_active = not user.is_active
     accion = "activar_usuario" if user.is_active else "desactivar_usuario"
     db.add(AuditLog(usuario_id=current_user.id, accion=accion, entidad="user", entidad_id=user.id, detalle=f"Usuario {user.codigo} ({user.rol.value})"))
@@ -268,6 +278,7 @@ def toggle_sancionado(
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     if user.rol != RolEnum.estudiante:
         raise HTTPException(status_code=400, detail="Las sanciones disciplinarias solo aplican a estudiantes")
+    _verificar_puede_gestionar(current_user, user)
     user.sancionado_disciplinariamente = not user.sancionado_disciplinariamente
     accion = "sancionar_usuario" if user.sancionado_disciplinariamente else "levantar_sancion"
     db.add(AuditLog(
@@ -329,6 +340,7 @@ def reset_password(
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    _verificar_puede_gestionar(current_user, user)
     auto_generada = not bool(body.nueva_password)
     if body.nueva_password:
         if len(body.nueva_password) < PASSWORD_MIN_LEN:
@@ -414,7 +426,7 @@ def crear_usuario(
 ):
     if body.rol == RolEnum.admin:
         raise HTTPException(status_code=403, detail="No se pueden crear usuarios con rol administrador a través de esta interfaz.")
-    if current_user.rol in (RolEnum.jefe_programa, RolEnum.decano) and body.rol not in (RolEnum.estudiante, RolEnum.profesor):
+    if current_user.rol in (RolEnum.jefe_programa, RolEnum.decano) and body.rol not in _ROLES_GESTIONABLES_POR_JEFE:
         raise HTTPException(status_code=403, detail="El jefe de programa solo puede crear usuarios con rol estudiante o profesor.")
     if db.query(User).filter(User.codigo == body.codigo).first():
         raise HTTPException(status_code=400, detail="El código ya existe")

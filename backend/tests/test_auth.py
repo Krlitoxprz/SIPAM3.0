@@ -212,3 +212,38 @@ def test_crear_usuario_admin_prohibido(client: TestClient, usuario_admin):
         "rol": "admin",
     })
     assert r.status_code == 403
+
+
+# ── PA-017: jefe/decano solo gestionan estudiantes y profesores ───────────────
+@pytest.mark.parametrize("actor", ["usuario_jefe", "usuario_decano"])
+@pytest.mark.parametrize("objetivo", ["usuario_admin", "usuario_decano", "usuario_jefe"])
+def test_jefe_decano_no_gestionan_roles_superiores(client: TestClient, request, actor, objetivo):
+    actor_u = request.getfixturevalue(actor)
+    objetivo_u = request.getfixturevalue(objetivo)
+    if actor_u.id == objetivo_u.id:
+        pytest.skip("auto-gestión cubierta por otra validación")
+    token = get_token(client, actor_u.codigo)
+    r = client.patch(f"/api/v1/auth/usuarios/{objetivo_u.id}/toggle-activo", headers=auth(token))
+    assert r.status_code == 403, r.text
+    r = client.patch(f"/api/v1/auth/usuarios/{objetivo_u.id}/reset-password", headers=auth(token), json={})
+    assert r.status_code == 403, r.text
+    assert "nueva_password" not in r.json()
+
+
+def test_jefe_gestiona_estudiante(client: TestClient, usuario_jefe, usuario_estudiante):
+    token = get_token(client, usuario_jefe.codigo)
+    url = f"/api/v1/auth/usuarios/{usuario_estudiante.id}"
+    for _ in range(2):
+        r = client.patch(f"{url}/toggle-activo", headers=auth(token))
+        assert r.status_code == 200, r.text
+        r = client.patch(f"{url}/toggle-sancionado", headers=auth(token))
+        assert r.status_code == 200, r.text
+    assert r.json()["is_active"] is True
+    r = client.patch(f"{url}/reset-password", headers=auth(token), json={"nueva_password": PASSWORD})
+    assert r.status_code == 200, r.text
+
+
+def test_admin_gestiona_jefe(client: TestClient, usuario_admin, usuario_jefe):
+    token = get_token(client, usuario_admin.codigo)
+    r = client.patch(f"/api/v1/auth/usuarios/{usuario_jefe.id}/reset-password", headers=auth(token), json={"nueva_password": PASSWORD})
+    assert r.status_code == 200, r.text
