@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { DollarSign, TrendingUp, TrendingDown, AlertCircle, Loader2, ChevronDown, Settings, Send, CheckCircle, X, RefreshCw, MessageSquare, Plus, ArrowUpCircle, Info, Paperclip, Upload, Download, Trash2, FileText, Eye } from 'lucide-react';
 import type { Presupuesto as PresupuestoType } from '../types';
 import { presupuestoService, downloadAuthenticated } from '../services/api';
-import { useAuthContext } from '../context/AuthContext';
+import { useAuthContext } from '../hooks/useAuthContext';
 
 interface MovimientoItem {
   id: number;
@@ -106,6 +106,15 @@ export function Presupuesto() {
     setTimeout(() => setFlash(null), 4000);
   }
 
+  const cargarDocs = useCallback(async (periodo: string) => {
+    setLoadingDocs(true);
+    try {
+      const r = await presupuestoService.listarDocumentos(periodo);
+      setDocs(r.data as DocItem[]);
+    } catch { setDocs([]); }
+    finally { setLoadingDocs(false); }
+  }, []);
+
   async function cargar(periodo?: string) {
     setLoading(true);
     try {
@@ -132,7 +141,7 @@ export function Presupuesto() {
   // Cargar docs cuando cambia el presupuesto
   useEffect(() => {
     if (presupuesto?.periodo_academico) cargarDocs(presupuesto.periodo_academico);
-  }, [presupuesto?.periodo_academico]);
+  }, [presupuesto?.periodo_academico, cargarDocs]);
 
   async function abrirModalNuevo() {
     setModalNuevo(true);
@@ -184,15 +193,6 @@ export function Presupuesto() {
       if (a.desc) fd.append('descripcion', a.desc);
       await presupuestoService.subirDocumento(periodo, fd);
     }
-  }
-
-  async function cargarDocs(periodo: string) {
-    setLoadingDocs(true);
-    try {
-      const r = await presupuestoService.listarDocumentos(periodo);
-      setDocs(r.data as DocItem[]);
-    } catch { setDocs([]); }
-    finally { setLoadingDocs(false); }
   }
 
   async function subirDoc() {

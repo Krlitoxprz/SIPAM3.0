@@ -1,18 +1,7 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import { useState, useEffect, useCallback, type ReactNode } from 'react';
 import { adminService } from '../services/api';
-import { useAuthContext } from './AuthContext';
-
-interface SystemContextType {
-  testingMode: boolean;
-  loadingMode: boolean;
-  refreshMode: () => Promise<void>;
-}
-
-const SystemContext = createContext<SystemContextType>({
-  testingMode: false,
-  loadingMode: true,
-  refreshMode: async () => {},
-});
+import { useAuthContext } from '../hooks/useAuthContext';
+import { SystemContext } from '../hooks/useSystemContext';
 
 export function SystemProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated } = useAuthContext();
@@ -40,8 +29,4 @@ export function SystemProvider({ children }: { children: ReactNode }) {
       {children}
     </SystemContext.Provider>
   );
-}
-
-export function useSystemContext() {
-  return useContext(SystemContext);
 }

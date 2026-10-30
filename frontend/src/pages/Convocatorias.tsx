@@ -8,8 +8,8 @@ import {
 import type { Convocatoria, EstadoConvocatoria, Postulacion, Asignatura, ArchivoAdjunto } from '../types';
 import { convocatoriasService, postulacionesService, seleccionService, reportesService, iaService, pdfService, archivosService, downloadBlob } from '../services/api';
 import { generarFO46 } from '../utils/pdfForms';
-import { useAuthContext } from '../context/AuthContext';
-import { useSystemContext } from '../context/SystemContext';
+import { useAuthContext } from '../hooks/useAuthContext';
+import { useSystemContext } from '../hooks/useSystemContext';
 
 interface RecomendacionIA {
   convocatoria_id: number;

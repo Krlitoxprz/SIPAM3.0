@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
-import { useSystemContext } from '../../context/SystemContext';
+import { useSystemContext } from '../../hooks/useSystemContext';
 import { FlaskConical } from 'lucide-react';
 
 export function MainLayout() {

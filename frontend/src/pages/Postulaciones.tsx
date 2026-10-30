@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { ClipboardList, FileText, Upload, CheckCircle, XCircle, Clock, AlertTriangle, Loader2, MessageSquare, LogOut, QrCode, Download } from 'lucide-react';
 import type { Postulacion, EstadoPostulacion } from '../types';
 import { postulacionesService, qrService, downloadBlob } from '../services/api';
-import { useAuthContext } from '../context/AuthContext';
+import { useAuthContext } from '../hooks/useAuthContext';
 
 const estadoConfig: Record<EstadoPostulacion, { label: string; color: string; icon: React.ReactNode }> = {
   pendiente: { label: 'Pendiente', color: 'bg-yellow-100 text-yellow-700', icon: <Clock size={14} /> },

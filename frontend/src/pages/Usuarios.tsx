@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Users, Plus, Search, ToggleLeft, ToggleRight, Loader2, X, ChevronDown, KeyRound, Copy, CheckCircle, ShieldAlert, ShieldCheck, FlaskConical } from 'lucide-react';
 import { usuariosService, adminService } from '../services/api';
-import { useSystemContext } from '../context/SystemContext';
+import { useSystemContext } from '../hooks/useSystemContext';
 import type { User, Rol } from '../types';
 
 const ROL_LABEL: Record<Rol, string> = {
