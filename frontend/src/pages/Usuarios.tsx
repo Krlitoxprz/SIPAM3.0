@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Users, Plus, Search, ToggleLeft, ToggleRight, Loader2, X, ChevronDown, KeyRound, Copy, CheckCircle, ShieldAlert, ShieldCheck, FlaskConical } from 'lucide-react';
 import { usuariosService, adminService } from '../services/api';
 import { useSystemContext } from '../hooks/useSystemContext';
+import { useAuthContext } from '../hooks/useAuthContext';
 import type { User, Rol } from '../types';
 
 const ROL_LABEL: Record<Rol, string> = {
@@ -51,6 +52,9 @@ const FORM_INICIAL: NuevoUsuarioForm = {
 
 export function Usuarios() {
   const { testingMode, refreshMode } = useSystemContext();
+  const { user: currentUser } = useAuthContext();
+  const puedeResetear = (u: User) =>
+    currentUser?.rol === 'admin' || u.rol === 'estudiante' || u.rol === 'profesor';
   const [usuarios, setUsuarios] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -393,6 +397,7 @@ export function Usuarios() {
                       ) : <span className="text-xs text-gray-300">—</span>}
                     </td>
                     <td className="px-4 py-3 text-center">
+                      {puedeResetear(u) ? (
                       <button
                         onClick={() => handleReset(u)}
                         disabled={resetting === u.id}
@@ -402,6 +407,7 @@ export function Usuarios() {
                         {resetting === u.id ? <Loader2 size={14} className="animate-spin" /> : <KeyRound size={14} />}
                         Reset
                       </button>
+                      ) : <span className="text-xs text-gray-300">—</span>}
                     </td>
                   </tr>
                 ))}
