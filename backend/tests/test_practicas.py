@@ -350,7 +350,8 @@ def test_eliminar_practica_limpia_relacionados(client: TestClient, usuario_profe
                            usuario_id=usuario_profesor.id))
     db.add(PagoViatico(practica_id=p.id, registrado_por_id=usuario_admin.id,
                        monto_pagado=100000, fecha_pago=datetime.now(timezone.utc)))
-    pres = Presupuesto(periodo_academico="2099-6", monto_total_asignado=1000000)
+    pres = Presupuesto(periodo_academico="2099-6", monto_total_asignado=1000000,
+                       monto_comprometido=50000)
     db.add(pres); db.flush()
     db.add(MovimientoPresupuestal(presupuesto_id=pres.id, tipo=TipoMovimientoEnum.comprometido,
                                 monto=50000, concepto="Viáticos práctica", practica_id=p.id))
@@ -369,3 +370,6 @@ def test_eliminar_practica_limpia_relacionados(client: TestClient, usuario_profe
     assert db.query(PagoViatico).filter(PagoViatico.practica_id == p.id).count() == 0
     assert db.query(MovimientoPresupuestal).filter(MovimientoPresupuestal.practica_id == p.id).count() == 0
     assert db.query(Viatico).filter(Viatico.practica_id == p.id).count() == 0
+    # el compromiso de la práctica eliminada se revirtió en el presupuesto
+    db.refresh(pres)
+    assert float(pres.monto_comprometido) == 0.0

@@ -660,6 +660,20 @@ def eliminar_practica(
             detail="No se pueden eliminar prácticas en ejecución o finalizadas",
         )
 
+    # Revertir el compromiso presupuestal antes de borrar los movimientos:
+    # aprobar_practica incrementó presupuesto.monto_comprometido y sin revertirlo
+    # quedaría un compromiso sin respaldo de ninguna práctica.
+    movimientos = db.query(MovimientoPresupuestal).filter(
+        MovimientoPresupuestal.practica_id == practica_id
+    ).all()
+    for mov in movimientos:
+        if mov.tipo == TipoMovimientoEnum.comprometido:
+            presupuesto = db.query(Presupuesto).filter(Presupuesto.id == mov.presupuesto_id).first()
+            if presupuesto:
+                presupuesto.monto_comprometido = max(
+                    0.0, float(presupuesto.monto_comprometido) - float(mov.monto)
+                )
+
     # Registros relacionados sin cascade ORM
     db.query(PagoViatico).filter(PagoViatico.practica_id == practica_id).delete()
     db.query(MovimientoPresupuestal).filter(MovimientoPresupuestal.practica_id == practica_id).delete()
