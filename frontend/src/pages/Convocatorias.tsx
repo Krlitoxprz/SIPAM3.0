@@ -489,7 +489,7 @@ function ModalDetalle({
   const [cambiandoEstado, setCambiandoEstado] = useState(false);
   const [ejecutandoSeleccion, setEjecutandoSeleccion] = useState(false);
   const [msg, setMsg] = useState<{ tipo: 'ok' | 'err'; texto: string } | null>(null);
-  const canSeePostulantes = user?.rol === 'jefe_programa' || user?.rol === 'decano' || user?.rol === 'profesor';
+  const canSeePostulantes = user?.rol === 'jefe_programa' || user?.rol === 'decano' || user?.rol === 'profesor' || user?.rol === 'admin';
   const sigEstado = TRANSICION[convocatoria.estado];
 
   useEffect(() => {

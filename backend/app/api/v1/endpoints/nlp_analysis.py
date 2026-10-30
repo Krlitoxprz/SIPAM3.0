@@ -84,7 +84,7 @@ async def analyze_text(
 
 
 @router.get("/models")
-async def list_nlp_models():
+async def list_nlp_models(_: User = Depends(get_current_user)):
     """List available NLP models (Transformer architectures)."""
     return {
         "models": [
