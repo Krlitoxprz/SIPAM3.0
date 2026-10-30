@@ -458,7 +458,11 @@ export function Configuracion() {
     finally { setLoadingAsig(false); }
   }, []);
 
-  useEffect(() => { cargarCalendarios(); cargarTarifas(); cargarPresupuestos(); cargarAsignaturas(); cargarProgramaAcademico(); }, [cargarCalendarios, cargarTarifas, cargarPresupuestos, cargarAsignaturas, cargarProgramaAcademico]);
+  const esAdmin = user?.rol === 'admin';
+  useEffect(() => {
+    if (!esAdmin) return; // los endpoints de configuración/presupuesto son solo de gestión
+    cargarCalendarios(); cargarTarifas(); cargarPresupuestos(); cargarAsignaturas(); cargarProgramaAcademico();
+  }, [esAdmin, cargarCalendarios, cargarTarifas, cargarPresupuestos, cargarAsignaturas, cargarProgramaAcademico]);
 
   if (user?.rol !== 'admin') {
     return (

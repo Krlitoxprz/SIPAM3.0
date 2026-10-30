@@ -73,11 +73,11 @@ export function Login() {
               <div className="grid grid-cols-3 gap-2">
                 {[
                   { label: 'Admin',       codigo: 'Krlitoxprz', pw: 'Sasuke24',  color: 'bg-gray-100 text-gray-700 hover:bg-gray-200' },
-                  { label: 'Decano',      codigo: '12791500',   pw: 'sipam2025', color: 'bg-usco-vinotinto/10 text-usco-vinotinto hover:bg-usco-vinotinto/20' },
-                  { label: 'Jefe Prog.',  codigo: '76001001',   pw: 'sipam2025', color: 'bg-purple-50 text-purple-700 hover:bg-purple-100' },
-                  { label: 'Enc. Gastos',codigo: '12345100',   pw: 'sipam2025', color: 'bg-amber-50 text-amber-700 hover:bg-amber-100' },
-                  { label: 'Profesor',    codigo: '87650001',   pw: 'sipam2025', color: 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100' },
-                  { label: 'Estudiante',  codigo: '1136279761', pw: 'sipam2025', color: 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' },
+                  { label: 'Decano',      codigo: 'DECANO001',  pw: 'sipam2025', color: 'bg-usco-vinotinto/10 text-usco-vinotinto hover:bg-usco-vinotinto/20' },
+                  { label: 'Jefe Prog.',  codigo: 'JEFE001',    pw: 'sipam2025', color: 'bg-purple-50 text-purple-700 hover:bg-purple-100' },
+                  { label: 'Jefe Prog. 2',codigo: 'JEFE002',    pw: 'sipam2025', color: 'bg-amber-50 text-amber-700 hover:bg-amber-100' },
+                  { label: 'Profesor',    codigo: 'PROF001',    pw: 'sipam2025', color: 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100' },
+                  { label: 'Estudiante',  codigo: '20231150092',pw: 'sipam2025', color: 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' },
                 ].map(u => (
                   <button key={u.codigo} type="button"
                     onClick={() => { setCodigo(u.codigo); setPassword(u.pw); }}

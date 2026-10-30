@@ -29,8 +29,8 @@
 | Código | Descripción |
 |---|---|
 | `admin` | Administrador del sistema |
-| `encargado_facultad` | Jefe de Programa / Encargado de Facultad |
-| `encargado_gastos` | Encargado de Gastos |
+| `decano` | Decano de Facultad |
+| `jefe_programa` | Jefe de Programa |
 | `profesor` | Profesor |
 | `estudiante` | Estudiante |
 
@@ -60,19 +60,19 @@
 
 ### `GET /auth/validar-academica/{codigo_estudiante}`
 - **Descripción:** Valida si un estudiante cumple los requisitos académicos (promedio ≥ 3.5 y créditos aprobados ≥ 30%). Implementa el RF-MON-01.
-- **Acceso:** `profesor`, `encargado_facultad`.
+- **Acceso:** `profesor`, `jefe_programa`.
 - **Parámetro:** `codigo_estudiante` — código del estudiante a validar.
 - **Respuesta:** `{ apto: bool, promedio, porcentaje_creditos, motivos_rechazo[] }`
 
 ### `GET /auth/usuarios`
 - **Descripción:** Lista todos los usuarios del sistema. Permite filtrar por rol (`?rol=`) y buscar por código, nombre o email (`?q=`).
-- **Acceso:** `admin`, `encargado_facultad`.
+- **Acceso:** `admin`, `jefe_programa`.
 - **Query params:** `rol` (opcional), `q` (opcional — búsqueda de texto).
 - **Respuesta:** `UserOut[]`
 
 ### `POST /auth/usuarios`
-- **Descripción:** Crea un nuevo usuario en el sistema. El `encargado_facultad` solo puede crear usuarios con rol `estudiante` o `profesor`. Nadie puede crear un `admin` por esta vía. Valida unicidad de código, email y cédula. Contraseña mínima 8 caracteres.
-- **Acceso:** `admin`, `encargado_facultad`.
+- **Descripción:** Crea un nuevo usuario en el sistema. El `jefe_programa` solo puede crear usuarios con rol `estudiante` o `profesor`. Nadie puede crear un `admin` por esta vía. Valida unicidad de código, email y cédula. Contraseña mínima 8 caracteres.
+- **Acceso:** `admin`, `jefe_programa`.
 - **Body:** `UserCreate { codigo, nombres, apellidos, email, cedula, password, rol, promedio?, porcentaje_creditos?, programa?, sede? }`
 - **Respuesta:** `UserOut` (HTTP 201)
 
@@ -84,13 +84,13 @@
 
 ### `PATCH /auth/usuarios/{user_id}/toggle-activo`
 - **Descripción:** Activa o desactiva un usuario. No permite desactivar la propia cuenta. Registra la acción en el audit log.
-- **Acceso:** `admin`, `encargado_facultad`.
+- **Acceso:** `admin`, `jefe_programa`.
 - **Parámetro:** `user_id` — ID del usuario.
 - **Respuesta:** `UserOut` (con estado actualizado)
 
 ### `PATCH /auth/usuarios/{user_id}/reset-password`
 - **Descripción:** Restablece la contraseña de un usuario. Si no se envía `nueva_password`, genera una contraseña temporal de 10 caracteres aleatorios. Registra la acción en audit log.
-- **Acceso:** `admin`, `encargado_facultad`.
+- **Acceso:** `admin`, `jefe_programa`.
 - **Body:** `{ nueva_password?: string }`
 - **Respuesta:** `{ ok: true, nueva_password: string, mensaje: string }`
 
@@ -106,7 +106,7 @@
 
 ### `POST /convocatorias/`
 - **Descripción:** Crea una nueva convocatoria en estado `borrador`. Valida: ventana de postulación mínima 5 días y máxima 20 (Acuerdo 012/2023 Art.6); fecha inicio no puede ser pasada; fecha publicación resultados debe ser posterior al cierre (Art.8). Los profesores solo pueden crear convocatorias para sus propias asignaturas.
-- **Acceso:** `encargado_facultad`, `profesor`.
+- **Acceso:** `jefe_programa`, `profesor`.
 - **Body:** `ConvocatoriaCreate`
 - **Respuesta:** `ConvocatoriaOut` (HTTP 201)
 
@@ -117,53 +117,53 @@
 
 ### `PUT /convocatorias/{conv_id}`
 - **Descripción:** Actualiza los datos de una convocatoria. Solo editable en estado `borrador` o `abierta`. Los profesores solo pueden editar sus propias convocatorias y no pueden asignar asignaturas ajenas.
-- **Acceso:** `encargado_facultad`, `profesor`.
+- **Acceso:** `jefe_programa`, `profesor`.
 - **Body:** `ConvocatoriaUpdate`
 - **Respuesta:** `ConvocatoriaOut`
 
 ### `PATCH /convocatorias/{conv_id}/estado`
 - **Descripción:** Cambia el estado de una convocatoria siguiendo el flujo: `borrador → abierta → cerrada → en_evaluacion → finalizada`. Al abrir, verifica que estemos dentro del período habilitado en `ConfiguracionCalendario`. Envía notificaciones automáticas a los interesados según el nuevo estado.
-- **Acceso:** `encargado_facultad`.
+- **Acceso:** `jefe_programa`.
 - **Body:** `{ estado: EstadoConvocatoriaEnum }`
 - **Respuesta:** `ConvocatoriaOut`
 
 ### `GET /convocatorias/profesores`
 - **Descripción:** Lista todos los profesores activos disponibles para asignar a una convocatoria.
-- **Acceso:** `encargado_facultad`.
+- **Acceso:** `jefe_programa`.
 - **Respuesta:** `[{ id, codigo, nombre }]`
 
 ### `GET /convocatorias/asignaturas/todas`
-- **Descripción:** Lista todas las asignaturas activas. El `encargado_facultad` puede incluir inactivas con `?include_inactive=true`. Los profesores solo ven las suyas.
+- **Descripción:** Lista todas las asignaturas activas. El `jefe_programa` puede incluir inactivas con `?include_inactive=true`. Los profesores solo ven las suyas.
 - **Acceso:** Todos los roles autenticados.
-- **Query params:** `include_inactive` (bool, solo `encargado_facultad`).
+- **Query params:** `include_inactive` (bool, solo `jefe_programa`).
 - **Respuesta:** `AsignaturaOut[]`
 
 ### `POST /convocatorias/asignaturas/`
 - **Descripción:** Crea una nueva asignatura con código, nombre, créditos, programa, facultad, semestre y profesor asignado. Valida unicidad de código.
-- **Acceso:** `encargado_facultad`.
+- **Acceso:** `jefe_programa`.
 - **Body:** `AsignaturaCreate`
 - **Respuesta:** `AsignaturaOut` (HTTP 201)
 
 ### `PATCH /convocatorias/asignaturas/{asig_id}`
 - **Descripción:** Actualiza los datos de una asignatura existente (nombre, créditos, facultad, estado activo, etc.).
-- **Acceso:** `encargado_facultad`.
+- **Acceso:** `jefe_programa`.
 - **Body:** `AsignaturaCreate`
 - **Respuesta:** `AsignaturaOut`
 
 ### `GET /convocatorias/asignaturas/{asig_id}/estudiantes`
 - **Descripción:** Lista todos los estudiantes matriculados en una asignatura específica con su período académico.
-- **Acceso:** `encargado_facultad`, `profesor`.
+- **Acceso:** `jefe_programa`, `profesor`.
 - **Respuesta:** `[{ id, estudiante_id, nombre, codigo, periodo_academico }]`
 
 ### `POST /convocatorias/asignaturas/{asig_id}/matricular`
 - **Descripción:** Matricula un estudiante en una asignatura para un período académico dado. Valida que no exista matrícula duplicada para el mismo período.
-- **Acceso:** `encargado_facultad`.
+- **Acceso:** `jefe_programa`.
 - **Body:** `{ estudiante_id: int, periodo_academico: string }`
 - **Respuesta:** `{ ok: true }` (HTTP 201)
 
 ### `DELETE /convocatorias/asignaturas/matricula/{matricula_id}`
 - **Descripción:** Elimina la matrícula de un estudiante en una asignatura (desmatricular).
-- **Acceso:** `encargado_facultad`.
+- **Acceso:** `jefe_programa`.
 - **Respuesta:** `{ ok: true }`
 
 ---
@@ -189,7 +189,7 @@
 
 ### `GET /postulaciones/convocatoria/{conv_id}`
 - **Descripción:** Lista todos los postulantes de una convocatoria. Permite filtrar por estado (`?estado=`). Los profesores solo pueden ver postulantes de sus propias convocatorias.
-- **Acceso:** `profesor`, `encargado_facultad`.
+- **Acceso:** `profesor`, `jefe_programa`.
 - **Query params:** `estado` (opcional).
 - **Respuesta:** `PostulacionOut[]`
 
@@ -216,12 +216,12 @@
 
 ### `POST /seleccion/convocatorias/{conv_id}/ejecutar-seleccion`
 - **Descripción:** Ejecuta el algoritmo de selección de monitores (RF-MON-05). Fórmula: `(Nota_Asignatura × 0.30) + (Promedio × 0.30) + (Entrevista × 0.40)`. Desempate: mejor entrevista → mejor promedio → mejor nota asignatura. Asigna estados `seleccionado` / `no_seleccionado`. Solo opera en convocatorias `cerrada` o `en_evaluacion`. Cambia automáticamente la convocatoria a `en_evaluacion` si estaba cerrada.
-- **Acceso:** `profesor` (de la convocatoria), `encargado_facultad`.
+- **Acceso:** `profesor` (de la convocatoria), `jefe_programa`.
 - **Respuesta:** `ResultadoSeleccionOut[]` (ordenado por puntaje)
 
 ### `GET /seleccion/convocatorias/{conv_id}/resultados`
 - **Descripción:** Consulta los resultados de selección de una convocatoria. Los estudiantes solo ven su propio resultado. Profesores y jefe ven todos los resultados ordenados por puesto.
-- **Acceso:** `profesor`, `encargado_facultad`, `estudiante`.
+- **Acceso:** `profesor`, `jefe_programa`, `estudiante`.
 - **Respuesta:** `ResultadoSeleccionOut[]`
 
 ---
@@ -258,12 +258,12 @@
 
 ### `PATCH /practicas/{practica_id}/aprobar`
 - **Descripción:** El jefe de programa aprueba una práctica solicitada. Si ya se alcanzó el quórum de firmas, cambia a `aprobado_transporte` y compromete los viáticos en el presupuesto; si no, cambia a `pendiente_quorum`. Notifica al profesor.
-- **Acceso:** `encargado_facultad`.
+- **Acceso:** `jefe_programa`.
 - **Respuesta:** `PracticaOut`
 
 ### `PATCH /practicas/{practica_id}/rechazar`
 - **Descripción:** El jefe de programa rechaza una práctica en estado `solicitada` o `pendiente_quorum`. Registra observaciones opcionales. Notifica al profesor con el motivo.
-- **Acceso:** `encargado_facultad`.
+- **Acceso:** `jefe_programa`.
 - **Body:** `{ observaciones_jefe?: string }`
 - **Respuesta:** `PracticaOut`
 
@@ -279,24 +279,24 @@
 
 ### `GET /practicas/tarifas/todas`
 - **Descripción:** Lista todas las tarifas de viáticos (activas e inactivas), para administración.
-- **Acceso:** `encargado_facultad`, `encargado_gastos`.
+- **Acceso:** `jefe_programa`, `admin`.
 - **Respuesta:** `TarifaViaticoOut[]`
 
 ### `POST /practicas/tarifas/`
 - **Descripción:** Crea una nueva tarifa de viáticos con descripción, valor por día y fecha de vigencia. El valor por día debe ser mayor a 0.
-- **Acceso:** `encargado_facultad`.
+- **Acceso:** `jefe_programa`.
 - **Body:** `{ descripcion, valor_dia, aplica_desde, is_active }`
 - **Respuesta:** `TarifaViaticoOut` (HTTP 201)
 
 ### `PATCH /practicas/tarifas/{tarifa_id}`
 - **Descripción:** Actualiza una tarifa de viáticos existente (descripción, valor o estado activo).
-- **Acceso:** `encargado_facultad`.
+- **Acceso:** `jefe_programa`.
 - **Body:** `{ descripcion?, valor_dia?, is_active? }`
 - **Respuesta:** `TarifaViaticoOut`
 
 ### `GET /practicas/{practica_id}/viaticos`
 - **Descripción:** Calcula los viáticos estimados de una práctica cruzando los días de duración con las tarifas vigentes a la fecha de inicio (RF-PRA-02/03). Retorna el subtotal por tarifa.
-- **Acceso:** `profesor`, `encargado_facultad`, `encargado_gastos`.
+- **Acceso:** `profesor`, `jefe_programa`, `admin`.
 - **Respuesta:** `ViaticosCalculadoOut[]`
 
 ---
@@ -305,68 +305,68 @@
 
 ### `GET /presupuesto/`
 - **Descripción:** Lista todos los presupuestos registrados ordenados por período descendente, con montos ejecutado, comprometido, disponible y porcentaje de ejecución.
-- **Acceso:** `encargado_facultad`, `encargado_gastos`.
+- **Acceso:** `jefe_programa`, `admin`.
 - **Respuesta:** `PresupuestoOut[]`
 
 ### `POST /presupuesto/`
 - **Descripción:** Crea un nuevo presupuesto para un período académico en estado `borrador`. Valida que no exista otro presupuesto para el mismo período.
-- **Acceso:** `encargado_facultad`.
+- **Acceso:** `jefe_programa`.
 - **Body:** `{ periodo_academico, monto_total_asignado, descripcion? }`
 - **Respuesta:** `PresupuestoOut` (HTTP 201)
 
 ### `GET /presupuesto/actual`
 - **Descripción:** Retorna el presupuesto del período académico activo (según `ConfiguracionCalendario`). Si no existe, retorna el más reciente.
-- **Acceso:** `encargado_facultad`, `encargado_gastos`.
+- **Acceso:** `jefe_programa`, `admin`.
 - **Respuesta:** `PresupuestoOut`
 
 ### `GET /presupuesto/{periodo}`
 - **Descripción:** Retorna el presupuesto de un período académico específico.
-- **Acceso:** `encargado_facultad`, `encargado_gastos`.
+- **Acceso:** `jefe_programa`, `admin`.
 - **Respuesta:** `PresupuestoOut`
 
 ### `PATCH /presupuesto/{periodo}/editar`
 - **Descripción:** El jefe de programa edita el monto o descripción de un presupuesto en estado `borrador`, `modificacion` o `rechazado`.
-- **Acceso:** `encargado_facultad`.
+- **Acceso:** `jefe_programa`.
 - **Body:** `{ monto_total_asignado?, descripcion? }`
 - **Respuesta:** `PresupuestoOut`
 
 ### `PATCH /presupuesto/{periodo}/solicitar`
-- **Descripción:** El jefe envía la solicitud de presupuesto al encargado de gastos (cambia a estado `solicitado`). Notifica automáticamente a todos los encargados de gastos.
-- **Acceso:** `encargado_facultad`.
+- **Descripción:** El jefe envía la solicitud de presupuesto al administrador (cambia a estado `solicitado`). Notifica automáticamente a todos los administradores.
+- **Acceso:** `jefe_programa`.
 - **Respuesta:** `PresupuestoOut`
 
 ### `PATCH /presupuesto/{periodo}/aprobar`
-- **Descripción:** El encargado de gastos aprueba la solicitud (cambia a `aprobado`). Si había un incremento pendiente, aplica el nuevo monto. Notifica al jefe de programa.
-- **Acceso:** `encargado_gastos`.
+- **Descripción:** El administrador aprueba la solicitud (cambia a `aprobado`). Si había un incremento pendiente, aplica el nuevo monto. Notifica al jefe de programa.
+- **Acceso:** `admin`.
 - **Body:** `{ observaciones?: string }`
 - **Respuesta:** `PresupuestoOut`
 
 ### `PATCH /presupuesto/{periodo}/rechazar`
-- **Descripción:** El encargado de gastos rechaza la solicitud. Si era un incremento, revierte a estado `aprobado` (no rechazado) para que el jefe pueda re-solicitar. Notifica al jefe con el motivo.
-- **Acceso:** `encargado_gastos`.
+- **Descripción:** El administrador rechaza la solicitud. Si era un incremento, revierte a estado `aprobado` (no rechazado) para que el jefe pueda re-solicitar. Notifica al jefe con el motivo.
+- **Acceso:** `admin`.
 - **Body:** `{ observaciones?: string }`
 - **Respuesta:** `PresupuestoOut`
 
 ### `PATCH /presupuesto/{periodo}/pedir-modificacion`
-- **Descripción:** El encargado de gastos devuelve la solicitud al jefe indicando correcciones (estado `modificacion`). Limpia el monto solicitado si había un incremento pendiente. Notifica al jefe.
-- **Acceso:** `encargado_gastos`.
+- **Descripción:** El administrador devuelve la solicitud al jefe indicando correcciones (estado `modificacion`). Limpia el monto solicitado si había un incremento pendiente. Notifica al jefe.
+- **Acceso:** `admin`.
 - **Body:** `{ observaciones?: string }`
 - **Respuesta:** `PresupuestoOut`
 
 ### `PATCH /presupuesto/{periodo}/solicitar-incremento`
-- **Descripción:** El jefe solicita un incremento del presupuesto ya aprobado. El nuevo monto debe ser mayor al actual. Guarda el monto solicitado sin modificar el monto aprobado, hasta que sea aprobado. Notifica al encargado de gastos con el diferencial.
-- **Acceso:** `encargado_facultad`.
+- **Descripción:** El jefe solicita un incremento del presupuesto ya aprobado. El nuevo monto debe ser mayor al actual. Guarda el monto solicitado sin modificar el monto aprobado, hasta que sea aprobado. Notifica al administrador con el diferencial.
+- **Acceso:** `jefe_programa`.
 - **Body:** `{ nuevo_monto: float, descripcion?: string }`
 - **Respuesta:** `PresupuestoOut`
 
 ### `GET /presupuesto/siguiente-periodo`
 - **Descripción:** Sugiere el código del siguiente período académico que aún no tiene presupuesto registrado (formato `YYYY-1` o `YYYY-2`).
-- **Acceso:** `encargado_facultad`.
+- **Acceso:** `jefe_programa`.
 - **Respuesta:** `{ periodo_sugerido, periodos_existentes[] }`
 
 ### `GET /presupuesto/movimientos/{periodo}`
 - **Descripción:** Lista todos los movimientos presupuestales de un período (compromisos, ejecuciones, etc.) ordenados por fecha descendente.
-- **Acceso:** `encargado_facultad`, `encargado_gastos`.
+- **Acceso:** `jefe_programa`, `admin`.
 - **Respuesta:** `[{ id, tipo, monto, concepto, fecha }]`
 
 ### `GET /presupuesto/periodo-activo`
@@ -376,40 +376,40 @@
 
 ### `GET /presupuesto/configuracion-calendario/`
 - **Descripción:** Lista todas las configuraciones de calendario académico registradas, ordenadas por período descendente.
-- **Acceso:** `encargado_facultad`.
+- **Acceso:** `jefe_programa`.
 - **Respuesta:** `CalendarioOut[]`
 
 ### `POST /presupuesto/configuracion-calendario/`
 - **Descripción:** Crea una nueva configuración de calendario para un período académico (fecha inicio/fin del semestre, semanas habilitadas para solicitudes). Valida que no exista configuración previa para el mismo período.
-- **Acceso:** `encargado_facultad`.
+- **Acceso:** `jefe_programa`.
 - **Body:** `CalendarioCreate { periodo_academico, semana_inicio_solicitudes, semana_fin_solicitudes, fecha_inicio_semestre, fecha_fin_semestre, is_active }`
 - **Respuesta:** `CalendarioOut` (HTTP 201)
 
 ### `PATCH /presupuesto/configuracion-calendario/{cal_id}`
 - **Descripción:** Actualiza una configuración de calendario existente.
-- **Acceso:** `encargado_facultad`.
+- **Acceso:** `jefe_programa`.
 - **Body:** `CalendarioCreate`
 - **Respuesta:** `CalendarioOut`
 
 ### `POST /presupuesto/{periodo}/documentos`
 - **Descripción:** El jefe sube un documento de soporte al presupuesto (PDF, imagen, Word, Excel). Tipos válidos: `solicitud`, `incremento`, `modificacion`. Máximo según configuración de `MAX_FILE_SIZE_MB`.
-- **Acceso:** `encargado_facultad`.
+- **Acceso:** `jefe_programa`.
 - **Form data:** `tipo_solicitud`, `descripcion?`, `file`.
 - **Respuesta:** `DocumentoOut` (HTTP 201)
 
 ### `GET /presupuesto/{periodo}/documentos`
 - **Descripción:** Lista todos los documentos adjuntos a un presupuesto de un período, con URL de descarga.
-- **Acceso:** `encargado_facultad`, `encargado_gastos`.
+- **Acceso:** `jefe_programa`, `admin`.
 - **Respuesta:** `DocumentoOut[]`
 
 ### `GET /presupuesto/documentos/{doc_id}/descargar`
 - **Descripción:** Descarga/visualiza un documento de presupuesto. Incluye protección anti path-traversal.
-- **Acceso:** `encargado_facultad`, `encargado_gastos`.
+- **Acceso:** `jefe_programa`, `admin`.
 - **Respuesta:** `FileResponse`
 
 ### `DELETE /presupuesto/{periodo}/documentos/{doc_id}`
 - **Descripción:** El jefe elimina un documento propio del presupuesto. Solo permite eliminar si el presupuesto no está aprobado. Borra también el archivo del disco.
-- **Acceso:** `encargado_facultad` (solo el subidor).
+- **Acceso:** `jefe_programa` (solo el subidor).
 - **Respuesta:** HTTP 204 (sin contenido)
 
 ---
@@ -418,17 +418,17 @@
 
 ### `GET /reportes/resumen`
 - **Descripción:** Resumen ejecutivo del sistema. Incluye: total de convocatorias por estado y períodos; total de postulaciones por estado; lista de monitores seleccionados con puntajes; total de prácticas por estado con detalle; resumen de presupuesto por período (totales, ejecutado, disponible, % ejecución).
-- **Acceso:** `encargado_facultad`, `encargado_gastos`.
+- **Acceso:** `jefe_programa`, `admin`.
 - **Respuesta:** JSON estructurado con secciones `convocatorias`, `postulaciones`, `monitores_seleccionados`, `practicas`, `presupuesto`.
 
 ### `GET /reportes/fo14/{convocatoria_id}`
 - **Descripción:** Datos completos para generar el formulario oficial **MI-FOR-FO-14** (Requerimiento de Monitores). Incluye datos de la convocatoria (sede, tipo de monitoría, descripción de actividades), asignatura (facultad), docente y monitor seleccionado (código, cédula, promedio, puntajes).
-- **Acceso:** `encargado_facultad`, `profesor`.
+- **Acceso:** `jefe_programa`, `profesor`.
 - **Respuesta:** JSON con secciones `convocatoria`, `asignatura`, `docente`, `monitor`, `total_postulantes`.
 
 ### `GET /reportes/fo15/{practica_id}`
 - **Descripción:** Datos completos para generar el formulario oficial **MI-FOR-FO-15** (Requerimiento de Prácticas Extramuros). Incluye datos de la práctica (tipo de docente, quórum, firmas), asignatura (facultad), docente, rutas ordenadas, participantes firmantes con fecha/hora de firma y total de viáticos calculados.
-- **Acceso:** `encargado_facultad`, `profesor`.
+- **Acceso:** `jefe_programa`, `profesor`.
 - **Respuesta:** JSON con secciones `practica`, `asignatura`, `docente`, `rutas`, `participantes`, `viaticos`, `total_viaticos`.
 
 ### `GET /reportes/consentimiento/{practica_id}`
@@ -482,17 +482,17 @@
 
 ### `GET /monitor/convocatoria/{conv_id}`
 - **Descripción:** El profesor o jefe consulta el registro de horas de todos los monitores seleccionados de una convocatoria, con el total por monitor y estado de aprobación por semana.
-- **Acceso:** `profesor`, `encargado_facultad`.
+- **Acceso:** `profesor`, `jefe_programa`.
 - **Respuesta:** `[{ postulacion_id, estudiante, codigo, total_horas, horas[] }]`
 
 ### `PATCH /monitor/horas/{hora_id}/aprobar`
 - **Descripción:** El profesor (o jefe) aprueba un registro de horas de un monitor. Los profesores solo pueden aprobar horas de sus propios monitores. Registra en audit log quién aprobó.
-- **Acceso:** `profesor` (solo sus monitores), `encargado_facultad`.
+- **Acceso:** `profesor` (solo sus monitores), `jefe_programa`.
 - **Respuesta:** `{ ok: true }`
 
 ### `GET /monitor/audit-log`
 - **Descripción:** Retorna el log de auditoría del sistema con las últimas N acciones (máximo 1000, por defecto 100). Incluye usuario, acción, entidad afectada, ID y timestamp.
-- **Acceso:** `admin`, `encargado_facultad`, `encargado_gastos`.
+- **Acceso:** `admin`, `jefe_programa`, `admin`.
 - **Query params:** `limit` (int, por defecto 100, máximo 1000).
 - **Respuesta:** `[{ id, usuario, codigo, accion, entidad, entidad_id, detalle, created_at }]`
 
