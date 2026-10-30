@@ -146,7 +146,9 @@ def _enrich(p: Practica, testing_mode: bool = False) -> PracticaOut:
         ventana_fin = fi - timedelta(days=DIAS_CIERRE_CONSENTIMIENTO)
         out.ventana_firma_inicio = ventana_inicio
         out.ventana_firma_fin = ventana_fin
-        practica_vigente = ff is None or ff >= hoy
+        # Misma regla que firmar_consentimiento: la vigencia y el estado siempre
+        # se exigen; el modo prueba solo omite la ventana D-10→D-5.
+        practica_vigente = ff is None or ff.date() >= hoy.date()
         estado_firma_ok = p.estado in [
             EstadoPracticaEnum.solicitada,
             EstadoPracticaEnum.pendiente_quorum,
@@ -154,8 +156,9 @@ def _enrich(p: Practica, testing_mode: bool = False) -> PracticaOut:
             EstadoPracticaEnum.aprobada_facultad,
             EstadoPracticaEnum.aprobado_transporte,
         ]
-        out.puede_firmar_ahora = testing_mode or bool(
-            practica_vigente and estado_firma_ok and ventana_inicio <= hoy <= ventana_fin
+        en_ventana = ventana_inicio <= hoy <= ventana_fin
+        out.puede_firmar_ahora = bool(
+            practica_vigente and estado_firma_ok and (en_ventana or testing_mode)
         )
     return out
 
