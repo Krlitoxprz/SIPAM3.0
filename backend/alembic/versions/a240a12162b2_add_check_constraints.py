@@ -32,14 +32,20 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def _safe(fn):
-    """Ejecuta fn() dentro de un SAVEPOINT: ignora errores de 'ya existe'
-    (DB previamente endurecida) sin abortar la transacción en PostgreSQL."""
+    """Ejecuta fn() dentro de un SAVEPOINT ignorando SOLO errores de
+    idempotencia ('ya existe' / duplicados — DB previamente endurecida) sin
+    abortar la transacción en PostgreSQL. Errores de validación (p. ej. filas
+    existentes que violan un CHECK nuevo) se propagan para que la revisión
+    falle y pueda reintentarse tras corregir los datos."""
     sp = op.get_bind().begin_nested()
     try:
         fn()
         sp.commit()
-    except Exception:
+    except Exception as e:
         sp.rollback()
+        msg = str(e).lower()
+        if "already exists" not in msg and "duplicate" not in msg:
+            raise
 
 
 def upgrade() -> None:
