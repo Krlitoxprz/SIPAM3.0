@@ -180,7 +180,7 @@ DEBUG=false
 ENVIRONMENT=production
 
 # Base de datos
-DATABASE_URL=postgresql://user:pass@localhost:5432/sipam_db
+DATABASE_URL=postgresql+psycopg2://user:pass@localhost:5432/sipam_db
 
 # Archivos
 UPLOAD_DIR=uploads

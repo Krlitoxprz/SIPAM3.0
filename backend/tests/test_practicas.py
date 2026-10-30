@@ -67,6 +67,35 @@ def test_crear_practica(client: TestClient, usuario_profesor, asignatura, db):
     assert data["nombre_practica"] == "Visita Empresa Acuícola del Huila"
 
 
+
+# ── PP-001b: No se puede crear práctica sobre asignatura ajena ─────────────────
+def test_crear_practica_asignatura_ajena(client: TestClient, usuario_profesor, usuario_admin, db):
+    from app.models.convocatoria import Asignatura
+
+    ajenas = []
+    for codigo, profesor_id in (("IS-AJENA-1", usuario_admin.id), ("IS-AJENA-2", None)):
+        a = Asignatura(
+            codigo=codigo,
+            nombre=f"Asignatura {codigo}",
+            programa="Ingeniería de Software",
+            facultad="Ingeniería",
+            creditos=3,
+            semestre=5,
+            profesor_id=profesor_id,
+            is_active=True,
+            caracter_curso="teorico_practico",
+            caracteristica_curso="especifico",
+        )
+        db.add(a); db.commit(); db.refresh(a)
+        ajenas.append(a)
+
+    token = get_token(client, usuario_profesor.codigo)
+    for a in ajenas:
+        r = client.post("/api/v1/practicas/", headers=auth(token),
+                        json=_practica_payload(a.id, "2098-1"))
+        assert r.status_code == 403, r.text
+        assert "asignaturas que usted dicta" in r.json()["detail"]
+
 # ── PP-002: Solicitar práctica (borrador → solicitada) ─────────────────────────
 def test_solicitar_practica(client: TestClient, usuario_profesor, asignatura, db):
     token = get_token(client, usuario_profesor.codigo)

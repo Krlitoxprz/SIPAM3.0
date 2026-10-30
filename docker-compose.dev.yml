@@ -1,4 +1,3 @@
-version: "3.9"
 
 # ── SIPAM-USCO — Docker Compose para Desarrollo ─────────────────────────────────
 # Este archivo usa PostgreSQL en Docker para desarrollo local (evita SQLite)
@@ -33,7 +32,7 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     environment:
-      DATABASE_URL:    postgresql://postgres:postgres_dev_password@db:5432/sipam_db_dev
+      DATABASE_URL:    postgresql+psycopg2://postgres:postgres_dev_password@db:5432/sipam_db_dev
       AI_SERVICE_URL:  http://ai_service:5001
       ENVIRONMENT:     development
       DEBUG:           "true"
