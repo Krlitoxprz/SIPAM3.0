@@ -605,6 +605,16 @@ def actualizar_convocatoria(
                 status_code=403,
                 detail="Solo puede asignar asignaturas de su programa",
             )
+    # El formulario siempre reenvía fecha_inicio_postulacion; solo se exige que
+    # no sea pasado cuando el instante realmente cambia (una convocatoria abierta
+    # conserva su apertura ya pasada y sigue editable).
+    ini_nuevo = updates.get("fecha_inicio_postulacion")
+    ini_cambio = False
+    if ini_nuevo is not None:
+        prev = conv.fecha_inicio_postulacion
+        prev_utc = prev if prev.tzinfo else prev.replace(tzinfo=timezone.utc)
+        nuevo_utc = ini_nuevo if ini_nuevo.tzinfo else ini_nuevo.replace(tzinfo=timezone.utc)
+        ini_cambio = nuevo_utc != prev_utc
     for field, value in updates.items():
         setattr(conv, field, value)
 
@@ -615,7 +625,7 @@ def actualizar_convocatoria(
         conv.fecha_fin_postulacion,
         conv.fecha_publicacion_resultados,
         db,
-        validar_pasado="fecha_inicio_postulacion" in updates,
+        validar_pasado=ini_cambio,
     )
 
     db.commit()
