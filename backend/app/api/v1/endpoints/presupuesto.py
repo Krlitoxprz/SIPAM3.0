@@ -1,4 +1,5 @@
 """RF-PRA-06 — Control Presupuestal para el Decano."""
+import logging
 import os
 from datetime import datetime
 from typing import Optional
@@ -18,6 +19,8 @@ from app.utils.file_security import validate_and_save
 from app.core.config import settings
 
 ALLOWED_DOC_EXTS = [".pdf", ".png", ".jpg", ".jpeg", ".docx", ".xlsx"]
+
+logger = logging.getLogger(__name__)
 
 
 class PresupuestoCreate(BaseModel):
@@ -266,7 +269,7 @@ def aprobar_presupuesto(
     periodo: str,
     body: DecisionBody,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles(RolEnum.admin)),
+    current_user: User = Depends(require_roles(RolEnum.admin)),
 ):
     """Admin aprueba la solicitud de presupuesto tal como fue establecida por el Jefe."""
     p = db.query(Presupuesto).filter(Presupuesto.periodo_academico == periodo).first()
@@ -278,8 +281,20 @@ def aprobar_presupuesto(
     p.observaciones_admin = body.observaciones
     # Si había un incremento pendiente, aplicarlo ahora que fue aprobado
     if p.monto_solicitado is not None:
+        monto_asignado = p.monto_solicitado - p.monto_total_asignado
+        concepto = f"Incremento aprobado por Administrador — {periodo}"
         p.monto_total_asignado = p.monto_solicitado
         p.monto_solicitado = None
+    else:
+        monto_asignado = p.monto_total_asignado
+        concepto = f"Asignación aprobada por Administrador — {periodo}"
+    db.add(MovimientoPresupuestal(
+        presupuesto_id=p.id,
+        tipo=TipoMovimientoEnum.asignacion,
+        monto=monto_asignado,
+        concepto=concepto,
+        responsable_id=current_user.id,
+    ))
     jefes = db.query(User).filter(User.rol.in_([RolEnum.jefe_programa, RolEnum.decano]), User.is_active == True).all()
     for j in jefes:
         crear_notificacion(
@@ -461,6 +476,15 @@ class DocumentoOut(BaseModel):
     download_url: str
 
 
+def _eliminar_archivo(full_path: str) -> None:
+    try:
+        os.remove(full_path)
+    except FileNotFoundError:
+        pass
+    except OSError:
+        logger.warning("No se pudo eliminar el archivo de presupuesto %s", full_path, exc_info=True)
+
+
 def _doc_to_out(d: DocumentoPresupuesto) -> DocumentoOut:
     nombre = f"{d.subido_por.nombres} {d.subido_por.apellidos}" if d.subido_por else "—"
     return DocumentoOut(
@@ -484,7 +508,13 @@ async def subir_documento_presupuesto(
     current_user: User = Depends(require_roles(RolEnum.jefe_programa, RolEnum.decano)),
 ):
     """Jefe sube un documento de soporte al presupuesto (PDF, imagen, Word, Excel)."""
-    p = db.query(Presupuesto).filter(Presupuesto.periodo_academico == periodo).first()
+    # Bloqueo compartido con eliminar_presupuesto para no dejar archivos sin registro.
+    p = (
+        db.query(Presupuesto)
+        .filter(Presupuesto.periodo_academico == periodo)
+        .with_for_update()
+        .first()
+    )
     if not p:
         raise HTTPException(status_code=404, detail="Presupuesto no encontrado")
     tipos_validos = {"solicitud", "incremento", "modificacion"}
@@ -511,7 +541,12 @@ async def subir_documento_presupuesto(
         descripcion=descripcion,
     )
     db.add(doc)
-    db.commit()
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
+        _eliminar_archivo(os.path.join(settings.UPLOAD_DIR, ruta_relativa))
+        raise
     db.refresh(doc)
     doc.subido_por  # eager load
     return _doc_to_out(doc)
@@ -698,8 +733,8 @@ def eliminar_presupuesto(
     db: Session = Depends(get_db),
     _: User = Depends(require_roles(RolEnum.admin)),
 ):
-    """Admin: elimina un presupuesto no aprobado y sin dinero comprometido ni ejecutado,
-    junto con sus movimientos, documentos de soporte y archivos (acción irreversible)."""
+    """Admin: elimina un presupuesto que nunca recibió asignación (sin aprobación ni
+    movimientos), junto con sus documentos de soporte y archivos (acción irreversible)."""
     p = (
         db.query(Presupuesto)
         .filter(Presupuesto.periodo_academico == periodo)
@@ -708,24 +743,22 @@ def eliminar_presupuesto(
     )
     if not p:
         raise HTTPException(status_code=404, detail="Presupuesto no encontrado")
-    if p.estado == EstadoPresupuestoEnum.aprobado:
+    # monto_solicitado solo existe en solicitudes de incremento de un presupuesto ya aprobado.
+    if p.estado == EstadoPresupuestoEnum.aprobado or p.monto_solicitado is not None:
         raise HTTPException(
             status_code=409,
             detail="No se puede eliminar un presupuesto aprobado",
         )
-    tiene_movimientos_financieros = (
+    tiene_movimientos = (
         db.query(MovimientoPresupuestal.id)
-        .filter(
-            MovimientoPresupuestal.presupuesto_id == p.id,
-            MovimientoPresupuestal.tipo.in_([TipoMovimientoEnum.comprometido, TipoMovimientoEnum.ejecucion]),
-        )
+        .filter(MovimientoPresupuestal.presupuesto_id == p.id)
         .first()
         is not None
     )
-    if (p.monto_comprometido or 0) > 0 or (p.monto_ejecutado or 0) > 0 or tiene_movimientos_financieros:
+    if (p.monto_comprometido or 0) > 0 or (p.monto_ejecutado or 0) > 0 or tiene_movimientos:
         raise HTTPException(
             status_code=409,
-            detail="No se puede eliminar un presupuesto con montos comprometidos o ejecutados",
+            detail="No se puede eliminar un presupuesto con asignaciones, compromisos o ejecuciones registradas",
         )
 
     base = os.path.abspath(settings.UPLOAD_DIR)
@@ -739,10 +772,7 @@ def eliminar_presupuesto(
     db.commit()
 
     for full_path in rutas_archivos:
-        try:
-            os.remove(full_path)
-        except FileNotFoundError:
-            pass
+        _eliminar_archivo(full_path)
 
 
 @router.get("/admin/estadisticas-globales")

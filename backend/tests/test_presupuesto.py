@@ -55,8 +55,6 @@ def test_eliminar_presupuesto_borra_documentos_y_archivos(client: TestClient, us
                                                          usuario_jefe, db, tmp_path, monkeypatch):
     monkeypatch.setattr(settings, "UPLOAD_DIR", str(tmp_path))
     p = _presupuesto(db, "2098-4", EstadoPresupuestoEnum.rechazado)
-    db.add(MovimientoPresupuestal(presupuesto_id=p.id, tipo=TipoMovimientoEnum.asignacion,
-                                  monto=1000000, concepto="Asignación inicial"))
     ruta = os.path.join("presupuesto", "2098-4", "soporte.pdf")
     os.makedirs(tmp_path / "presupuesto" / "2098-4")
     (tmp_path / ruta).write_bytes(b"%PDF-1.4 test")
@@ -80,3 +78,52 @@ def test_eliminar_presupuesto_solo_admin(client: TestClient, usuario_jefe, db):
     _presupuesto(db, "2098-5", EstadoPresupuestoEnum.borrador)
     tj = get_token(client, usuario_jefe.codigo)
     assert client.delete("/api/v1/presupuesto/2098-5", headers=auth(tj)).status_code == 403
+
+
+def test_eliminar_presupuesto_con_incremento_pendiente_bloqueado(client: TestClient, usuario_admin, db):
+    # solicitar-incremento pasa un presupuesto aprobado a "solicitado" conservando su asignación.
+    _presupuesto(db, "2098-6", EstadoPresupuestoEnum.solicitado, monto_solicitado=1500000)
+    ta = get_token(client, usuario_admin.codigo)
+    assert client.delete("/api/v1/presupuesto/2098-6", headers=auth(ta)).status_code == 409
+
+
+def test_eliminar_presupuesto_aprobado_y_forzado_bloqueado(client: TestClient, usuario_admin, db):
+    p = _presupuesto(db, "2098-7", EstadoPresupuestoEnum.solicitado)
+    ta = get_token(client, usuario_admin.codigo)
+    assert client.patch("/api/v1/presupuesto/2098-7/aprobar", json={}, headers=auth(ta)).status_code == 200
+    mov = db.query(MovimientoPresupuestal).filter(MovimientoPresupuestal.presupuesto_id == p.id).one()
+    assert mov.tipo == TipoMovimientoEnum.asignacion
+    assert float(mov.monto) == 1000000.0
+
+    r = client.patch("/api/v1/presupuesto/2098-7/forzar-estado", json={"estado": "rechazado"}, headers=auth(ta))
+    assert r.status_code == 200
+    assert client.delete("/api/v1/presupuesto/2098-7", headers=auth(ta)).status_code == 409
+
+
+def test_eliminar_presupuesto_error_al_borrar_archivo_no_falla(client: TestClient, usuario_admin,
+                                                              usuario_jefe, db, tmp_path, monkeypatch):
+    monkeypatch.setattr(settings, "UPLOAD_DIR", str(tmp_path))
+    p = _presupuesto(db, "2098-8", EstadoPresupuestoEnum.borrador)
+    os.makedirs(tmp_path / "presupuesto" / "2098-8")
+    rutas = []
+    for nombre in ("a.pdf", "b.pdf"):
+        ruta = os.path.join("presupuesto", "2098-8", nombre)
+        (tmp_path / ruta).write_bytes(b"%PDF-1.4 test")
+        rutas.append(ruta)
+        db.add(DocumentoPresupuesto(presupuesto_id=p.id, subido_por_id=usuario_jefe.id,
+                                    tipo_solicitud="solicitud", nombre_original=nombre,
+                                    nombre_almacenado=nombre, ruta=ruta))
+    db.commit()
+
+    real_remove = os.remove
+
+    def remove_falla_primero(path):
+        if path.endswith("a.pdf"):
+            raise PermissionError(path)
+        real_remove(path)
+
+    monkeypatch.setattr(os, "remove", remove_falla_primero)
+    ta = get_token(client, usuario_admin.codigo)
+    assert client.delete("/api/v1/presupuesto/2098-8", headers=auth(ta)).status_code == 204
+    assert (tmp_path / rutas[0]).exists()
+    assert not (tmp_path / rutas[1]).exists()
