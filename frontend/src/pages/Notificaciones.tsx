@@ -61,6 +61,7 @@ export function Notificaciones() {
     try {
       const r = await notificacionesService.getMias();
       setItems(r.data);
+      setErrorCarga('');
     } catch {
       setItems([]);
       setErrorCarga('No se pudieron cargar las notificaciones.');

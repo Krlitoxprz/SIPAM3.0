@@ -4,7 +4,7 @@ import type { Practica, EstadoPractica, Asignatura } from '../types';
 import { practicasService, convocatoriasService, configuracionService, transporteService, pagoViaticosService, geoService, pdfService, downloadBlob } from '../services/api';
 import { useAuthContext } from '../hooks/useAuthContext';
 import { MapaRuta } from '../components/maps/MapaRuta';
-import { formatFecha, hoyLocalISO, isoLocalDaysAhead } from '../utils/fechas';
+import { formatFecha, hoyLocalISO, isoUTCDaysAhead } from '../utils/fechas';
 
 const estadoConfig: Record<EstadoPractica, { label: string; color: string }> = {
   borrador:           { label: 'Borrador',                color: 'bg-gray-100 text-gray-600' },
@@ -819,7 +819,7 @@ function NuevaPracticaModal({
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1">Fecha Inicio *</label>
               <input type="datetime-local" value={form.fecha_inicio}
-                min={practicaEditar ? undefined : isoLocalDaysAhead(30)}
+                min={practicaEditar ? undefined : isoUTCDaysAhead(30)}
                 onChange={e => setForm(p => ({ ...p, fecha_inicio: e.target.value }))}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-usco-vinotinto/50" />
               <p className="text-xs text-amber-600 mt-1 flex items-center gap-1"><Clock size={10} /> Mín. 30 días de anticipación (Ac. 003/2012)</p>
@@ -827,7 +827,7 @@ function NuevaPracticaModal({
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1">Fecha Fin *</label>
               <input type="datetime-local" value={form.fecha_fin}
-                min={practicaEditar ? form.fecha_inicio || undefined : (form.fecha_inicio || isoLocalDaysAhead(30))}
+                min={practicaEditar ? form.fecha_inicio || undefined : (form.fecha_inicio || isoUTCDaysAhead(30))}
                 onChange={e => setForm(p => ({ ...p, fecha_fin: e.target.value }))}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-usco-vinotinto/50" />
             </div>

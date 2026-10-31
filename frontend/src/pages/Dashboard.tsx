@@ -538,6 +538,10 @@ export function Dashboard() {
         <div className="flex items-center justify-center h-32">
           <Loader2 size={28} className="animate-spin text-usco-vinotinto" />
         </div>
+      ) : errorCarga ? (
+        <div className="text-center py-10 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm font-medium">
+          {errorCarga}
+        </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {user.rol === 'estudiante' && <>
@@ -774,7 +778,6 @@ export function Dashboard() {
               ...(user.rol === 'estudiante' ? [{ to: '/postulaciones', label: 'Mis postulaciones', color: 'text-emerald-600' }] : []),
               ...(user.rol === 'profesor' ? [{ to: '/evaluaciones', label: 'Mis evaluaciones y selección', color: 'text-indigo-600' }] : []),
               ...(['jefe_programa', 'decano', 'admin'].includes(user.rol) ? [{ to: '/presupuesto', label: 'Control presupuestal', color: 'text-amber-600' }] : []),
-              ...(user.rol === 'admin' ? [{ to: '/configuracion', label: 'Configuración del sistema', color: 'text-gray-500' }] : []),
             ].map(item => (
               <Link key={item.to} to={item.to}
                 className={`flex items-center gap-2 text-sm font-medium ${item.color} hover:underline py-1.5`}>

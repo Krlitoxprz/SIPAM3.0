@@ -86,8 +86,9 @@ export function Calendario() {
   const eventosDelDia = (dia: Date) => eventos.filter(e => mismodia(e.fecha, dia));
   const eventosSeleccionados = seleccionado ? eventosDelDia(seleccionado) : [];
 
+  const inicioHoy = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
   const proximosEventos = eventos
-    .filter(e => e.fecha >= hoy)
+    .filter(e => e.fecha >= inicioHoy)
     .sort((a, b) => a.fecha.getTime() - b.fecha.getTime())
     .slice(0, 8);
 

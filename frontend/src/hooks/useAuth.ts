@@ -41,10 +41,14 @@ export function useAuth() {
     authService.me().then((res) => {
       setUser(res.data);
       localStorage.setItem('sipam_user', JSON.stringify(res.data));
-    }).catch(() => {
-      // Token invalid or expired
-      localStorage.removeItem('sipam_user');
-      setUser(null);
+    }).catch((err: unknown) => {
+      // Solo limpiar sesión ante rechazo explícito (401/403): un timeout o 500
+      // no debe expulsar al usuario que tiene cookies válidas.
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      if (status === 401 || status === 403) {
+        localStorage.removeItem('sipam_user');
+        setUser(null);
+      }
     });
   }, []);
 

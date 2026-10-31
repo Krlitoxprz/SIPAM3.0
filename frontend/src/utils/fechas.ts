@@ -38,12 +38,9 @@ export function ahoraLocalISO(): string {
   return `${d.getFullYear()}-${mes}-${dia}T${h}:${min}`;
 }
 
-/** 'YYYY-MM-DDTHH:MM' local de hoy + n días — para min de inputs datetime-local. */
-export function isoLocalDaysAhead(days: number): string {
-  const d = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
-  const mes = String(d.getMonth() + 1).padStart(2, '0');
-  const dia = String(d.getDate()).padStart(2, '0');
-  const h = String(d.getHours()).padStart(2, '0');
-  const min = String(d.getMinutes()).padStart(2, '0');
-  return `${d.getFullYear()}-${mes}-${dia}T${h}:${min}`;
+/** 'YYYY-MM-DDTHH:MM' en UTC de hoy + n días.
+ *  Úsalo para `min`/`max` de inputs datetime-local cuando el backend interpreta
+ *  valores naive como UTC (convención de crear_practica). */
+export function isoUTCDaysAhead(days: number): string {
+  return new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString().slice(0, 16);
 }
