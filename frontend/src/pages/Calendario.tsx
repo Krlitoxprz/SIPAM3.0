@@ -88,7 +88,9 @@ export function Calendario() {
 
   const inicioHoy = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
   const proximosEventos = eventos
-    .filter(e => e.fecha >= inicioHoy)
+    // Prácticas son fechas sin hora (medianoche local): comparar por día para
+    // no descartar las de hoy. Convocatorias tienen hora real: instante exacto.
+    .filter(e => e.fecha >= (e.tipo.startsWith('practica') ? inicioHoy : hoy))
     .sort((a, b) => a.fecha.getTime() - b.fecha.getTime())
     .slice(0, 8);
 
