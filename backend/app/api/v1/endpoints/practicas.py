@@ -163,23 +163,8 @@ def _enrich(p: Practica, testing_mode: bool = False) -> PracticaOut:
     return out
 
 
-@router.get("/", response_model=list[PracticaOut])
-def listar_practicas(
-    estado: Optional[str] = Query(None),
-    periodo: Optional[str] = Query(None),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    q = db.query(Practica).options(
-        joinedload(Practica.asignatura),
-        joinedload(Practica.profesor),
-        joinedload(Practica.rutas),
-    )
-    if estado:
-        q = q.filter(Practica.estado == estado)
-    if periodo:
-        q = q.filter(Practica.periodo_academico == periodo)
-
+def _filtrar_por_acceso(q, db: Session, current_user: User):
+    """Restringe una consulta de Practica a las que el usuario puede ver según rol/propiedad."""
     if current_user.rol == RolEnum.profesor:
         q = q.filter(Practica.profesor_id == current_user.id)
     elif current_user.rol == RolEnum.jefe_programa and current_user.programa:
@@ -208,6 +193,37 @@ def listar_practicas(
                 Practica.estado == EstadoPracticaEnum.finalizada,
             )
         )
+    return q
+
+
+def _practica_accesible(db: Session, practica_id: int, current_user: User, *options) -> Practica:
+    """Devuelve la práctica si el usuario tiene acceso; 404 en caso contrario (no revela existencia)."""
+    q = db.query(Practica)
+    if options:
+        q = q.options(*options)
+    p = _filtrar_por_acceso(q.filter(Practica.id == practica_id), db, current_user).first()
+    if not p:
+        raise HTTPException(status_code=404, detail="Práctica no encontrada")
+    return p
+
+
+@router.get("/", response_model=list[PracticaOut])
+def listar_practicas(
+    estado: Optional[str] = Query(None),
+    periodo: Optional[str] = Query(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    q = db.query(Practica).options(
+        joinedload(Practica.asignatura),
+        joinedload(Practica.profesor),
+        joinedload(Practica.rutas),
+    )
+    if estado:
+        q = q.filter(Practica.estado == estado)
+    if periodo:
+        q = q.filter(Practica.periodo_academico == periodo)
+    q = _filtrar_por_acceso(q, db, current_user)
 
     practicas = q.order_by(Practica.created_at.desc()).all()
     modo_prueba = es_modo_prueba(db)
@@ -396,20 +412,14 @@ def datos_asignatura(
 def obtener_practica(
     practica_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
-    p = (
-        db.query(Practica)
-        .options(
-            joinedload(Practica.asignatura),
-            joinedload(Practica.profesor),
-            joinedload(Practica.rutas),
-        )
-        .filter(Practica.id == practica_id)
-        .first()
+    p = _practica_accesible(
+        db, practica_id, current_user,
+        joinedload(Practica.asignatura),
+        joinedload(Practica.profesor),
+        joinedload(Practica.rutas),
     )
-    if not p:
-        raise HTTPException(status_code=404, detail="Práctica no encontrada")
     return _enrich(p, testing_mode=es_modo_prueba(db))
 
 
@@ -1258,8 +1268,9 @@ def actualizar_tarifa(
 def historial_practica(
     practica_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
+    _practica_accesible(db, practica_id, current_user)
     registros = (
         db.query(HistorialEstado)
         .filter(HistorialEstado.entidad == "practica", HistorialEstado.entidad_id == practica_id)
@@ -1347,8 +1358,9 @@ def registrar_pago_viatico(
 def listar_pagos_viatico(
     practica_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles(RolEnum.admin, RolEnum.jefe_programa, RolEnum.decano, RolEnum.profesor)),
+    current_user: User = Depends(require_roles(RolEnum.admin, RolEnum.jefe_programa, RolEnum.decano, RolEnum.profesor)),
 ):
+    _practica_accesible(db, practica_id, current_user)
     pagos = db.query(PagoViatico).filter(PagoViatico.practica_id == practica_id).order_by(PagoViatico.fecha_pago.desc()).all()
     return [
         {
@@ -1367,12 +1379,10 @@ def listar_pagos_viatico(
 def calcular_viaticos(
     practica_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles(RolEnum.profesor, RolEnum.jefe_programa, RolEnum.decano, RolEnum.admin)),
+    current_user: User = Depends(require_roles(RolEnum.profesor, RolEnum.jefe_programa, RolEnum.decano, RolEnum.admin)),
 ):
     """RF-PRA-02/03 — Calcula viáticos cruzando días de práctica con tarifas vigentes."""
-    p = db.query(Practica).filter(Practica.id == practica_id).first()
-    if not p:
-        raise HTTPException(status_code=404, detail="Práctica no encontrada")
+    p = _practica_accesible(db, practica_id, current_user)
 
     tarifas = db.query(TarifaViatico).filter(
         TarifaViatico.is_active == True,

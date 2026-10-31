@@ -416,3 +416,77 @@ def test_eliminar_practica_con_pagos_bloqueada(client: TestClient, usuario_profe
     assert client.delete(f"/api/v1/practicas/{p.id}", headers=auth(ta)).status_code == 400
     assert db.query(Practica).filter(Practica.id == p.id).count() == 1
     assert db.query(PagoViatico).filter(PagoViatico.practica_id == p.id).count() == 1
+
+
+# ── PP-013: GETs por id respetan rol/propiedad (sin IDOR) ─────────────────────
+def _usuario_extra(db, codigo, rol, programa=None):
+    from app.models.user import User
+    from app.core.security import get_password_hash
+    u = db.query(User).filter(User.codigo == codigo).first()
+    if u:
+        return u
+    u = User(
+        codigo=codigo, nombres="Extra", apellidos=codigo,
+        email=f"{codigo.lower()}@usco.edu.co", cedula=f"9{abs(hash(codigo)) % 10**8:08d}",
+        hashed_password=get_password_hash(PASSWORD), rol=rol, is_active=True,
+        programa=programa,
+    )
+    db.add(u); db.commit(); db.refresh(u)
+    return u
+
+
+_ENDPOINTS_DETALLE = ("", "/historial", "/pagos", "/viaticos")
+
+
+def _get_status(client, practica_id, suf, token):
+    # get_current_user prioriza la cookie del último login; forzar el Bearer indicado
+    client.cookies.clear()
+    return client.get(f"/api/v1/practicas/{practica_id}{suf}", headers=auth(token)).status_code
+
+
+def test_detalle_practica_profesor_ajeno_404(client: TestClient, usuario_profesor, asignatura, db):
+    from app.models.user import RolEnum
+    p = _nueva_practica_db(db, asignatura, usuario_profesor.id, EstadoPracticaEnum.solicitada, "2099-1")
+    ajeno = _usuario_extra(db, "TEST_PROF_AJENO", RolEnum.profesor, "Ingeniería de Software")
+    t_ajeno = get_token(client, ajeno.codigo)
+    t_dueno = get_token(client, usuario_profesor.codigo)
+    for suf in _ENDPOINTS_DETALLE:
+        assert _get_status(client, p.id, suf, t_ajeno) == 404, suf
+        assert _get_status(client, p.id, suf, t_dueno) == 200, suf
+
+
+def test_detalle_practica_jefe_otro_programa_404(client: TestClient, usuario_profesor, usuario_jefe,
+                                                  usuario_admin, usuario_decano, asignatura, db):
+    from app.models.user import RolEnum
+    p = _nueva_practica_db(db, asignatura, usuario_profesor.id, EstadoPracticaEnum.solicitada, "2099-1")
+    jefe_otro = _usuario_extra(db, "TEST_JEFE_OTRO", RolEnum.jefe_programa, "Medicina")
+    t_otro = get_token(client, jefe_otro.codigo)
+    for suf in _ENDPOINTS_DETALLE:
+        assert _get_status(client, p.id, suf, t_otro) == 404, suf
+    for u in (usuario_jefe, usuario_admin, usuario_decano):
+        t = get_token(client, u.codigo)
+        for suf in _ENDPOINTS_DETALLE:
+            assert _get_status(client, p.id, suf, t) == 200, (u.codigo, suf)
+
+
+def test_detalle_practica_estudiante_segun_matricula(client: TestClient, usuario_profesor, asignatura, db):
+    from app.models.user import RolEnum
+    from app.models.convocatoria import AsignaturaEstudiante
+    p = _nueva_practica_db(db, asignatura, usuario_profesor.id, EstadoPracticaEnum.solicitada, "2099-1")
+    borrador = _nueva_practica_db(db, asignatura, usuario_profesor.id, EstadoPracticaEnum.borrador, "2099-1")
+    matriculado = _usuario_extra(db, "TEST_EST_MAT", RolEnum.estudiante, "Ingeniería de Software")
+    externo = _usuario_extra(db, "TEST_EST_EXT", RolEnum.estudiante, "Medicina")
+    if not db.query(AsignaturaEstudiante).filter_by(asignatura_id=asignatura.id, estudiante_id=matriculado.id).first():
+        db.add(AsignaturaEstudiante(asignatura_id=asignatura.id, estudiante_id=matriculado.id, periodo_academico="2099-1"))
+        db.commit()
+
+    t_mat = get_token(client, matriculado.codigo)
+    t_ext = get_token(client, externo.codigo)
+    assert _get_status(client, p.id, "", t_mat) == 200
+    assert _get_status(client, p.id, "/historial", t_mat) == 200
+    assert _get_status(client, borrador.id, "", t_mat) == 404
+    for suf in ("", "/historial"):
+        assert _get_status(client, p.id, suf, t_ext) == 404, suf
+    # pagos y viáticos siguen vedados al rol estudiante
+    for suf in ("/pagos", "/viaticos"):
+        assert _get_status(client, p.id, suf, t_mat) == 403, suf
