@@ -645,6 +645,15 @@ def actualizar_practica(
         setattr(p, field, value)
 
     if p.fecha_inicio and p.fecha_fin:
+        # Postgres devuelve aware y el formulario envía naive: normalizar a UTC
+        # (convención naive=UTC de crear_practica) para poder compararlos.
+        ini_cmp = p.fecha_inicio if p.fecha_inicio.tzinfo else p.fecha_inicio.replace(tzinfo=timezone.utc)
+        fin_cmp = p.fecha_fin if p.fecha_fin.tzinfo else p.fecha_fin.replace(tzinfo=timezone.utc)
+        if fin_cmp < ini_cmp:
+            raise HTTPException(
+                status_code=400,
+                detail="fecha_fin debe ser igual o posterior a fecha_inicio",
+            )
         p.duracion_dias = max(1, (p.fecha_fin.date() - p.fecha_inicio.date()).days + 1)
         if not es_modo_prueba(db):
             dias_viaje_check = (p.fecha_fin.date() - p.fecha_inicio.date()).days
@@ -1111,7 +1120,7 @@ class RechazoPracticaBody(BaseModel):
 class TarifaCreate(BaseModel):
     descripcion: str
     valor_dia: float
-    aplica_desde: str
+    aplica_desde: date
     is_active: bool = True
 
 
@@ -1306,14 +1315,12 @@ def crear_tarifa(
     db: Session = Depends(get_db),
     _: User = Depends(require_roles(RolEnum.admin)),
 ):
-    from datetime import date as date_type
-    aplica = date_type.fromisoformat(body.aplica_desde) if isinstance(body.aplica_desde, str) else body.aplica_desde
     if body.valor_dia <= 0:
         raise HTTPException(status_code=400, detail="El valor por día debe ser mayor a 0")
     tarifa = TarifaViatico(
         descripcion=body.descripcion,
         valor_dia=body.valor_dia,
-        aplica_desde=aplica,
+        aplica_desde=body.aplica_desde,
         is_active=body.is_active,
     )
     db.add(tarifa)

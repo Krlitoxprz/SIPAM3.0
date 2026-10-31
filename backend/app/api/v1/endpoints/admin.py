@@ -8,7 +8,7 @@ Cubre:
 from datetime import datetime, timezone
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func as sa_func
 
@@ -39,16 +39,16 @@ class SemestreCreate(BaseModel):
     periodo_academico: str
     fecha_inicio_semestre: datetime
     fecha_fin_semestre: datetime
-    semana_inicio_solicitudes: int = 3
-    semana_fin_solicitudes: int = 14
+    semana_inicio_solicitudes: int = Field(default=3, ge=1, le=30)
+    semana_fin_solicitudes: int = Field(default=14, ge=1, le=30)
     is_active: bool = False
 
 
 class SemestreUpdate(BaseModel):
     fecha_inicio_semestre: Optional[datetime] = None
     fecha_fin_semestre: Optional[datetime] = None
-    semana_inicio_solicitudes: Optional[int] = None
-    semana_fin_solicitudes: Optional[int] = None
+    semana_inicio_solicitudes: Optional[int] = Field(default=None, ge=1, le=30)
+    semana_fin_solicitudes: Optional[int] = Field(default=None, ge=1, le=30)
     is_active: Optional[bool] = None
 
 

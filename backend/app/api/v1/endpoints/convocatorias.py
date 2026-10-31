@@ -445,22 +445,13 @@ def obtener_convocatoria(
     return _enrich(conv, db)
 
 
-@router.post("/", response_model=ConvocatoriaOut, status_code=201)
-def crear_convocatoria(
-    body: ConvocatoriaCreate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(
-        require_roles(RolEnum.jefe_programa, RolEnum.decano, RolEnum.profesor)
-    ),
-):
-    asig = db.query(Asignatura).filter(Asignatura.id == body.asignatura_id).first()
-    if not asig:
-        raise HTTPException(status_code=404, detail="Asignatura no encontrada")
+def _validar_ventana_postulacion(ini, fin, publicacion, db, validar_pasado: bool = True) -> None:
+    """RF-MON-TIME-02: mismas reglas de ventana de postulación en crear y editar.
 
-    # RF-MON-TIME-02: validar ventana de postulación al crear la convocatoria
+    validar_pasado=False en PUT cuando no se toca fecha_inicio (una convocatoria
+    abierta puede tener su apertura en el pasado y seguir editándose).
+    """
     hoy = datetime.now(timezone.utc)
-    ini = body.fecha_inicio_postulacion
-    fin = body.fecha_fin_postulacion
     if fin <= ini:
         raise HTTPException(status_code=400, detail="La fecha de cierre debe ser posterior a la fecha de apertura de postulación.")
     delta_dias = (fin.date() - ini.date()).days
@@ -474,16 +465,37 @@ def crear_convocatoria(
             status_code=400,
             detail=f"La ventana de postulación no puede superar {DIAS_MAXIMOS_POSTULACION} días. Diferencia actual: {delta_dias} día(s).",
         )
-    if ini.date() < hoy.date():
+    if validar_pasado and ini.date() < hoy.date():
         raise HTTPException(
             status_code=400,
             detail="La fecha de inicio de postulación no puede ser en el pasado.",
         )
-    if body.fecha_publicacion_resultados and body.fecha_publicacion_resultados <= fin:
+    if publicacion and publicacion <= fin:
         raise HTTPException(
             status_code=400,
             detail="La fecha de publicación de resultados debe ser posterior al cierre de postulaciones (Art.8).",
         )
+
+
+@router.post("/", response_model=ConvocatoriaOut, status_code=201)
+def crear_convocatoria(
+    body: ConvocatoriaCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(
+        require_roles(RolEnum.jefe_programa, RolEnum.decano, RolEnum.profesor)
+    ),
+):
+    asig = db.query(Asignatura).filter(Asignatura.id == body.asignatura_id).first()
+    if not asig:
+        raise HTTPException(status_code=404, detail="Asignatura no encontrada")
+
+    # RF-MON-TIME-02: validar ventana de postulación al crear la convocatoria
+    _validar_ventana_postulacion(
+        body.fecha_inicio_postulacion,
+        body.fecha_fin_postulacion,
+        body.fecha_publicacion_resultados,
+        db,
+    )
 
     if current_user.rol in (RolEnum.jefe_programa, RolEnum.decano):
         if not body.profesor_id:
@@ -593,8 +605,28 @@ def actualizar_convocatoria(
                 status_code=403,
                 detail="Solo puede asignar asignaturas de su programa",
             )
+    # El formulario siempre reenvía fecha_inicio_postulacion; solo se exige que
+    # no sea pasado cuando el instante realmente cambia (una convocatoria abierta
+    # conserva su apertura ya pasada y sigue editable).
+    ini_nuevo = updates.get("fecha_inicio_postulacion")
+    ini_cambio = False
+    if ini_nuevo is not None:
+        prev = conv.fecha_inicio_postulacion
+        prev_utc = prev if prev.tzinfo else prev.replace(tzinfo=timezone.utc)
+        nuevo_utc = ini_nuevo if ini_nuevo.tzinfo else ini_nuevo.replace(tzinfo=timezone.utc)
+        ini_cambio = nuevo_utc != prev_utc
     for field, value in updates.items():
         setattr(conv, field, value)
+
+    # Revalidar la ventana resultante con las mismas reglas que en POST: una
+    # edición puede dejar fechas invertidas o fuera del rango 5-20 días.
+    _validar_ventana_postulacion(
+        conv.fecha_inicio_postulacion,
+        conv.fecha_fin_postulacion,
+        conv.fecha_publicacion_resultados,
+        db,
+        validar_pasado=ini_cambio,
+    )
 
     db.commit()
     db.refresh(conv)

@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from fastapi.responses import FileResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.db.database import get_db
@@ -22,14 +22,14 @@ ALLOWED_DOC_EXTS = [".pdf", ".png", ".jpg", ".jpeg", ".docx", ".xlsx"]
 
 class PresupuestoCreate(BaseModel):
     periodo_academico: str
-    monto_total_asignado: float
+    monto_total_asignado: float = Field(gt=0, le=10_000_000_000)
     descripcion: Optional[str] = None
 
 
 class CalendarioCreate(BaseModel):
     periodo_academico: str
-    semana_inicio_solicitudes: int = 3
-    semana_fin_solicitudes: int = 14
+    semana_inicio_solicitudes: int = Field(default=3, ge=1, le=30)
+    semana_fin_solicitudes: int = Field(default=14, ge=1, le=30)
     fecha_inicio_semestre: datetime
     fecha_fin_semestre: datetime
     is_active: bool = True
@@ -167,7 +167,7 @@ class DecisionBody(BaseModel):
 
 
 class PresupuestoUpdate(BaseModel):
-    monto_total_asignado: Optional[float] = None
+    monto_total_asignado: Optional[float] = Field(default=None, gt=0, le=10_000_000_000)
     descripcion: Optional[str] = None
 
 
