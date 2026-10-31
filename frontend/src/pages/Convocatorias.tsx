@@ -496,7 +496,7 @@ function ModalDetalle({
     setLoadingPost(true);
     postulacionesService.getPorConvocatoria(convocatoria.id)
       .then(r => setPostulantes(r.data))
-      .catch(() => setPostulantes([]))
+      .catch(() => setMsg({ tipo: 'err', texto: 'No se pudo cargar la lista de postulantes.' }))
       .finally(() => setLoadingPost(false));
   }, [convocatoria.id, canSeePostulantes]);
 
@@ -618,7 +618,9 @@ function ModalDetalle({
                     const r = await pdfService.fo46(convocatoria.id);
                     downloadBlob(new Blob([r.data], { type: 'application/pdf' }),
                       `FO-46_Convocatoria_${convocatoria.id}_${convocatoria.periodo_academico}.pdf`);
-                  } catch { /* silencioso */ }
+                  } catch {
+                    setMsg({ tipo: 'err', texto: 'No se pudo descargar el FO-46.' });
+                  }
                 }}
                 className="flex items-center gap-2 text-xs font-semibold text-usco-gris border border-gray-200 hover:text-usco-vinotinto hover:border-usco-vinotinto/30 px-3 py-2 rounded-lg transition-colors">
                 <FileText size={13} /> FO-46 Cartel Convocatoria
@@ -810,7 +812,9 @@ export function Convocatorias() {
     try {
       const r = await convocatoriasService.getAll();
       setConvocatorias(r.data);
-    } catch { setConvocatorias([]); }
+    } catch {
+      showMsg('err', 'No se pudieron cargar las convocatorias. Intente de nuevo.');
+    }
     finally { setLoading(false); }
   }, []);
 

@@ -34,17 +34,23 @@ export function useAuth() {
     }
   }, []);
 
+  // Revalida la sesión contra el backend al montar: el usuario guardado en
+  // localStorage puede tener datos desactualizados (rol, estado, foto) o el
+  // token/cookie puede haber expirado.
   useEffect(() => {
-    if (!user) {
-      authService.me().then((res) => {
-        setUser(res.data);
-        localStorage.setItem('sipam_user', JSON.stringify(res.data));
-      }).catch(() => {
-        // Token invalid or expired
+    authService.me().then((res) => {
+      setUser(res.data);
+      localStorage.setItem('sipam_user', JSON.stringify(res.data));
+    }).catch((err: unknown) => {
+      // Solo limpiar sesión ante rechazo explícito (401/403): un timeout o 500
+      // no debe expulsar al usuario que tiene cookies válidas.
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      if (status === 401 || status === 403) {
         localStorage.removeItem('sipam_user');
-      });
-    }
-  }, [user]);
+        setUser(null);
+      }
+    });
+  }, []);
 
   const refreshUser = useCallback(async () => {
     try {

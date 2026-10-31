@@ -153,9 +153,14 @@ export function Presupuesto() {
 
   async function crearNuevoPeriodo() {
     if (!nuevoMonto) return;
+    const monto = parseFloat(nuevoMonto.replace(/\./g, '').replace(',', '.'));
+    if (!Number.isFinite(monto) || monto <= 0) {
+      showFlash('err', 'Ingrese un monto válido mayor a cero.');
+      return;
+    }
     setAccionando(true);
     try {
-      await presupuestoService.crear({ periodo_academico: periodeSugerido, monto_total_asignado: parseFloat(nuevoMonto.replace(/\./g, '').replace(',', '.')), descripcion: nuevaDesc || undefined });
+      await presupuestoService.crear({ periodo_academico: periodeSugerido, monto_total_asignado: monto, descripcion: nuevaDesc || undefined });
       showFlash('ok', `Presupuesto ${periodeSugerido} creado en borrador. Ajusta el monto y envíalo a Gastos.`);
       setModalNuevo(false); setNuevoMonto(''); setNuevaDesc('');
       await cargar(periodeSugerido);
@@ -167,10 +172,15 @@ export function Presupuesto() {
 
   async function ejecutarIncremento() {
     if (!presupuesto || !incrementoMonto) return;
+    const nuevoMontoNum = parseFloat(incrementoMonto.replace(/\./g, '').replace(',', '.'));
+    if (!Number.isFinite(nuevoMontoNum) || nuevoMontoNum <= 0) {
+      showFlash('err', 'Ingrese un nuevo monto válido mayor a cero.');
+      return;
+    }
     setAccionando(true);
     try {
       await presupuestoService.solicitarIncremento(presupuesto.periodo_academico, {
-        nuevo_monto: parseFloat(incrementoMonto.replace(/\./g, '').replace(',', '.')),
+        nuevo_monto: nuevoMontoNum,
         descripcion: incrementoDesc || undefined,
       });
       if (archivosInc.length > 0) {
