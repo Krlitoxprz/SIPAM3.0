@@ -947,7 +947,16 @@ def aprobar_practica(
             presupuesto = db.query(Presupuesto).filter(
                 Presupuesto.periodo_academico == p.periodo_academico
             ).first()
-            if presupuesto:
+            if not presupuesto:
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        f"La práctica tiene viáticos por ${total_viaticos:,.0f} COP pero no "
+                        f"existe presupuesto para el período {p.periodo_academico}. Cree el "
+                        "presupuesto del período antes de dar aprobación final."
+                    ),
+                )
+            else:
                 # UPDATE atómico con guard de disponible: evita la condición de
                 # carrera read-modify-write y el compromiso por encima del saldo.
                 result = db.execute(
@@ -1405,20 +1414,29 @@ def registrar_pago_viatico(
     except ValueError:
         raise HTTPException(status_code=400, detail="Formato de fecha inválido (use ISO 8601)")
 
-    # El pago mueve comprometido→ejecutado: exige compromiso previo en el
-    # presupuesto del período y no permite pagar más de lo comprometido.
+    # El pago mueve comprometido→ejecutado: exige compromiso previo y no permite
+    # pagar más de lo comprometido. El presupuesto se resuelve desde el
+    # movimiento de compromiso — si el período de la práctica cambió tras la
+    # aprobación, el dinero sigue debitándose del presupuesto que lo respalda.
     from sqlalchemy import func as sa_func
-    presupuesto = db.query(Presupuesto).filter(
-        Presupuesto.periodo_academico == p.periodo_academico
-    ).with_for_update().first()
-    compromiso_practica = (
-        db.query(sa_func.coalesce(sa_func.sum(MovimientoPresupuestal.monto), 0))
+    compromiso_row = (
+        db.query(
+            sa_func.coalesce(sa_func.sum(MovimientoPresupuestal.monto), 0),
+            MovimientoPresupuestal.presupuesto_id,
+        )
         .filter(
             MovimientoPresupuestal.practica_id == practica_id,
             MovimientoPresupuestal.tipo == TipoMovimientoEnum.comprometido,
         )
-        .scalar()
-    ) or 0
+        .group_by(MovimientoPresupuestal.presupuesto_id)
+        .first()
+    )
+    compromiso_practica = float(compromiso_row[0]) if compromiso_row else 0
+    presupuesto = None
+    if compromiso_row:
+        presupuesto = db.query(Presupuesto).filter(
+            Presupuesto.id == compromiso_row[1]
+        ).with_for_update().first()
     pagado_prev = (
         db.query(sa_func.coalesce(sa_func.sum(PagoViatico.monto_pagado), 0))
         .filter(PagoViatico.practica_id == practica_id)
