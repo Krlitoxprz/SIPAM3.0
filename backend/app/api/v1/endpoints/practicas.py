@@ -392,11 +392,22 @@ def datos_asignatura(
     return result
 
 
+def _verificar_programa_jefe(p: Practica, current_user: User) -> None:
+    """jefe_programa solo gestiona prácticas de su programa académico."""
+    if (
+        current_user.rol == RolEnum.jefe_programa
+        and current_user.programa
+        and p.asignatura
+        and p.asignatura.programa != current_user.programa
+    ):
+        raise HTTPException(status_code=403, detail="Solo puede gestionar prácticas de su programa")
+
+
 @router.get("/{practica_id}", response_model=PracticaOut)
 def obtener_practica(
     practica_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
     p = (
         db.query(Practica)
@@ -410,6 +421,26 @@ def obtener_practica(
     )
     if not p:
         raise HTTPException(status_code=404, detail="Práctica no encontrada")
+    if current_user.rol == RolEnum.profesor and p.profesor_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Solo puede acceder a sus propias prácticas")
+    _verificar_programa_jefe(p, current_user)
+    if current_user.rol == RolEnum.estudiante:
+        participa = (
+            db.query(AsignaturaEstudiante)
+            .filter(
+                AsignaturaEstudiante.asignatura_id == p.asignatura_id,
+                AsignaturaEstudiante.estudiante_id == current_user.id,
+            )
+            .first()
+            or db.query(FirmaConsentimiento)
+            .filter(
+                FirmaConsentimiento.practica_id == practica_id,
+                FirmaConsentimiento.estudiante_id == current_user.id,
+            )
+            .first()
+        )
+        if not participa:
+            raise HTTPException(status_code=403, detail="No participas en esta práctica")
     return _enrich(p, testing_mode=es_modo_prueba(db))
 
 
@@ -579,6 +610,7 @@ def actualizar_practica(
         if p.estado not in [EstadoPracticaEnum.borrador, EstadoPracticaEnum.solicitada]:
             raise HTTPException(status_code=400, detail="Solo se pueden editar prácticas en borrador o solicitadas")
     elif current_user.rol in (RolEnum.jefe_programa, RolEnum.decano):
+        _verificar_programa_jefe(p, current_user)
         if p.estado in ESTADOS_NO_EDITABLES:
             raise HTTPException(status_code=400, detail="No se pueden editar prácticas finalizadas o rechazadas")
 
@@ -803,6 +835,7 @@ def aprobar_practica(
     p = db.query(Practica).options(joinedload(Practica.viaticos)).filter(Practica.id == practica_id).first()
     if not p:
         raise HTTPException(status_code=404, detail="Práctica no encontrada")
+    _verificar_programa_jefe(p, current_user)
 
     # ── Etapa 1: jefe_programa — Comité de Currículo ────────────────────────────────────
     if current_user.rol == RolEnum.jefe_programa:
@@ -902,7 +935,9 @@ def firmar_consentimiento(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_roles(RolEnum.estudiante)),
 ):
-    p = db.query(Practica).filter(Practica.id == practica_id).first()
+    # Lock de fila: dos firmas concurrentes serializan el count()+1 del
+    # quórum (la UniqueConstraint ya impide la doble firma del estudiante).
+    p = db.query(Practica).filter(Practica.id == practica_id).with_for_update().first()
     if not p:
         raise HTTPException(status_code=404, detail="Práctica no encontrada")
     ESTADOS_FIRMA = [
@@ -1045,6 +1080,7 @@ def rechazar_practica(
     p = db.query(Practica).filter(Practica.id == practica_id).first()
     if not p:
         raise HTTPException(status_code=404, detail="Práctica no encontrada")
+    _verificar_programa_jefe(p, current_user)
 
     # Cualquier etapa del flujo puede ser rechazada por la instancia correspondiente
     RECHAZABLES = [
@@ -1298,6 +1334,7 @@ def registrar_pago_viatico(
     p = db.query(Practica).filter(Practica.id == practica_id).first()
     if not p:
         raise HTTPException(status_code=404, detail="Práctica no encontrada")
+    _verificar_programa_jefe(p, current_user)
     if p.estado not in (EstadoPracticaEnum.finalizada, EstadoPracticaEnum.en_ejecucion, EstadoPracticaEnum.aprobado_transporte):
         raise HTTPException(status_code=400, detail="Solo se pueden registrar pagos en prácticas aprobadas o finalizadas")
     if body.monto_pagado <= 0:
@@ -1347,8 +1384,14 @@ def registrar_pago_viatico(
 def listar_pagos_viatico(
     practica_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles(RolEnum.admin, RolEnum.jefe_programa, RolEnum.decano, RolEnum.profesor)),
+    current_user: User = Depends(require_roles(RolEnum.admin, RolEnum.jefe_programa, RolEnum.decano, RolEnum.profesor)),
 ):
+    p = db.query(Practica).options(joinedload(Practica.asignatura)).filter(Practica.id == practica_id).first()
+    if not p:
+        raise HTTPException(status_code=404, detail="Práctica no encontrada")
+    if current_user.rol == RolEnum.profesor and p.profesor_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Solo puede consultar pagos de sus propias prácticas")
+    _verificar_programa_jefe(p, current_user)
     pagos = db.query(PagoViatico).filter(PagoViatico.practica_id == practica_id).order_by(PagoViatico.fecha_pago.desc()).all()
     return [
         {

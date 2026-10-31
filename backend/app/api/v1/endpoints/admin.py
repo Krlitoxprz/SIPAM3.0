@@ -18,6 +18,12 @@ from app.models.presupuesto import ConfiguracionCalendario
 from app.models.convocatoria import Convocatoria, EstadoConvocatoriaEnum, Asignatura
 from app.models.postulacion import Postulacion
 from app.models.practica import Practica, EstadoPracticaEnum
+from app.models.presupuesto import Presupuesto, MovimientoPresupuestal, TipoMovimientoEnum
+from app.models.pago_viatico import PagoViatico
+from app.models.monitor import HorasMonitor
+from app.models.evaluacion_monitor import EvaluacionMonitor
+from app.models.historial_estado import HistorialEstado
+from sqlalchemy import update, case
 from app.api.deps import require_roles
 
 router = APIRouter()
@@ -283,6 +289,15 @@ def listar_postulaciones_convocatoria(
     ]
 
 
+def _limpiar_dependencias_postulacion(db: Session, post_ids: list) -> None:
+    """Borra registros ligados a postulaciones que no tienen cascade ORM
+    (sin esto el DELETE falla con IntegrityError en Postgres)."""
+    if not post_ids:
+        return
+    db.query(HorasMonitor).filter(HorasMonitor.postulacion_id.in_(post_ids)).delete(synchronize_session=False)
+    db.query(EvaluacionMonitor).filter(EvaluacionMonitor.postulacion_id.in_(post_ids)).delete(synchronize_session=False)
+
+
 @router.delete("/monitorias/{conv_id}", status_code=204)
 def eliminar_convocatoria_admin(
     conv_id: int,
@@ -293,6 +308,12 @@ def eliminar_convocatoria_admin(
     conv = db.query(Convocatoria).filter(Convocatoria.id == conv_id).first()
     if not conv:
         raise HTTPException(404, "Convocatoria no encontrada")
+    post_ids = [p.id for p in conv.postulaciones]
+    _limpiar_dependencias_postulacion(db, post_ids)
+    db.query(HistorialEstado).filter(
+        HistorialEstado.entidad == "convocatoria",
+        HistorialEstado.entidad_id == conv_id,
+    ).delete()
     db.delete(conv)
     db.commit()
 
@@ -307,6 +328,7 @@ def eliminar_postulacion_admin(
     post = db.query(Postulacion).filter(Postulacion.id == post_id).first()
     if not post:
         raise HTTPException(404, "Postulación no encontrada")
+    _limpiar_dependencias_postulacion(db, [post.id])
     db.delete(post)
     db.commit()
 
@@ -364,9 +386,52 @@ def eliminar_practica_admin(
     db: Session = Depends(get_db),
     _: User = _ADMIN,
 ):
-    """Elimina una práctica y todos sus datos asociados (acción irreversible)."""
-    p = db.query(Practica).filter(Practica.id == practica_id).first()
+    """Elimina una práctica y todos sus datos asociados (acción irreversible).
+
+    Mismas reglas que el endpoint regular de prácticas: bloquea si hay pagos
+    de viáticos, revierte el compromiso presupuestal y limpia movimientos e
+    historial (sin ello quedan filas huérfanas / compromiso inflado).
+    """
+    p = (
+        db.query(Practica)
+        .filter(Practica.id == practica_id)
+        .with_for_update()
+        .first()
+    )
     if not p:
         raise HTTPException(404, "Práctica no encontrada")
+
+    if db.query(PagoViatico).filter(PagoViatico.practica_id == practica_id).first():
+        raise HTTPException(
+            status_code=400,
+            detail="No se puede eliminar: la práctica tiene pagos de viáticos registrados",
+        )
+    if p.estado in [EstadoPracticaEnum.en_ejecucion, EstadoPracticaEnum.finalizada]:
+        raise HTTPException(
+            status_code=400,
+            detail="No se pueden eliminar prácticas en ejecución o finalizadas",
+        )
+
+    movimientos = db.query(MovimientoPresupuestal).filter(
+        MovimientoPresupuestal.practica_id == practica_id
+    ).all()
+    for mov in movimientos:
+        if mov.tipo == TipoMovimientoEnum.comprometido:
+            db.execute(
+                update(Presupuesto)
+                .where(Presupuesto.id == mov.presupuesto_id)
+                .values(monto_comprometido=case(
+                    (Presupuesto.monto_comprometido - mov.monto > 0,
+                     Presupuesto.monto_comprometido - mov.monto),
+                    else_=0,
+                ))
+            )
+
+    db.query(MovimientoPresupuestal).filter(MovimientoPresupuestal.practica_id == practica_id).delete()
+    db.query(HistorialEstado).filter(
+        HistorialEstado.entidad == "practica",
+        HistorialEstado.entidad_id == practica_id,
+    ).delete()
+    # rutas, firmas y viáticos se eliminan por cascade="all, delete-orphan"
     db.delete(p)
     db.commit()
