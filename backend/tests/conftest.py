@@ -163,6 +163,23 @@ def usuario_jefe(session_db):
 
 
 @pytest.fixture(scope="session")
+def usuario_jefe_otro_programa(session_db):
+    u = User(
+        codigo="TEST_JEFE_OTRO",
+        nombres="Jefe",
+        apellidos="Otro Programa",
+        email="jefe.otro.test@usco.edu.co",
+        cedula="40000002",
+        hashed_password=get_password_hash(PASSWORD),
+        rol=RolEnum.jefe_programa,
+        is_active=True,
+        programa="Zootecnia",
+    )
+    session_db.add(u); session_db.commit(); session_db.refresh(u)
+    return u
+
+
+@pytest.fixture(scope="session")
 def usuario_decano(session_db):
     u = User(
         codigo="TEST_DECANO",

@@ -12,7 +12,7 @@ from app.schemas.convocatoria import (
     ConvocatoriaCreate, ConvocatoriaUpdate, ConvocatoriaOut,
     CambiarEstadoRequest, AsignaturaOut,
 )
-from app.api.deps import get_current_user, require_roles
+from app.api.deps import get_current_user, require_roles, verificar_programa_jefe
 from app.utils.historial import registrar_historial
 from app.utils.notificaciones import crear_notificacion
 from app.models.presupuesto import ConfiguracionCalendario
@@ -427,6 +427,7 @@ def crear_convocatoria(
     asig = db.query(Asignatura).filter(Asignatura.id == body.asignatura_id).first()
     if not asig:
         raise HTTPException(status_code=404, detail="Asignatura no encontrada")
+    verificar_programa_jefe(current_user, asig.programa)
 
     # RF-MON-TIME-02: validar ventana de postulación al crear la convocatoria
     hoy = datetime.now(timezone.utc)
@@ -529,6 +530,7 @@ def actualizar_convocatoria(
     conv = db.query(Convocatoria).filter(Convocatoria.id == conv_id).first()
     if not conv:
         raise HTTPException(status_code=404, detail="Convocatoria no encontrada")
+    verificar_programa_jefe(current_user, conv.asignatura.programa if conv.asignatura else None)
 
     if current_user.rol == RolEnum.profesor and conv.profesor_id != current_user.id:
         raise HTTPException(status_code=403, detail="Solo puede editar sus propias convocatorias")
@@ -537,6 +539,11 @@ def actualizar_convocatoria(
         raise HTTPException(status_code=400, detail="Solo se pueden editar convocatorias en borrador o abiertas")
 
     updates = body.model_dump(exclude_unset=True)
+    if current_user.rol == RolEnum.jefe_programa and "asignatura_id" in updates:
+        nueva_asig = db.query(Asignatura).filter(Asignatura.id == updates["asignatura_id"]).first()
+        if not nueva_asig:
+            raise HTTPException(status_code=404, detail="Asignatura no encontrada")
+        verificar_programa_jefe(current_user, nueva_asig.programa)
     if current_user.rol == RolEnum.profesor and "asignatura_id" in updates:
         nueva_asig = db.query(Asignatura).filter(Asignatura.id == updates["asignatura_id"]).first()
         if not nueva_asig or nueva_asig.profesor_id != current_user.id:
@@ -570,6 +577,7 @@ def cambiar_estado(
     conv = db.query(Convocatoria).filter(Convocatoria.id == conv_id).first()
     if not conv:
         raise HTTPException(status_code=404, detail="Convocatoria no encontrada")
+    verificar_programa_jefe(current_user, conv.asignatura.programa if conv.asignatura else None)
 
     permitidos = TRANSICIONES_VALIDAS.get(conv.estado, [])
     if body.estado not in permitidos:

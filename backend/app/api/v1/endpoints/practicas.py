@@ -22,7 +22,7 @@ from app.schemas.practica import (
     PracticaCreate, PracticaUpdate, PracticaOut,
     FirmaConsentimientoOut, TarifaViaticoOut, ViaticosCalculadoOut,
 )
-from app.api.deps import get_current_user, require_roles
+from app.api.deps import get_current_user, require_roles, verificar_programa_jefe
 from app.utils.notificaciones import crear_notificacion
 from app.models.historial_estado import HistorialEstado
 from app.utils.historial import registrar_historial
@@ -571,6 +571,7 @@ def actualizar_practica(
     p = db.query(Practica).filter(Practica.id == practica_id).first()
     if not p:
         raise HTTPException(status_code=404, detail="Práctica no encontrada")
+    verificar_programa_jefe(current_user, p.asignatura.programa if p.asignatura else None)
 
     ESTADOS_NO_EDITABLES = [EstadoPracticaEnum.finalizada, EstadoPracticaEnum.rechazada]
     if current_user.rol == RolEnum.profesor:
@@ -803,6 +804,7 @@ def aprobar_practica(
     p = db.query(Practica).options(joinedload(Practica.viaticos)).filter(Practica.id == practica_id).first()
     if not p:
         raise HTTPException(status_code=404, detail="Práctica no encontrada")
+    verificar_programa_jefe(current_user, p.asignatura.programa if p.asignatura else None)
 
     # ── Etapa 1: jefe_programa — Comité de Currículo ────────────────────────────────────
     if current_user.rol == RolEnum.jefe_programa:
@@ -1045,6 +1047,7 @@ def rechazar_practica(
     p = db.query(Practica).filter(Practica.id == practica_id).first()
     if not p:
         raise HTTPException(status_code=404, detail="Práctica no encontrada")
+    verificar_programa_jefe(current_user, p.asignatura.programa if p.asignatura else None)
 
     # Cualquier etapa del flujo puede ser rechazada por la instancia correspondiente
     RECHAZABLES = [
@@ -1161,6 +1164,7 @@ def finalizar_practica(
     p = db.query(Practica).filter(Practica.id == practica_id).first()
     if not p:
         raise HTTPException(status_code=404, detail="Práctica no encontrada")
+    verificar_programa_jefe(current_user, p.asignatura.programa if p.asignatura else None)
     if p.estado != EstadoPracticaEnum.en_ejecucion:
         raise HTTPException(
             status_code=400,
@@ -1298,6 +1302,7 @@ def registrar_pago_viatico(
     p = db.query(Practica).filter(Practica.id == practica_id).first()
     if not p:
         raise HTTPException(status_code=404, detail="Práctica no encontrada")
+    verificar_programa_jefe(current_user, p.asignatura.programa if p.asignatura else None)
     if p.estado not in (EstadoPracticaEnum.finalizada, EstadoPracticaEnum.en_ejecucion, EstadoPracticaEnum.aprobado_transporte):
         raise HTTPException(status_code=400, detail="Solo se pueden registrar pagos en prácticas aprobadas o finalizadas")
     if body.monto_pagado <= 0:

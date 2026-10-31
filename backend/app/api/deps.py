@@ -60,3 +60,18 @@ def require_roles(*roles: RolEnum):
             )
         return current_user
     return checker
+
+
+def verificar_programa_jefe(current_user: User, programa: str | None) -> None:
+    """Un jefe_programa solo puede mutar recursos de su propio programa.
+
+    Se compara con `Asignatura.programa`, la misma dimensión que usan los listados.
+    Un jefe sin programa asignado no tiene jurisdicción sobre ningún recurso.
+    """
+    if current_user.rol != RolEnum.jefe_programa:
+        return
+    if not current_user.programa or programa != current_user.programa:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Solo puede gestionar recursos de su propio programa académico",
+        )
