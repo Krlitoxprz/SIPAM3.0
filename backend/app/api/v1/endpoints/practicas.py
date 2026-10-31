@@ -645,7 +645,11 @@ def actualizar_practica(
         setattr(p, field, value)
 
     if p.fecha_inicio and p.fecha_fin:
-        if p.fecha_fin < p.fecha_inicio:
+        # Postgres devuelve aware y el formulario envía naive: normalizar a UTC
+        # (convención naive=UTC de crear_practica) para poder compararlos.
+        ini_cmp = p.fecha_inicio if p.fecha_inicio.tzinfo else p.fecha_inicio.replace(tzinfo=timezone.utc)
+        fin_cmp = p.fecha_fin if p.fecha_fin.tzinfo else p.fecha_fin.replace(tzinfo=timezone.utc)
+        if fin_cmp < ini_cmp:
             raise HTTPException(
                 status_code=400,
                 detail="fecha_fin debe ser igual o posterior a fecha_inicio",
