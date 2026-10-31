@@ -845,7 +845,16 @@ def aprobar_practica(
         RolEnum.jefe_programa, RolEnum.decano, RolEnum.admin,
     )),
 ):
-    p = db.query(Practica).options(joinedload(Practica.viaticos)).filter(Practica.id == practica_id).first()
+    # Lock de fila: dos aprobaciones concurrentes serializan la transición de
+    # estado — sin el lock ambas leerían 'aprobada_facultad' y comprometerían
+    # los viáticos dos veces.
+    p = (
+        db.query(Practica)
+        .options(joinedload(Practica.viaticos))
+        .filter(Practica.id == practica_id)
+        .with_for_update()
+        .first()
+    )
     if not p:
         raise HTTPException(status_code=404, detail="Práctica no encontrada")
     _verificar_programa_jefe(p, current_user)
@@ -912,7 +921,18 @@ def aprobar_practica(
         registrar_historial(db, "practica", practica_id, p.estado, EstadoPracticaEnum.aprobado_transporte, current_user.id)
         p.estado = EstadoPracticaEnum.aprobado_transporte
 
-        total_viaticos = sum(v.valor_calculado for v in p.viaticos) if p.viaticos else 0.0
+        # Persistir los viáticos calculados si aún no existen filas: ningún
+        # flujo los creaba, y el compromiso presupuestal depende de ellos.
+        if not p.viaticos:
+            for v in _viaticos_calculados(p, db):
+                db.add(Viatico(
+                    practica_id=p.id, tarifa_id=v["tarifa_id"],
+                    num_dias=v["num_dias"], num_personas=v["num_personas"],
+                    valor_calculado=v["subtotal"], descripcion=v["descripcion"],
+                ))
+            db.flush()
+            db.refresh(p, attribute_names=["viaticos"])
+        total_viaticos = sum(float(v.valor_calculado) for v in p.viaticos) if p.viaticos else 0.0
         if total_viaticos > 0:
             presupuesto = db.query(Presupuesto).filter(
                 Presupuesto.periodo_academico == p.periodo_academico
@@ -1411,28 +1431,39 @@ def registrar_pago_viatico(
         )
 
     if presupuesto:
-        resto = float(compromiso_practica) - float(pagado_prev)
-        mover = min(float(body.monto_pagado), resto)
-        db.execute(
-            update(Presupuesto)
-            .where(Presupuesto.id == presupuesto.id)
-            .values(
-                monto_comprometido=case(
-                    (Presupuesto.monto_comprometido - mover > 0,
-                     Presupuesto.monto_comprometido - mover),
-                    else_=0,
-                ),
-                monto_ejecutado=Presupuesto.monto_ejecutado + mover,
+        # Lo que ya se transfirió a ejecutado por esta práctica (movimientos
+        # tipo ejecucion). Pago anterior→comprometido residual se reconcilia
+        # aquí: se mueve el total pagado, no solo el pago nuevo.
+        ejecutado_prev = (
+            db.query(sa_func.coalesce(sa_func.sum(MovimientoPresupuestal.monto), 0))
+            .filter(
+                MovimientoPresupuestal.practica_id == practica_id,
+                MovimientoPresupuestal.tipo == TipoMovimientoEnum.ejecucion,
             )
-        )
-        db.add(MovimientoPresupuestal(
-            presupuesto_id=presupuesto.id,
-            tipo=TipoMovimientoEnum.ejecucion,
-            monto=mover,
-            concepto=f"Pago viáticos: {p.nombre_practica}",
-            practica_id=p.id,
-            responsable_id=current_user.id,
-        ))
+            .scalar()
+        ) or 0
+        mover = min(float(pagado_prev) + float(body.monto_pagado), float(compromiso_practica)) - float(ejecutado_prev)
+        if mover > 0:
+            db.execute(
+                update(Presupuesto)
+                .where(Presupuesto.id == presupuesto.id)
+                .values(
+                    monto_comprometido=case(
+                        (Presupuesto.monto_comprometido - mover > 0,
+                         Presupuesto.monto_comprometido - mover),
+                        else_=0,
+                    ),
+                    monto_ejecutado=Presupuesto.monto_ejecutado + mover,
+                )
+            )
+            db.add(MovimientoPresupuestal(
+                presupuesto_id=presupuesto.id,
+                tipo=TipoMovimientoEnum.ejecucion,
+                monto=mover,
+                concepto=f"Pago viáticos: {p.nombre_practica}",
+                practica_id=p.id,
+                responsable_id=current_user.id,
+            ))
 
     pago = PagoViatico(
         practica_id=practica_id,
@@ -1495,35 +1526,68 @@ def listar_pagos_viatico(
     ]
 
 
+def _viaticos_calculados(p: Practica, db: Session) -> list[dict]:
+    """Proyección de viáticos: tarifas vigentes a fecha_inicio × días × 1 docente
+    (Acuerdo 003/2012). Usada para la vista previa y para persistir los
+    viáticos al aprobar la práctica."""
+    if not p.fecha_inicio or not p.duracion_dias:
+        return []
+    tarifas = db.query(TarifaViatico).filter(
+        TarifaViatico.is_active == True,
+        TarifaViatico.aplica_desde <= p.fecha_inicio.date(),
+    ).all()
+    NUM_DOCENTES = 1
+    return [
+        {
+            "tarifa_id": t.id,
+            "descripcion": t.descripcion,
+            "valor_dia": float(t.valor_dia),
+            "num_dias": p.duracion_dias,
+            "num_personas": NUM_DOCENTES,
+            "subtotal": float(t.valor_dia) * p.duracion_dias * NUM_DOCENTES,
+        }
+        for t in tarifas
+    ]
+
+
 @router.get("/{practica_id}/viaticos", response_model=list[ViaticosCalculadoOut])
 def calcular_viaticos(
     practica_id: int,
     db: Session = Depends(get_db),
     _: User = Depends(require_roles(RolEnum.profesor, RolEnum.jefe_programa, RolEnum.decano, RolEnum.admin)),
 ):
-    """RF-PRA-02/03 — Calcula viáticos cruzando días de práctica con tarifas vigentes."""
-    p = db.query(Practica).filter(Practica.id == practica_id).first()
+    """RF-PRA-02/03 — Calcula viáticos cruzando días de práctica con tarifas vigentes.
+
+    Si la práctica ya tiene viáticos persistidos (p. ej. tras la aprobación
+    final), devuelve esos importes; si no, proyecta desde las tarifas.
+    """
+    p = db.query(Practica).options(joinedload(Practica.viaticos)).filter(Practica.id == practica_id).first()
     if not p:
         raise HTTPException(status_code=404, detail="Práctica no encontrada")
 
-    tarifas = db.query(TarifaViatico).filter(
-        TarifaViatico.is_active == True,
-        TarifaViatico.aplica_desde <= p.fecha_inicio.date(),
-    ).all()
-
-    NUM_DOCENTES = 1  # Viáticos para el docente responsable (Acuerdo 003/2012)
-    resultado = []
-    for tarifa in tarifas:
-        subtotal = tarifa.valor_dia * p.duracion_dias * NUM_DOCENTES
-        resultado.append(ViaticosCalculadoOut(
-            tarifa_id=tarifa.id,
-            descripcion=tarifa.descripcion,
-            valor_dia=tarifa.valor_dia,
-            num_dias=p.duracion_dias,
-            num_personas=NUM_DOCENTES,
-            subtotal=subtotal,
-        ))
-    return resultado
+    if p.viaticos:
+        return [
+            ViaticosCalculadoOut(
+                tarifa_id=v.tarifa_id,
+                descripcion=v.descripcion or "",
+                valor_dia=round(float(v.valor_calculado) / max(v.num_dias * v.num_personas, 1), 2),
+                num_dias=v.num_dias,
+                num_personas=v.num_personas,
+                subtotal=float(v.valor_calculado),
+            )
+            for v in p.viaticos
+        ]
+    return [
+        ViaticosCalculadoOut(
+            tarifa_id=r["tarifa_id"],
+            descripcion=r["descripcion"],
+            valor_dia=r["valor_dia"],
+            num_dias=r["num_dias"],
+            num_personas=r["num_personas"],
+            subtotal=r["subtotal"],
+        )
+        for r in _viaticos_calculados(p, db)
+    ]
 
 
 
