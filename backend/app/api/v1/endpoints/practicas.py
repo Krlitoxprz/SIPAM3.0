@@ -848,9 +848,10 @@ def aprobar_practica(
     # Lock de fila: dos aprobaciones concurrentes serializan la transición de
     # estado — sin el lock ambas leerían 'aprobada_facultad' y comprometerían
     # los viáticos dos veces.
+    # joinedload queda fuera: en PostgreSQL FOR UPDATE rechaza el outer join
+    # a colecciones. Los viáticos se cargan lazy una vez tomado el lock.
     p = (
         db.query(Practica)
-        .options(joinedload(Practica.viaticos))
         .filter(Practica.id == practica_id)
         .with_for_update()
         .first()
@@ -1536,6 +1537,20 @@ def _viaticos_calculados(p: Practica, db: Session) -> list[dict]:
         TarifaViatico.is_active == True,
         TarifaViatico.aplica_desde <= p.fecha_inicio.date(),
     ).all()
+    # Solo la categoría de viático aplicable al itinerario: una sola tarifa de
+    # alojamiento/alimentación por día según la zona (rural > interdepartamental
+    # > municipal). El transporte interno aplica cuando la práctica es local.
+    if any(getattr(r, "es_rural", False) for r in p.rutas):
+        zona = "rural"
+    elif _es_fuera_del_huila(p.rutas):
+        zona = "interdepartamental"
+    else:
+        zona = "municipal"
+    tarifas = [
+        t for t in tarifas
+        if zona in (t.descripcion or "").lower()
+        or (zona == "municipal" and "transporte" in (t.descripcion or "").lower())
+    ]
     NUM_DOCENTES = 1
     return [
         {
