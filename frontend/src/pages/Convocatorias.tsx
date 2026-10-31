@@ -210,9 +210,11 @@ function ModalConvocatoria({
         ...(esJefe && { profesor_id: parseInt(form.profesor_id) }),
         tipo_monitoria: form.tipo_monitoria,
         periodo_academico: form.periodo_academico,
-        fecha_inicio_postulacion: new Date(form.fecha_inicio_postulacion).toISOString(),
-        fecha_fin_postulacion: new Date(form.fecha_fin_postulacion).toISOString(),
-        fecha_publicacion_resultados: form.fecha_publicacion_resultados ? new Date(form.fecha_publicacion_resultados).toISOString() : null,
+        // El backend interpreta datetimes naive como UTC: enviar el valor del
+        // input tal cual (sin convertir a ISO) para no desplazar la hora.
+        fecha_inicio_postulacion: form.fecha_inicio_postulacion,
+        fecha_fin_postulacion: form.fecha_fin_postulacion,
+        fecha_publicacion_resultados: form.fecha_publicacion_resultados || null,
         num_monitores_requeridos: parseInt(form.num_monitores_requeridos),
         horas_semana: parseInt(form.horas_semana),
         horas_semestre: parseInt(form.horas_semestre),

@@ -451,7 +451,14 @@ def _validar_ventana_postulacion(ini, fin, publicacion, db, validar_pasado: bool
     validar_pasado=False en PUT cuando no se toca fecha_inicio (una convocatoria
     abierta puede tener su apertura en el pasado y seguir editándose).
     """
-    hoy = datetime.now(timezone.utc)
+    # Postgres devuelve fechas aware y SQLite/formularios naive (convención
+    # naive=UTC): normalizar a naive-UTC para que las comparaciones no mezclen.
+    def _utc_naive(d):
+        return d.astimezone(timezone.utc).replace(tzinfo=None) if d and d.tzinfo else d
+    ini = _utc_naive(ini)
+    fin = _utc_naive(fin)
+    publicacion = _utc_naive(publicacion)
+    hoy = datetime.now(timezone.utc).replace(tzinfo=None)
     if fin <= ini:
         raise HTTPException(status_code=400, detail="La fecha de cierre debe ser posterior a la fecha de apertura de postulación.")
     delta_dias = (fin.date() - ini.date()).days
