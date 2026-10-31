@@ -2,10 +2,12 @@
 import logging
 import os
 from datetime import datetime
+from decimal import Decimal
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.db.database import get_db
@@ -215,7 +217,7 @@ def solicitar_incremento(
     if body.nuevo_monto <= p.monto_total_asignado:
         raise HTTPException(status_code=400, detail=f"El nuevo monto debe ser mayor al actual (${p.monto_total_asignado:,.0f})")
     # Guardamos el monto solicitado SIN tocar monto_total_asignado (que sigue siendo el aprobado)
-    diff = body.nuevo_monto - p.monto_total_asignado
+    diff = body.nuevo_monto - float(p.monto_total_asignado)
     p.monto_solicitado = body.nuevo_monto
     if body.descripcion:
         p.descripcion = body.descripcion
@@ -281,20 +283,26 @@ def aprobar_presupuesto(
     p.observaciones_admin = body.observaciones
     # Si había un incremento pendiente, aplicarlo ahora que fue aprobado
     if p.monto_solicitado is not None:
-        monto_asignado = p.monto_solicitado - p.monto_total_asignado
-        concepto = f"Incremento aprobado por Administrador — {periodo}"
         p.monto_total_asignado = p.monto_solicitado
         p.monto_solicitado = None
-    else:
-        monto_asignado = p.monto_total_asignado
-        concepto = f"Asignación aprobada por Administrador — {periodo}"
-    db.add(MovimientoPresupuestal(
-        presupuesto_id=p.id,
-        tipo=TipoMovimientoEnum.asignacion,
-        monto=monto_asignado,
-        concepto=concepto,
-        responsable_id=current_user.id,
-    ))
+    # Registrar solo la parte del total aprobado que aún no consta en movimientos de asignación/ajuste.
+    ya_registrado = (
+        db.query(func.coalesce(func.sum(MovimientoPresupuestal.monto), 0))
+        .filter(
+            MovimientoPresupuestal.presupuesto_id == p.id,
+            MovimientoPresupuestal.tipo.in_([TipoMovimientoEnum.asignacion, TipoMovimientoEnum.ajuste]),
+        )
+        .scalar()
+    )
+    monto_asignado = Decimal(str(p.monto_total_asignado)) - Decimal(str(ya_registrado))
+    if monto_asignado > 0:
+        db.add(MovimientoPresupuestal(
+            presupuesto_id=p.id,
+            tipo=TipoMovimientoEnum.asignacion,
+            monto=monto_asignado,
+            concepto=f"Asignación aprobada por Administrador — {periodo}",
+            responsable_id=current_user.id,
+        ))
     jefes = db.query(User).filter(User.rol.in_([RolEnum.jefe_programa, RolEnum.decano]), User.is_active == True).all()
     for j in jefes:
         crear_notificacion(

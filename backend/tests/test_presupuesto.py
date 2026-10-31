@@ -127,3 +127,44 @@ def test_eliminar_presupuesto_error_al_borrar_archivo_no_falla(client: TestClien
     assert client.delete("/api/v1/presupuesto/2098-8", headers=auth(ta)).status_code == 204
     assert (tmp_path / rutas[0]).exists()
     assert not (tmp_path / rutas[1]).exists()
+
+
+def _asignaciones(db, pid):
+    return [float(m.monto) for m in db.query(MovimientoPresupuestal)
+            .filter(MovimientoPresupuestal.presupuesto_id == pid,
+                    MovimientoPresupuestal.tipo == TipoMovimientoEnum.asignacion)
+            .order_by(MovimientoPresupuestal.id).all()]
+
+
+def test_aprobar_presupuesto_cero_no_registra_movimiento(client: TestClient, usuario_admin, db):
+    p = Presupuesto(periodo_academico="2098-9", monto_total_asignado=0,
+                    estado=EstadoPresupuestoEnum.solicitado)
+    db.add(p); db.commit(); db.refresh(p)
+    ta = get_token(client, usuario_admin.codigo)
+    assert client.patch("/api/v1/presupuesto/2098-9/aprobar", json={}, headers=auth(ta)).status_code == 200
+    assert _asignaciones(db, p.id) == []
+
+
+def test_aprobar_incremento_registra_solo_diferencia_sin_duplicar(client: TestClient, usuario_admin,
+                                                                  usuario_jefe, db):
+    p = _presupuesto(db, "2097-1", EstadoPresupuestoEnum.solicitado)
+    ta = get_token(client, usuario_admin.codigo)
+    tj = get_token(client, usuario_jefe.codigo)
+    client.cookies.clear()  # get_current_user prioriza la cookie sobre el header Authorization
+    assert client.patch("/api/v1/presupuesto/2097-1/aprobar", json={}, headers=auth(ta)).status_code == 200
+
+    # incremento → pedir modificación → reenviar sin cambio de monto → aprobar: no duplica
+    assert client.patch("/api/v1/presupuesto/2097-1/solicitar-incremento",
+                        json={"nuevo_monto": 1500000}, headers=auth(tj)).status_code == 200
+    assert client.patch("/api/v1/presupuesto/2097-1/pedir-modificacion", json={}, headers=auth(ta)).status_code == 200
+    assert client.patch("/api/v1/presupuesto/2097-1/solicitar", headers=auth(tj)).status_code == 200
+    assert client.patch("/api/v1/presupuesto/2097-1/aprobar", json={}, headers=auth(ta)).status_code == 200
+    db.expire_all()
+    assert _asignaciones(db, p.id) == [1000000.0]
+
+    # incremento aprobado registra solo la diferencia
+    assert client.patch("/api/v1/presupuesto/2097-1/solicitar-incremento",
+                        json={"nuevo_monto": 1500000}, headers=auth(tj)).status_code == 200
+    assert client.patch("/api/v1/presupuesto/2097-1/aprobar", json={}, headers=auth(ta)).status_code == 200
+    db.expire_all()
+    assert _asignaciones(db, p.id) == [1000000.0, 500000.0]
