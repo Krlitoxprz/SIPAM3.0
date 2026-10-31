@@ -1537,9 +1537,11 @@ def _viaticos_calculados(p: Practica, db: Session) -> list[dict]:
         TarifaViatico.is_active == True,
         TarifaViatico.aplica_desde <= p.fecha_inicio.date(),
     ).all()
-    # Solo la categoría de viático aplicable al itinerario: una sola tarifa de
-    # alojamiento/alimentación por día según la zona (rural > interdepartamental
-    # > municipal). El transporte interno aplica cuando la práctica es local.
+    # Zona del itinerario: rural > interdepartamental > municipal. Las tarifas
+    # que declaran zona se filtran a la aplicable; las que no declaran ninguna
+    # (Desayuno/Almuerzo/Cena/Alojamiento del Decreto USCO) aplican a toda zona,
+    # salvo el "transporte interno" que solo tiene sentido en prácticas locales.
+    ZONAS = ("rural", "interdepartamental", "municipal")
     if any(getattr(r, "es_rural", False) for r in p.rutas):
         zona = "rural"
     elif _es_fuera_del_huila(p.rutas):
@@ -1548,8 +1550,9 @@ def _viaticos_calculados(p: Practica, db: Session) -> list[dict]:
         zona = "municipal"
     tarifas = [
         t for t in tarifas
-        if zona in (t.descripcion or "").lower()
-        or (zona == "municipal" and "transporte" in (t.descripcion or "").lower())
+        if not [z for z in ZONAS if z in (t.descripcion or "").lower()]  # sin zona: aplica a toda
+        and not ("transporte" in (t.descripcion or "").lower() and zona != "municipal")
+        or zona in (t.descripcion or "").lower()                          # zona específica aplicable
     ]
     NUM_DOCENTES = 1
     return [
