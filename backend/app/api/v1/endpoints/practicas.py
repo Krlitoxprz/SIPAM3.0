@@ -425,6 +425,19 @@ def obtener_practica(
         raise HTTPException(status_code=403, detail="Solo puede acceder a sus propias prácticas")
     _verificar_programa_jefe(p, current_user)
     if current_user.rol == RolEnum.estudiante:
+        # Mismos estados que expone el listado: borradores y rechazadas no se
+        # muestran aunque el estudiante esté matriculado en la asignatura.
+        ESTADOS_VISIBLES = [
+            EstadoPracticaEnum.solicitada,
+            EstadoPracticaEnum.pendiente_quorum,
+            EstadoPracticaEnum.aprobada_curriculo,
+            EstadoPracticaEnum.aprobada_facultad,
+            EstadoPracticaEnum.aprobado_transporte,
+            EstadoPracticaEnum.en_ejecucion,
+            EstadoPracticaEnum.finalizada,
+        ]
+        if p.estado not in ESTADOS_VISIBLES:
+            raise HTTPException(status_code=404, detail="Práctica no encontrada")
         participa = (
             db.query(AsignaturaEstudiante)
             .filter(

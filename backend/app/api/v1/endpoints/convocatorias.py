@@ -573,12 +573,25 @@ def actualizar_convocatoria(
         raise HTTPException(status_code=400, detail="Solo se pueden editar convocatorias en borrador o abiertas")
 
     updates = body.model_dump(exclude_unset=True)
-    if current_user.rol == RolEnum.profesor and "asignatura_id" in updates:
+    if "asignatura_id" in updates:
         nueva_asig = db.query(Asignatura).filter(Asignatura.id == updates["asignatura_id"]).first()
-        if not nueva_asig or nueva_asig.profesor_id != current_user.id:
+        if not nueva_asig:
+            raise HTTPException(status_code=404, detail="Asignatura no encontrada")
+        if current_user.rol == RolEnum.profesor and nueva_asig.profesor_id != current_user.id:
             raise HTTPException(
                 status_code=403,
                 detail="Solo puede asignar asignaturas que usted dicta.",
+            )
+        # La verificación del programa cubre la asignatura ORIGEN; la nueva
+        # también debe ser del programa del jefe (si no, la reasigna fuera).
+        if (
+            current_user.rol == RolEnum.jefe_programa
+            and current_user.programa
+            and nueva_asig.programa != current_user.programa
+        ):
+            raise HTTPException(
+                status_code=403,
+                detail="Solo puede asignar asignaturas de su programa",
             )
     for field, value in updates.items():
         setattr(conv, field, value)
