@@ -414,8 +414,8 @@ _COMBUSTIBLE_VEHICULO = {
 async def calcular_costos_practica(
     practica_id: int,
     tipo_vehiculo: str = "bus",
-    num_vehiculos: int = 1,
-    categoria_peaje: int = 3,
+    num_vehiculos: int = Query(1, ge=1, le=20),
+    categoria_peaje: int = Query(3, ge=1, le=5),
     tipo_combustible: str = "",   # si viene vacío se auto-deriva del tipo_vehiculo
     db: Session = Depends(get_db),
     current_user: User = Depends(require_roles(

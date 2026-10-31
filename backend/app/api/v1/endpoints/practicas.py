@@ -1111,7 +1111,7 @@ class RechazoPracticaBody(BaseModel):
 class TarifaCreate(BaseModel):
     descripcion: str
     valor_dia: float
-    aplica_desde: str
+    aplica_desde: date
     is_active: bool = True
 
 
@@ -1306,14 +1306,12 @@ def crear_tarifa(
     db: Session = Depends(get_db),
     _: User = Depends(require_roles(RolEnum.admin)),
 ):
-    from datetime import date as date_type
-    aplica = date_type.fromisoformat(body.aplica_desde) if isinstance(body.aplica_desde, str) else body.aplica_desde
     if body.valor_dia <= 0:
         raise HTTPException(status_code=400, detail="El valor por día debe ser mayor a 0")
     tarifa = TarifaViatico(
         descripcion=body.descripcion,
         valor_dia=body.valor_dia,
-        aplica_desde=aplica,
+        aplica_desde=body.aplica_desde,
         is_active=body.is_active,
     )
     db.add(tarifa)
