@@ -212,3 +212,64 @@ def test_crear_usuario_admin_prohibido(client: TestClient, usuario_admin):
         "rol": "admin",
     })
     assert r.status_code == 403
+
+
+# ── PA-017: jefe/decano no pueden gestionar cuentas privilegiadas ─────────────
+def _crear_usuario_temporal(db, codigo: str, cedula: str, rol):
+    from app.models.user import User
+    from app.core.security import get_password_hash
+    u = User(
+        codigo=codigo, nombres="Temp", apellidos="Test",
+        email=f"{codigo.lower()}@usco.edu.co", cedula=cedula,
+        hashed_password=get_password_hash(PASSWORD), rol=rol, is_active=True,
+    )
+    db.add(u); db.commit(); db.refresh(u)
+    return u
+
+
+@pytest.mark.parametrize("actor", ["usuario_jefe", "usuario_decano"])
+@pytest.mark.parametrize("rol_objetivo,sufijo", [("admin", "1"), ("decano", "2"), ("jefe_programa", "3")])
+def test_jefe_decano_no_gestionan_privilegiados(client: TestClient, db, request, actor, rol_objetivo, sufijo):
+    from app.models.user import RolEnum
+    actor_user = request.getfixturevalue(actor)
+    codigo = f"PRIV_{actor_user.codigo}_{sufijo}"
+    cedula = f"7{len(actor_user.codigo)}00000{sufijo}"
+    objetivo = _crear_usuario_temporal(db, codigo, cedula, RolEnum[rol_objetivo])
+    hash_original = objetivo.hashed_password
+    token = get_token(client, actor_user.codigo)
+
+    r = client.patch(f"/api/v1/auth/usuarios/{objetivo.id}/toggle-activo", headers=auth(token))
+    assert r.status_code == 403, r.text
+    r = client.patch(f"/api/v1/auth/usuarios/{objetivo.id}/toggle-sancionado", headers=auth(token))
+    assert r.status_code == 403, r.text
+    r = client.patch(f"/api/v1/auth/usuarios/{objetivo.id}/reset-password", headers=auth(token), json={})
+    assert r.status_code == 403, r.text
+
+    db.refresh(objetivo)
+    assert objetivo.is_active is True
+    assert objetivo.hashed_password == hash_original
+
+
+def test_jefe_gestiona_estudiante(client: TestClient, db, usuario_jefe):
+    from app.models.user import RolEnum
+    objetivo = _crear_usuario_temporal(db, "GEST_EST_JEFE", "71234561", RolEnum.estudiante)
+    token = get_token(client, usuario_jefe.codigo)
+
+    r = client.patch(f"/api/v1/auth/usuarios/{objetivo.id}/toggle-activo", headers=auth(token))
+    assert r.status_code == 200, r.text
+    assert r.json()["is_active"] is False
+    r = client.patch(f"/api/v1/auth/usuarios/{objetivo.id}/toggle-sancionado", headers=auth(token))
+    assert r.status_code == 200, r.text
+    r = client.patch(f"/api/v1/auth/usuarios/{objetivo.id}/reset-password", headers=auth(token), json={})
+    assert r.status_code == 200, r.text
+    assert "nueva_password" in r.json()
+
+
+def test_admin_resetea_decano(client: TestClient, db, usuario_admin):
+    from app.models.user import RolEnum
+    objetivo = _crear_usuario_temporal(db, "GEST_DEC_ADMIN", "71234562", RolEnum.decano)
+    token = get_token(client, usuario_admin.codigo)
+    r = client.patch(f"/api/v1/auth/usuarios/{objetivo.id}/reset-password", headers=auth(token), json={})
+    assert r.status_code == 200, r.text
+    r = client.patch(f"/api/v1/auth/usuarios/{objetivo.id}/toggle-activo", headers=auth(token))
+    assert r.status_code == 200, r.text

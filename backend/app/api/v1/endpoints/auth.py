@@ -237,6 +237,18 @@ def listar_usuarios(
     return query.order_by(User.rol, User.apellidos).all()
 
 
+_ROLES_GESTIONABLES_NO_ADMIN = (RolEnum.estudiante, RolEnum.profesor)
+
+
+def _verificar_alcance_sobre_usuario(actor: User, objetivo: User) -> None:
+    """jefe_programa/decano solo pueden gestionar cuentas estudiante o profesor (igual que crear_usuario)."""
+    if actor.rol != RolEnum.admin and objetivo.rol not in _ROLES_GESTIONABLES_NO_ADMIN:
+        raise HTTPException(
+            status_code=403,
+            detail="Solo puedes gestionar usuarios con rol estudiante o profesor.",
+        )
+
+
 @router.patch("/usuarios/{user_id}/toggle-activo", response_model=UserOut)
 def toggle_activo(
     user_id: int,
@@ -248,6 +260,7 @@ def toggle_activo(
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
     if user.id == current_user.id:
         raise HTTPException(status_code=400, detail="No puedes desactivar tu propia cuenta")
+    _verificar_alcance_sobre_usuario(current_user, user)
     user.is_active = not user.is_active
     accion = "activar_usuario" if user.is_active else "desactivar_usuario"
     db.add(AuditLog(usuario_id=current_user.id, accion=accion, entidad="user", entidad_id=user.id, detalle=f"Usuario {user.codigo} ({user.rol.value})"))
@@ -266,6 +279,7 @@ def toggle_sancionado(
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    _verificar_alcance_sobre_usuario(current_user, user)
     if user.rol != RolEnum.estudiante:
         raise HTTPException(status_code=400, detail="Las sanciones disciplinarias solo aplican a estudiantes")
     user.sancionado_disciplinariamente = not user.sancionado_disciplinariamente
@@ -329,6 +343,7 @@ def reset_password(
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    _verificar_alcance_sobre_usuario(current_user, user)
     auto_generada = not bool(body.nueva_password)
     if body.nueva_password:
         if len(body.nueva_password) < PASSWORD_MIN_LEN:
