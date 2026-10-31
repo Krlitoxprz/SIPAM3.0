@@ -698,10 +698,26 @@ def eliminar_presupuesto(
     db: Session = Depends(get_db),
     _: User = Depends(require_roles(RolEnum.admin)),
 ):
-    """Admin: elimina un presupuesto y todos sus movimientos (acción irreversible)."""
+    """Admin: elimina un presupuesto y todos sus movimientos (acción irreversible).
+
+    Bloquea si hay fondos comprometidos o ejecutados — borrar el presupuesto
+    dejaría compromisos fantasma en las prácticas que lo referencian.
+    """
     p = db.query(Presupuesto).filter(Presupuesto.periodo_academico == periodo).first()
     if not p:
         raise HTTPException(status_code=404, detail="Presupuesto no encontrado")
+    if p.monto_comprometido > 0 or p.monto_ejecutado > 0:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "No se puede eliminar: el presupuesto tiene fondos comprometidos "
+                f"(${float(p.monto_comprometido):,.0f}) o ejecutados "
+                f"(${float(p.monto_ejecutado):,.0f})."
+            ),
+        )
+    db.query(MovimientoPresupuestal).filter(
+        MovimientoPresupuestal.presupuesto_id == p.id
+    ).delete(synchronize_session=False)
     db.delete(p)
     db.commit()
 

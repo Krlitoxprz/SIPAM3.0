@@ -918,7 +918,26 @@ def aprobar_practica(
                 Presupuesto.periodo_academico == p.periodo_academico
             ).first()
             if presupuesto:
-                presupuesto.monto_comprometido += total_viaticos
+                # UPDATE atómico con guard de disponible: evita la condición de
+                # carrera read-modify-write y el compromiso por encima del saldo.
+                result = db.execute(
+                    update(Presupuesto)
+                    .where(
+                        Presupuesto.id == presupuesto.id,
+                        Presupuesto.monto_total_asignado
+                        - Presupuesto.monto_ejecutado
+                        - Presupuesto.monto_comprometido >= total_viaticos,
+                    )
+                    .values(monto_comprometido=Presupuesto.monto_comprometido + total_viaticos)
+                )
+                if result.rowcount == 0:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=(
+                            f"Presupuesto insuficiente para comprometer los viáticos "
+                            f"(${total_viaticos:,.0f} COP) del periodo {p.periodo_academico}."
+                        ),
+                    )
                 db.add(MovimientoPresupuestal(
                     presupuesto_id=presupuesto.id,
                     tipo=TipoMovimientoEnum.comprometido,
@@ -1357,6 +1376,63 @@ def registrar_pago_viatico(
         fecha = datetime.fromisoformat(body.fecha_pago)
     except ValueError:
         raise HTTPException(status_code=400, detail="Formato de fecha inválido (use ISO 8601)")
+
+    # El pago mueve comprometido→ejecutado: exige compromiso previo en el
+    # presupuesto del período y no permite pagar más de lo comprometido.
+    from sqlalchemy import func as sa_func
+    presupuesto = db.query(Presupuesto).filter(
+        Presupuesto.periodo_academico == p.periodo_academico
+    ).with_for_update().first()
+    compromiso_practica = (
+        db.query(sa_func.coalesce(sa_func.sum(MovimientoPresupuestal.monto), 0))
+        .filter(
+            MovimientoPresupuestal.practica_id == practica_id,
+            MovimientoPresupuestal.tipo == TipoMovimientoEnum.comprometido,
+        )
+        .scalar()
+    ) or 0
+    pagado_prev = (
+        db.query(sa_func.coalesce(sa_func.sum(PagoViatico.monto_pagado), 0))
+        .filter(PagoViatico.practica_id == practica_id)
+        .scalar()
+    ) or 0
+    if float(compromiso_practica) <= 0:
+        raise HTTPException(
+            status_code=400,
+            detail="La práctica no tiene compromiso presupuestal de viáticos registrado",
+        )
+    if float(pagado_prev) + float(body.monto_pagado) > float(compromiso_practica):
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"El pago excede el compromiso de viáticos "
+                f"(${float(compromiso_practica) - float(pagado_prev):,.0f} COP pendientes)"
+            ),
+        )
+
+    if presupuesto:
+        resto = float(compromiso_practica) - float(pagado_prev)
+        mover = min(float(body.monto_pagado), resto)
+        db.execute(
+            update(Presupuesto)
+            .where(Presupuesto.id == presupuesto.id)
+            .values(
+                monto_comprometido=case(
+                    (Presupuesto.monto_comprometido - mover > 0,
+                     Presupuesto.monto_comprometido - mover),
+                    else_=0,
+                ),
+                monto_ejecutado=Presupuesto.monto_ejecutado + mover,
+            )
+        )
+        db.add(MovimientoPresupuestal(
+            presupuesto_id=presupuesto.id,
+            tipo=TipoMovimientoEnum.ejecucion,
+            monto=mover,
+            concepto=f"Pago viáticos: {p.nombre_practica}",
+            practica_id=p.id,
+            responsable_id=current_user.id,
+        ))
 
     pago = PagoViatico(
         practica_id=practica_id,
