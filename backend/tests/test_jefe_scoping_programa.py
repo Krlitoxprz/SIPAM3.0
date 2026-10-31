@@ -152,3 +152,29 @@ def test_jefe_otro_programa_no_crea_convocatoria(client: TestClient, usuario_pro
         "creditos_minimo_pct": 30.0,
     })
     assert r.status_code == 403
+
+
+def test_jefe_otro_programa_no_gestiona_asignatura_ajena(client: TestClient, usuario_jefe_otro_programa,
+                                                         usuario_estudiante, asignatura, db):
+    from app.models.convocatoria import Asignatura
+
+    token = get_token(client, usuario_jefe_otro_programa.codigo)
+    payload = {
+        "codigo": asignatura.codigo,
+        "nombre": asignatura.nombre,
+        "creditos": asignatura.creditos,
+        "programa": usuario_jefe_otro_programa.programa,
+        "semestre": asignatura.semestre,
+    }
+    r = client.patch(f"/api/v1/convocatorias/asignaturas/{asignatura.id}", headers=auth(token), json=payload)
+    assert r.status_code == 403
+    db.expire_all()
+    assert db.query(Asignatura).filter(Asignatura.id == asignatura.id).first().programa == "Ingeniería de Software"
+
+    r = client.post(f"/api/v1/convocatorias/asignaturas/{asignatura.id}/matricular", headers=auth(token),
+                    json={"estudiante_id": usuario_estudiante.id, "periodo_academico": "2099-6"})
+    assert r.status_code == 403
+
+    r = client.post("/api/v1/convocatorias/asignaturas/", headers=auth(token),
+                    json={**payload, "codigo": "IS-AJENA-NEW", "programa": "Ingeniería de Software"})
+    assert r.status_code == 403

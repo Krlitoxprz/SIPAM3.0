@@ -143,8 +143,9 @@ class AsignaturaCreate(BaseModel):
 def crear_asignatura(
     body: AsignaturaCreate,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles(RolEnum.jefe_programa, RolEnum.admin)),
+    current_user: User = Depends(require_roles(RolEnum.jefe_programa, RolEnum.admin)),
 ):
+    verificar_programa_jefe(current_user, body.programa)
     if db.query(Asignatura).filter(Asignatura.codigo == body.codigo).first():
         raise HTTPException(status_code=400, detail="Ya existe una asignatura con ese código")
     a = Asignatura(**body.model_dump())
@@ -159,12 +160,16 @@ def actualizar_asignatura(
     asig_id: int,
     body: AsignaturaCreate,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles(RolEnum.jefe_programa, RolEnum.admin)),
+    current_user: User = Depends(require_roles(RolEnum.jefe_programa, RolEnum.admin)),
 ):
     a = db.query(Asignatura).filter(Asignatura.id == asig_id).first()
     if not a:
         raise HTTPException(status_code=404, detail="Asignatura no encontrada")
-    for k, v in body.model_dump(exclude_unset=True).items():
+    verificar_programa_jefe(current_user, a.programa)
+    updates = body.model_dump(exclude_unset=True)
+    if "programa" in updates:
+        verificar_programa_jefe(current_user, updates["programa"])
+    for k, v in updates.items():
         setattr(a, k, v)
     db.commit()
     db.refresh(a)
@@ -204,8 +209,12 @@ def matricular_estudiante(
     asig_id: int,
     body: MatriculaIn,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles(RolEnum.jefe_programa, RolEnum.admin)),
+    current_user: User = Depends(require_roles(RolEnum.jefe_programa, RolEnum.admin)),
 ):
+    asig = db.query(Asignatura).filter(Asignatura.id == asig_id).first()
+    if not asig:
+        raise HTTPException(status_code=404, detail="Asignatura no encontrada")
+    verificar_programa_jefe(current_user, asig.programa)
     exists = db.query(AsignaturaEstudiante).filter(
         AsignaturaEstudiante.asignatura_id == asig_id,
         AsignaturaEstudiante.estudiante_id == body.estudiante_id,
@@ -227,11 +236,12 @@ def matricular_estudiante(
 def desmatricular_estudiante(
     matricula_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles(RolEnum.jefe_programa, RolEnum.admin)),
+    current_user: User = Depends(require_roles(RolEnum.jefe_programa, RolEnum.admin)),
 ):
     matricula = db.query(AsignaturaEstudiante).filter(AsignaturaEstudiante.id == matricula_id).first()
     if not matricula:
         raise HTTPException(status_code=404, detail="Matrícula no encontrada")
+    verificar_programa_jefe(current_user, matricula.asignatura.programa if matricula.asignatura else None)
     db.delete(matricula)
     db.commit()
     return {"ok": True}
