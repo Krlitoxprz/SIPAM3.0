@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Text, Index
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import backref, relationship
 from sqlalchemy.sql import func
 
 from app.db.database import Base
@@ -23,5 +23,7 @@ class DocumentoPresupuesto(Base):
         Index("ix_docs_subido_por", "subido_por_id"),
     )
 
-    presupuesto = relationship("Presupuesto", backref="documentos")
+    presupuesto = relationship(
+        "Presupuesto", backref=backref("documentos", cascade="all, delete-orphan")
+    )
     subido_por = relationship("User", foreign_keys=[subido_por_id])

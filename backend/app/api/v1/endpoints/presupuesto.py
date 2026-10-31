@@ -698,12 +698,51 @@ def eliminar_presupuesto(
     db: Session = Depends(get_db),
     _: User = Depends(require_roles(RolEnum.admin)),
 ):
-    """Admin: elimina un presupuesto y todos sus movimientos (acción irreversible)."""
-    p = db.query(Presupuesto).filter(Presupuesto.periodo_academico == periodo).first()
+    """Admin: elimina un presupuesto no aprobado y sin dinero comprometido ni ejecutado,
+    junto con sus movimientos, documentos de soporte y archivos (acción irreversible)."""
+    p = (
+        db.query(Presupuesto)
+        .filter(Presupuesto.periodo_academico == periodo)
+        .with_for_update()
+        .first()
+    )
     if not p:
         raise HTTPException(status_code=404, detail="Presupuesto no encontrado")
+    if p.estado == EstadoPresupuestoEnum.aprobado:
+        raise HTTPException(
+            status_code=409,
+            detail="No se puede eliminar un presupuesto aprobado",
+        )
+    tiene_movimientos_financieros = (
+        db.query(MovimientoPresupuestal.id)
+        .filter(
+            MovimientoPresupuestal.presupuesto_id == p.id,
+            MovimientoPresupuestal.tipo.in_([TipoMovimientoEnum.comprometido, TipoMovimientoEnum.ejecucion]),
+        )
+        .first()
+        is not None
+    )
+    if (p.monto_comprometido or 0) > 0 or (p.monto_ejecutado or 0) > 0 or tiene_movimientos_financieros:
+        raise HTTPException(
+            status_code=409,
+            detail="No se puede eliminar un presupuesto con montos comprometidos o ejecutados",
+        )
+
+    base = os.path.abspath(settings.UPLOAD_DIR)
+    rutas_archivos = []
+    for doc in p.documentos:
+        full_path = os.path.abspath(os.path.join(settings.UPLOAD_DIR, doc.ruta))
+        if full_path.startswith(base + os.sep):
+            rutas_archivos.append(full_path)
+
     db.delete(p)
     db.commit()
+
+    for full_path in rutas_archivos:
+        try:
+            os.remove(full_path)
+        except FileNotFoundError:
+            pass
 
 
 @router.get("/admin/estadisticas-globales")
