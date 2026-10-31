@@ -51,6 +51,7 @@ export function Notificaciones() {
   const navigate = useNavigate();
   const [items, setItems] = useState<Notificacion[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorCarga, setErrorCarga] = useState('');
   const [tab, setTab] = useState<'todas' | 'no_leidas'>('todas');
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [markingAll, setMarkingAll] = useState(false);
@@ -60,7 +61,10 @@ export function Notificaciones() {
     try {
       const r = await notificacionesService.getMias();
       setItems(r.data);
-    } catch { setItems([]); }
+    } catch {
+      setItems([]);
+      setErrorCarga('No se pudieron cargar las notificaciones.');
+    }
     finally { setLoading(false); }
   }, []);
 
@@ -136,6 +140,12 @@ export function Notificaciones() {
       {loading ? (
         <div className="flex justify-center py-16">
           <Loader2 size={24} className="animate-spin text-usco-vinotinto" />
+        </div>
+      ) : errorCarga ? (
+        <div className="flex flex-col items-center py-20 gap-3 text-red-400">
+          <AlertCircle size={40} className="opacity-60" />
+          <p className="text-sm">{errorCarga}</p>
+          <button onClick={() => cargar()} className="text-sm font-semibold text-usco-vinotinto hover:underline">Reintentar</button>
         </div>
       ) : visibles.length === 0 ? (
         <div className="flex flex-col items-center py-20 gap-3 text-gray-400">

@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useAuthContext } from '../hooks/useAuthContext';
 import { perfilService } from '../services/api';
+import { hoyLocalISO } from '../utils/fechas';
 
 const ROL_LABEL: Record<string, string> = {
   estudiante: 'Estudiante',
@@ -464,7 +465,7 @@ export function Perfil() {
                     <div className="relative">
                       <Calendar size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                       <input type="date" value={fechaNac} onChange={e => setFechaNac(e.target.value)}
-                        max={new Date().toISOString().split('T')[0]} className={ICON_INPUT} />
+                        max={hoyLocalISO()} className={ICON_INPUT} />
                     </div>
                   </div>
 

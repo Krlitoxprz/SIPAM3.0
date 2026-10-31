@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Calendar, ChevronLeft, ChevronRight, BookOpen, MapPin } from 'lucide-react';
 import { convocatoriasService, practicasService } from '../services/api';
+import { parseFechaLocal } from '../utils/fechas';
 
 interface Evento {
   id: string;
@@ -32,6 +33,7 @@ export function Calendario() {
   const [mes, setMes] = useState(hoy.getMonth());
   const [eventos, setEventos] = useState<Evento[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorCarga, setErrorCarga] = useState('');
   const [seleccionado, setSeleccionado] = useState<Date | null>(null);
 
   useEffect(() => {
@@ -53,11 +55,13 @@ export function Calendario() {
         }
         for (const p of praRes.data) {
           if (p.fecha_inicio)
-            evts.push({ id: `pi-${p.id}`, titulo: p.nombre_practica, fecha: new Date(p.fecha_inicio), tipo: 'practica_inicio', color: '' });
+            evts.push({ id: `pi-${p.id}`, titulo: p.nombre_practica, fecha: parseFechaLocal(p.fecha_inicio) ?? new Date(p.fecha_inicio), tipo: 'practica_inicio', color: '' });
           if (p.fecha_fin)
-            evts.push({ id: `pf-${p.id}`, titulo: p.nombre_practica, fecha: new Date(p.fecha_fin), tipo: 'practica_fin', color: '' });
+            evts.push({ id: `pf-${p.id}`, titulo: p.nombre_practica, fecha: parseFechaLocal(p.fecha_fin) ?? new Date(p.fecha_fin), tipo: 'practica_fin', color: '' });
         }
-      } catch { /* silencioso */ }
+      } catch {
+        setErrorCarga('No se pudieron cargar los eventos del calendario.');
+      }
       setEventos(evts);
       setLoading(false);
     }
@@ -117,6 +121,8 @@ export function Calendario() {
 
           {loading ? (
             <div className="h-48 flex items-center justify-center text-gray-400 text-sm">Cargando eventos…</div>
+          ) : errorCarga ? (
+            <div className="h-48 flex items-center justify-center text-red-500 text-sm">{errorCarga}</div>
           ) : (
             <div className="grid grid-cols-7 gap-px bg-gray-100 rounded-lg overflow-hidden border border-gray-100">
               {celdas.map((dia, idx) => {

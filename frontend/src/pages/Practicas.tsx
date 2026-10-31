@@ -4,6 +4,7 @@ import type { Practica, EstadoPractica, Asignatura } from '../types';
 import { practicasService, convocatoriasService, configuracionService, transporteService, pagoViaticosService, geoService, pdfService, downloadBlob } from '../services/api';
 import { useAuthContext } from '../hooks/useAuthContext';
 import { MapaRuta } from '../components/maps/MapaRuta';
+import { formatFecha, hoyLocalISO, isoLocalDaysAhead } from '../utils/fechas';
 
 const estadoConfig: Record<EstadoPractica, { label: string; color: string }> = {
   borrador:           { label: 'Borrador',                color: 'bg-gray-100 text-gray-600' },
@@ -39,14 +40,16 @@ interface ViaticosItem {
 
 function PagoViaticoButton({ practicaId, yaPagado: yaRegistrado }: { practicaId: number; yaPagado?: boolean }) {
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ monto_pagado: '', fecha_pago: new Date().toISOString().slice(0, 10), observaciones: '' });
+  const [form, setForm] = useState({ monto_pagado: '', fecha_pago: hoyLocalISO(), observaciones: '' });
   const [saving, setSaving] = useState(false);
   const [ok, setOk] = useState(false);
+  const [error, setError] = useState('');
   const [pagado, setPagado] = useState(yaRegistrado ?? false);
 
   async function guardar(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
+    setError('');
     try {
       await pagoViaticosService.registrar(practicaId, {
         monto_pagado: parseFloat(form.monto_pagado),
@@ -55,8 +58,11 @@ function PagoViaticoButton({ practicaId, yaPagado: yaRegistrado }: { practicaId:
       });
       setOk(true);
       setPagado(true);
-      setTimeout(() => { setOpen(false); setOk(false); setForm({ monto_pagado: '', fecha_pago: new Date().toISOString().slice(0, 10), observaciones: '' }); }, 1500);
-    } catch { /* silencioso */ }
+      setTimeout(() => { setOpen(false); setOk(false); setForm({ monto_pagado: '', fecha_pago: hoyLocalISO(), observaciones: '' }); }, 1500);
+    } catch (err: unknown) {
+      const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      setError(detail ?? 'No se pudo registrar el pago. Intente de nuevo.');
+    }
     finally { setSaving(false); }
   }
 
@@ -104,6 +110,9 @@ function PagoViaticoButton({ practicaId, yaPagado: yaRegistrado }: { practicaId:
                   <input value={form.observaciones} onChange={e => setForm(p => ({ ...p, observaciones: e.target.value }))}
                     className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-300" />
                 </div>
+                {error && (
+                  <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</p>
+                )}
                 <div className="flex gap-3 pt-2">
                   <button type="button" onClick={() => setOpen(false)}
                     className="flex-1 border border-gray-300 text-gray-700 font-semibold py-2 rounded-lg hover:bg-gray-50 text-sm">
@@ -810,7 +819,7 @@ function NuevaPracticaModal({
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1">Fecha Inicio *</label>
               <input type="datetime-local" value={form.fecha_inicio}
-                min={practicaEditar ? undefined : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16)}
+                min={practicaEditar ? undefined : isoLocalDaysAhead(30)}
                 onChange={e => setForm(p => ({ ...p, fecha_inicio: e.target.value }))}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-usco-vinotinto/50" />
               <p className="text-xs text-amber-600 mt-1 flex items-center gap-1"><Clock size={10} /> Mín. 30 días de anticipación (Ac. 003/2012)</p>
@@ -818,7 +827,7 @@ function NuevaPracticaModal({
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1">Fecha Fin *</label>
               <input type="datetime-local" value={form.fecha_fin}
-                min={practicaEditar ? form.fecha_inicio || undefined : (form.fecha_inicio || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16))}
+                min={practicaEditar ? form.fecha_inicio || undefined : (form.fecha_inicio || isoLocalDaysAhead(30))}
                 onChange={e => setForm(p => ({ ...p, fecha_fin: e.target.value }))}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-usco-vinotinto/50" />
             </div>
@@ -1072,11 +1081,12 @@ function NuevaPracticaModal({
 function ViaticosModal({ practicaId, onClose }: { practicaId: number; onClose: () => void }) {
   const [viaticos, setViaticos] = useState<ViaticosItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorViaticos, setErrorViaticos] = useState('');
 
   useEffect(() => {
     practicasService.calcularViaticos(practicaId)
       .then(r => setViaticos(r.data))
-      .catch(() => setViaticos([]))
+      .catch(() => { setViaticos([]); setErrorViaticos('No se pudo calcular los viáticos. Intente de nuevo.'); })
       .finally(() => setLoading(false));
   }, [practicaId]);
 
@@ -1091,6 +1101,9 @@ function ViaticosModal({ practicaId, onClose }: { practicaId: number; onClose: (
         </div>
         {loading ? <p className="text-sm text-gray-400 text-center py-4">Calculando...</p> : (
           <div className="space-y-3">
+            {errorViaticos && (
+              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{errorViaticos}</p>
+            )}
             {viaticos.map(v => (
               <div key={v.tarifa_id} className="flex items-center justify-between border border-gray-100 rounded-lg p-3">
                 <div>
@@ -1382,13 +1395,17 @@ export function Practicas() {
   const [transporteModal, setTransporteModal] = useState<number | null>(null);
   const [informeModal, setInformeModal] = useState<number | null>(null);
   const [mapaExpandido, setMapaExpandido] = useState<number | null>(null);
+  const [errorCarga, setErrorCarga] = useState('');
 
   const cargar = useCallback(async () => {
     setLoading(true);
+    setErrorCarga('');
     try {
       const r = await practicasService.getAll();
       setPracticas(r.data);
-    } catch { setPracticas([]); }
+    } catch {
+      setErrorCarga('No se pudieron cargar las prácticas. Verifique su conexión e intente de nuevo.');
+    }
     finally { setLoading(false); }
   }, []);
 
@@ -1555,14 +1572,14 @@ export function Practicas() {
               <Plus size={16} /> Nueva Práctica
             </button>
           )}
-          {user?.rol === 'jefe_programa' && (
+          {(['jefe_programa', 'decano', 'admin'].includes(user?.rol ?? '')) && (
             <button
               onClick={async () => {
                 try {
                   const r = await pdfService.fo15Consolidado();
                   downloadBlob(new Blob([r.data], { type: 'application/pdf' }),
                     `FO-15_Consolidado_${user?.programa ?? 'Programa'}.pdf`);
-                } catch { /* silent */ }
+                } catch { showFlash('err', 'No se pudo descargar el FO-15 consolidado.'); }
               }}
               className="flex items-center gap-2 bg-usco-vinotinto/10 hover:bg-usco-vinotinto/20 text-usco-vinotinto border border-usco-vinotinto/30 font-semibold px-4 py-2.5 rounded-lg transition-colors text-sm">
               <FileText size={15} /> Descargar FO-15 Programa
@@ -1633,6 +1650,12 @@ export function Practicas() {
         <div className="flex items-center justify-center h-48">
           <Spin size={24} className="animate-spin text-usco-vinotinto" />
         </div>
+      ) : errorCarga ? (
+        <div className="text-center py-16 bg-white rounded-xl border border-red-100 text-red-500">
+          <AlertCircle size={48} className="mx-auto mb-3 opacity-60" />
+          <p className="text-lg font-medium">{errorCarga}</p>
+          <button onClick={() => cargar()} className="mt-3 text-sm font-semibold text-usco-vinotinto hover:underline">Reintentar</button>
+        </div>
       ) : practicasFiltradas.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-xl border border-gray-100 text-gray-400">
           <MapPin size={48} className="mx-auto mb-3 opacity-40" />
@@ -1653,7 +1676,7 @@ export function Practicas() {
                     <h3 className="font-semibold text-gray-800 truncate">{p.nombre_practica}</h3>
                     <p className="text-sm text-gray-500 mt-0.5">
                       {p.asignatura?.nombre ?? `Asignatura #${p.asignatura_id}`} ·{' '}
-                      {new Date(p.fecha_inicio).toLocaleDateString('es-CO')} – {new Date(p.fecha_fin).toLocaleDateString('es-CO')} ·{' '}
+                      {formatFecha(p.fecha_inicio)} – {formatFecha(p.fecha_fin)} ·{' '}
                       {Math.round((new Date(new Date(p.fecha_fin).toDateString()).getTime() - new Date(new Date(p.fecha_inicio).toDateString()).getTime()) / 86400000)} día(s)
                     </p>
                   </div>
@@ -1876,7 +1899,7 @@ export function Practicas() {
                           const r = await pdfService.consentimiento(p.id);
                           downloadBlob(new Blob([r.data], { type: 'application/pdf' }),
                             `Consentimiento_${p.id}.pdf`);
-                        } catch { /* silent */ }
+                        } catch { showFlash('err', 'No se pudo descargar el consentimiento.'); }
                       }}
                       className="flex items-center gap-1.5 text-xs font-semibold text-usco-vinotinto border border-usco-vinotinto/30 hover:bg-usco-vinotinto/5 px-3 py-1.5 rounded-lg transition-colors">
                       <FileText size={13} /> Descargar consentimiento
@@ -1915,7 +1938,7 @@ export function Practicas() {
                     </span>
                   )}
 
-                  {(['jefe_programa', 'decano', 'profesor'].includes(user?.rol ?? '')) &&
+                  {(['jefe_programa', 'decano', 'profesor', 'admin'].includes(user?.rol ?? '')) &&
                     !['borrador'].includes(p.estado) && (
                     <button
                       onClick={async () => {
@@ -1923,14 +1946,14 @@ export function Practicas() {
                           const r = await pdfService.fo16(p.id);
                           downloadBlob(new Blob([r.data], { type: 'application/pdf' }),
                             `FO-16_Practica${p.id}_${p.periodo_academico || ''}.pdf`);
-                        } catch { /* silent */ }
+                        } catch { showFlash('err', 'No se pudo descargar el FO-16.'); }
                       }}
                       className="flex items-center gap-1.5 text-xs font-semibold text-usco-gris border border-gray-200 hover:text-usco-vinotinto hover:border-usco-vinotinto/30 px-3 py-1.5 rounded-lg transition-colors">
                       <FileText size={13} /> FO-16 PDF
                     </button>
                   )}
 
-                  {(['jefe_programa', 'decano', 'profesor'].includes(user?.rol ?? '')) &&
+                  {(['jefe_programa', 'decano', 'profesor', 'admin'].includes(user?.rol ?? '')) &&
                     ['aprobado_transporte', 'en_ejecucion', 'finalizada'].includes(p.estado) && (
                     <button
                       onClick={async () => {
@@ -1938,14 +1961,14 @@ export function Practicas() {
                           const r = await pdfService.fo15(p.id);
                           downloadBlob(new Blob([r.data], { type: 'application/pdf' }),
                             `FO-15_Participantes_Practica${p.id}.pdf`);
-                        } catch { /* silent */ }
+                        } catch { showFlash('err', 'No se pudo descargar el FO-15.'); }
                       }}
                       className="flex items-center gap-1.5 text-xs font-semibold text-usco-vinotinto border border-usco-vinotinto/30 hover:bg-usco-vinotinto/5 px-3 py-1.5 rounded-lg transition-colors">
                       <FileText size={13} /> FO-15 PDF
                     </button>
                   )}
 
-                  {(['jefe_programa', 'decano', 'profesor'].includes(user?.rol ?? '')) &&
+                  {(['jefe_programa', 'decano', 'profesor', 'admin'].includes(user?.rol ?? '')) &&
                     ['aprobado_transporte', 'en_ejecucion', 'finalizada'].includes(p.estado) && (
                     <button
                       onClick={async () => {
@@ -1953,14 +1976,14 @@ export function Practicas() {
                           const r = await pdfService.fo05(p.id);
                           downloadBlob(new Blob([r.data], { type: 'application/pdf' }),
                             `FO-05_Desplazamiento_Practica${p.id}.pdf`);
-                        } catch { /* silent */ }
+                        } catch { showFlash('err', 'No se pudo descargar el FO-05.'); }
                       }}
                       className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 border border-emerald-200 hover:bg-emerald-50 px-3 py-1.5 rounded-lg transition-colors">
                       <Truck size={13} /> FO-05 PDF
                     </button>
                   )}
 
-                  {user?.rol === 'admin' &&
+                  {(['admin', 'jefe_programa', 'decano'].includes(user?.rol ?? '')) &&
                     ['aprobado_transporte', 'en_ejecucion', 'finalizada'].includes(p.estado) && (
                     <PagoViaticoButton practicaId={p.id} yaPagado={p.pago_registrado ?? false} />
                   )}
