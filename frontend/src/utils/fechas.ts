@@ -38,6 +38,16 @@ export function ahoraLocalISO(): string {
   return `${d.getFullYear()}-${mes}-${dia}T${h}:${min}`;
 }
 
+/** Convierte un ISO almacenado (naive=UTC, o aware) al string local
+ *  'YYYY-MM-DDTHH:MM' que espera un input datetime-local. */
+export function isoUTCToLocalInput(s: string): string {
+  const aware = /Z$|[+-]\d{2}:?\d{2}$/.test(s) ? s : `${s}Z`;
+  const d = new Date(aware);
+  if (isNaN(d.getTime())) return s.slice(0, 16);
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
 /** 'YYYY-MM-DDTHH:MM' en UTC de hoy + n días.
  *  Úsalo para `min`/`max` de inputs datetime-local cuando el backend interpreta
  *  valores naive como UTC (convención de crear_practica). */

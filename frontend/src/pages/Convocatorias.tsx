@@ -9,6 +9,7 @@ import type { Convocatoria, EstadoConvocatoria, Postulacion, Asignatura, Archivo
 import { convocatoriasService, postulacionesService, seleccionService, iaService, pdfService, archivosService, downloadBlob } from '../services/api';
 import { useAuthContext } from '../hooks/useAuthContext';
 import { useSystemContext } from '../hooks/useSystemContext';
+import { isoUTCToLocalInput } from '../utils/fechas';
 
 interface RecomendacionIA {
   convocatoria_id: number;
@@ -124,9 +125,11 @@ function ModalConvocatoria({
       profesor_id: String(convocatoria.profesor_id),
       tipo_monitoria: convocatoria.tipo_monitoria,
       periodo_academico: convocatoria.periodo_academico,
-      fecha_inicio_postulacion: convocatoria.fecha_inicio_postulacion.slice(0, 16),
-      fecha_fin_postulacion: convocatoria.fecha_fin_postulacion.slice(0, 16),
-      fecha_publicacion_resultados: ext?.fecha_publicacion_resultados?.slice(0, 16) ?? '',
+      // El backend guarda naive-UTC: convertir a hora local para que el input
+      // datetime-local muestre la hora que el usuario eligió.
+      fecha_inicio_postulacion: isoUTCToLocalInput(convocatoria.fecha_inicio_postulacion),
+      fecha_fin_postulacion: isoUTCToLocalInput(convocatoria.fecha_fin_postulacion),
+      fecha_publicacion_resultados: ext?.fecha_publicacion_resultados ? isoUTCToLocalInput(ext.fecha_publicacion_resultados) : '',
       num_monitores_requeridos: String(convocatoria.num_monitores_requeridos),
       horas_semana: String(convocatoria.horas_semana),
       horas_semestre: String(convocatoria.horas_semestre),
@@ -210,11 +213,11 @@ function ModalConvocatoria({
         ...(esJefe && { profesor_id: parseInt(form.profesor_id) }),
         tipo_monitoria: form.tipo_monitoria,
         periodo_academico: form.periodo_academico,
-        // El backend interpreta datetimes naive como UTC: enviar el valor del
-        // input tal cual (sin convertir a ISO) para no desplazar la hora.
-        fecha_inicio_postulacion: form.fecha_inicio_postulacion,
-        fecha_fin_postulacion: form.fecha_fin_postulacion,
-        fecha_publicacion_resultados: form.fecha_publicacion_resultados || null,
+        // El input es hora local: convertir a UTC (aware) para que el backend
+        // almacene el instante correcto.
+        fecha_inicio_postulacion: new Date(form.fecha_inicio_postulacion).toISOString(),
+        fecha_fin_postulacion: new Date(form.fecha_fin_postulacion).toISOString(),
+        fecha_publicacion_resultados: form.fecha_publicacion_resultados ? new Date(form.fecha_publicacion_resultados).toISOString() : null,
         num_monitores_requeridos: parseInt(form.num_monitores_requeridos),
         horas_semana: parseInt(form.horas_semana),
         horas_semestre: parseInt(form.horas_semestre),

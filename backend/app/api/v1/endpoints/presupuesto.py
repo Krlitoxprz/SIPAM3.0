@@ -240,7 +240,10 @@ def editar_presupuesto(
     _: User = Depends(require_roles(RolEnum.jefe_programa, RolEnum.decano)),
 ):
     """Jefe de Programa edita monto/descripcion del presupuesto (solo en borrador, modificacion o rechazado)."""
-    p = db.query(Presupuesto).filter(Presupuesto.periodo_academico == periodo).first()
+    # FOR UPDATE: serializa contra aprobar_practica — sin lock, un compromiso
+    # en vuelo puede comprometer después de leer ocupado y quedar por encima
+    # del nuevo monto.
+    p = db.query(Presupuesto).filter(Presupuesto.periodo_academico == periodo).with_for_update().first()
     if not p:
         raise HTTPException(status_code=404, detail="Presupuesto no encontrado")
     if p.estado not in [
