@@ -645,6 +645,11 @@ def actualizar_practica(
         setattr(p, field, value)
 
     if p.fecha_inicio and p.fecha_fin:
+        if p.fecha_fin < p.fecha_inicio:
+            raise HTTPException(
+                status_code=400,
+                detail="fecha_fin debe ser igual o posterior a fecha_inicio",
+            )
         p.duracion_dias = max(1, (p.fecha_fin.date() - p.fecha_inicio.date()).days + 1)
         if not es_modo_prueba(db):
             dias_viaje_check = (p.fecha_fin.date() - p.fecha_inicio.date()).days
