@@ -135,6 +135,15 @@ def _ascii_filename(name: str) -> str:
     return "".join(c for c in normalized if ord(c) < 128).replace('"', "")
 
 
+def _verificar_propietario(profesor_id: int | None, current_user: User) -> None:
+    """Un profesor solo genera PDFs oficiales de sus propias convocatorias/prácticas."""
+    if current_user.rol == RolEnum.profesor and profesor_id != current_user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="Solo puede generar documentos de sus propias convocatorias o prácticas",
+        )
+
+
 # ── FO-14 ─────────────────────────────────────────────────────────────────────
 
 @router.get(
@@ -155,6 +164,7 @@ def pdf_fo14(
     )
     if not conv:
         raise HTTPException(status_code=404, detail="Convocatoria no encontrada")
+    _verificar_propietario(conv.profesor_id, _)
 
     seleccionado = (
         db.query(Postulacion)
@@ -243,6 +253,7 @@ def pdf_fo16(
     )
     if not pr:
         raise HTTPException(status_code=404, detail="Práctica no encontrada")
+    _verificar_propietario(pr.profesor_id, _)
 
     rutas = sorted(pr.rutas, key=lambda r: r.orden)
     origen = next((r for r in rutas if r.tipo_punto == "origen"), rutas[0] if rutas else None)
@@ -345,6 +356,7 @@ def pdf_fo15(
     )
     if not pr:
         raise HTTPException(status_code=404, detail="Práctica no encontrada")
+    _verificar_propietario(pr.profesor_id, _)
 
     rutas = sorted(pr.rutas, key=lambda r: r.orden)
     destino = next((r for r in rutas if r.tipo_punto == "destino"), rutas[-1] if rutas else None)

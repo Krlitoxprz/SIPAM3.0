@@ -110,12 +110,25 @@ async def obtener_metadata_archivo(
         )
 
     # Mismas verificaciones de permisos que el endpoint de descarga
-    if (archivo.usuario_id != current_user.id and
-        current_user.rol not in [RolEnum.admin, RolEnum.jefe_programa, RolEnum.decano]):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="No tienes permiso para acceder a este archivo"
-        )
+    if archivo.usuario_id != current_user.id:
+        if current_user.rol in [RolEnum.admin, RolEnum.jefe_programa, RolEnum.decano]:
+            pass  # Permitido
+        elif current_user.rol == RolEnum.profesor:
+            es_convocatoria_suya = (
+                archivo.postulacion
+                and archivo.postulacion.convocatoria
+                and archivo.postulacion.convocatoria.profesor_id == current_user.id
+            )
+            if not es_convocatoria_suya:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="No tienes permiso para acceder a este archivo"
+                )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="No tienes permiso para acceder a este archivo"
+            )
 
     return {
         "id": archivo.id,

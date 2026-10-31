@@ -10,10 +10,10 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session, joinedload
 
 from app.db.database import get_db
-from app.models.user import User
+from app.models.user import User, RolEnum
 from app.models.practica import Practica
 from app.models.transporte import PrecioCombustible, PeajeNacional
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, require_roles
 from app.services.ors_client import calcular_ruta, distancia_punto_a_ruta
 from app.services.geocoder_co import distancia_entre_municipios, geocode_local, haversine_km
 from app.services.colombia_geo import get_departamentos, get_municipios
@@ -305,11 +305,31 @@ class CalcularDistanciasResponse(BaseModel):
     advertencias: list[str]
 
 
+def _verificar_practica_transporte(db: Session, practica_id: int, current_user: User) -> Practica:
+    """Estos endpoints mutan distancia_km (insumo del compromiso presupuestal):
+    solo el profesor titular o roles privilegiados pueden recalcularlos."""
+    pr = db.query(Practica).options(joinedload(Practica.rutas)).filter(Practica.id == practica_id).first()
+    if not pr:
+        raise HTTPException(status_code=404, detail="Práctica no encontrada")
+    if current_user.rol == RolEnum.profesor and pr.profesor_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Solo puede calcular datos de sus propias prácticas")
+    if (
+        current_user.rol == RolEnum.jefe_programa
+        and current_user.programa
+        and pr.asignatura
+        and pr.asignatura.programa != current_user.programa
+    ):
+        raise HTTPException(status_code=403, detail="Solo puede gestionar prácticas de su programa")
+    return pr
+
+
 @router.post("/rutas/{practica_id}/calcular-distancias", summary="Calcula y guarda distancias entre waypoints de la práctica")
 async def calcular_distancias_practica(
     practica_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    current_user: User = Depends(require_roles(
+        RolEnum.profesor, RolEnum.jefe_programa, RolEnum.decano, RolEnum.admin,
+    )),
 ):
     """
     Geocodifica los municipios de cada segmento de ruta y calcula la distancia vial estimada.
@@ -318,9 +338,7 @@ async def calcular_distancias_practica(
     Guarda el resultado en RutaPractica.distancia_km.
     """
     from app.models.practica import RutaPractica
-    pr = db.query(Practica).options(joinedload(Practica.rutas)).filter(Practica.id == practica_id).first()
-    if not pr:
-        raise HTTPException(status_code=404, detail="Práctica no encontrada")
+    pr = _verificar_practica_transporte(db, practica_id, current_user)
 
     rutas = sorted(pr.rutas, key=lambda r: r.orden)
     if not rutas:
@@ -400,13 +418,13 @@ async def calcular_costos_practica(
     categoria_peaje: int = 3,
     tipo_combustible: str = "",   # si viene vacío se auto-deriva del tipo_vehiculo
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    current_user: User = Depends(require_roles(
+        RolEnum.profesor, RolEnum.jefe_programa, RolEnum.decano, RolEnum.admin,
+    )),
 ):
     """Calcula el costo estimado de transporte para una práctica extramural registrada."""
     from app.models.practica import RutaPractica
-    pr = db.query(Practica).options(joinedload(Practica.rutas)).filter(Practica.id == practica_id).first()
-    if not pr:
-        raise HTTPException(status_code=404, detail="Práctica no encontrada")
+    pr = _verificar_practica_transporte(db, practica_id, current_user)
 
     rutas = sorted(pr.rutas, key=lambda r: r.orden)
     if not rutas:

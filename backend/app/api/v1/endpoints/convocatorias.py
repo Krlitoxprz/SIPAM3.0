@@ -399,11 +399,39 @@ def programa_academico(
     return result
 
 
+def _verificar_lectura_convocatoria(conv: Convocatoria, current_user: User) -> None:
+    """Mismos filtros que listar_convocatorias aplicados al detalle:
+    profesor solo las suyas, jefe solo su programa, estudiante nunca ve borradores."""
+    if current_user.rol == RolEnum.profesor and conv.profesor_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Solo puede acceder a sus propias convocatorias")
+    if (
+        current_user.rol == RolEnum.jefe_programa
+        and current_user.programa
+        and conv.asignatura
+        and conv.asignatura.programa != current_user.programa
+    ):
+        raise HTTPException(status_code=403, detail="Solo puede acceder a convocatorias de su programa")
+    if current_user.rol == RolEnum.estudiante and conv.estado == EstadoConvocatoriaEnum.borrador:
+        # 404 para no revelar la existencia del borrador
+        raise HTTPException(status_code=404, detail="Convocatoria no encontrada")
+
+
+def _verificar_programa_jefe(conv: Convocatoria, current_user: User) -> None:
+    """jefe_programa solo puede mutar convocatorias de su programa."""
+    if (
+        current_user.rol == RolEnum.jefe_programa
+        and current_user.programa
+        and conv.asignatura
+        and conv.asignatura.programa != current_user.programa
+    ):
+        raise HTTPException(status_code=403, detail="Solo puede gestionar convocatorias de su programa")
+
+
 @router.get("/{conv_id}", response_model=ConvocatoriaOut)
 def obtener_convocatoria(
     conv_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
     conv = (
         db.query(Convocatoria)
@@ -413,6 +441,7 @@ def obtener_convocatoria(
     )
     if not conv:
         raise HTTPException(status_code=404, detail="Convocatoria no encontrada")
+    _verificar_lectura_convocatoria(conv, current_user)
     return _enrich(conv, db)
 
 
@@ -463,6 +492,12 @@ def crear_convocatoria(
         if not prof:
             raise HTTPException(status_code=404, detail="Profesor no encontrado")
         profesor_id = body.profesor_id
+        if (
+            current_user.rol == RolEnum.jefe_programa
+            and current_user.programa
+            and asig.programa != current_user.programa
+        ):
+            raise HTTPException(status_code=403, detail="Solo puede crear convocatorias para asignaturas de su programa")
     else:
         profesor_id = current_user.id
         if asig.profesor_id != current_user.id:
@@ -532,17 +567,31 @@ def actualizar_convocatoria(
 
     if current_user.rol == RolEnum.profesor and conv.profesor_id != current_user.id:
         raise HTTPException(status_code=403, detail="Solo puede editar sus propias convocatorias")
+    _verificar_programa_jefe(conv, current_user)
 
     if conv.estado not in [EstadoConvocatoriaEnum.borrador, EstadoConvocatoriaEnum.abierta]:
         raise HTTPException(status_code=400, detail="Solo se pueden editar convocatorias en borrador o abiertas")
 
     updates = body.model_dump(exclude_unset=True)
-    if current_user.rol == RolEnum.profesor and "asignatura_id" in updates:
+    if "asignatura_id" in updates:
         nueva_asig = db.query(Asignatura).filter(Asignatura.id == updates["asignatura_id"]).first()
-        if not nueva_asig or nueva_asig.profesor_id != current_user.id:
+        if not nueva_asig:
+            raise HTTPException(status_code=404, detail="Asignatura no encontrada")
+        if current_user.rol == RolEnum.profesor and nueva_asig.profesor_id != current_user.id:
             raise HTTPException(
                 status_code=403,
                 detail="Solo puede asignar asignaturas que usted dicta.",
+            )
+        # La verificación del programa cubre la asignatura ORIGEN; la nueva
+        # también debe ser del programa del jefe (si no, la reasigna fuera).
+        if (
+            current_user.rol == RolEnum.jefe_programa
+            and current_user.programa
+            and nueva_asig.programa != current_user.programa
+        ):
+            raise HTTPException(
+                status_code=403,
+                detail="Solo puede asignar asignaturas de su programa",
             )
     for field, value in updates.items():
         setattr(conv, field, value)
@@ -570,6 +619,7 @@ def cambiar_estado(
     conv = db.query(Convocatoria).filter(Convocatoria.id == conv_id).first()
     if not conv:
         raise HTTPException(status_code=404, detail="Convocatoria no encontrada")
+    _verificar_programa_jefe(conv, current_user)
 
     permitidos = TRANSICIONES_VALIDAS.get(conv.estado, [])
     if body.estado not in permitidos:
@@ -679,9 +729,18 @@ def cambiar_estado(
 def historial_convocatoria(
     conv_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
     from app.models.historial_estado import HistorialEstado
+    conv = (
+        db.query(Convocatoria)
+        .options(joinedload(Convocatoria.asignatura))
+        .filter(Convocatoria.id == conv_id)
+        .first()
+    )
+    if not conv:
+        raise HTTPException(status_code=404, detail="Convocatoria no encontrada")
+    _verificar_lectura_convocatoria(conv, current_user)
     registros = (
         db.query(HistorialEstado)
         .filter(HistorialEstado.entidad == "convocatoria", HistorialEstado.entidad_id == conv_id)
