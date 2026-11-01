@@ -61,7 +61,10 @@ export function MonitorHoras() {
     try {
       const r = await monitorService.misHoras();
       setData(r.data);
-    } catch { setData(null); }
+    } catch {
+      setData(null);
+      showFlash('err', 'No se pudieron cargar tus horas registradas.');
+    }
     finally { setLoading(false); }
   }, []);
 
@@ -70,7 +73,10 @@ export function MonitorHoras() {
     try {
       const r = await monitorService.horasPorConvocatoria(convId);
       setDataProf(r.data);
-    } catch { setDataProf([]); }
+    } catch {
+      setDataProf([]);
+      showFlash('err', 'No se pudieron cargar las horas de la convocatoria.');
+    }
     finally { setLoading(false); }
   }, []);
 
@@ -114,7 +120,9 @@ export function MonitorHoras() {
     try {
       const r = await exportarService.horasMonitorCsv(convSel);
       downloadBlob(r.data, `horas_monitor_conv${convSel}_${new Date().toISOString().slice(0,10)}.csv`);
-    } catch { /* silencioso */ }
+    } catch {
+      showFlash('err', 'No se pudo exportar el CSV de horas.');
+    }
     finally { setExportandoHoras(false); }
   }
 

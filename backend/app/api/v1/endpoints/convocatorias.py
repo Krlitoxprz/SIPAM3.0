@@ -399,11 +399,39 @@ def programa_academico(
     return result
 
 
+def _verificar_lectura_convocatoria(conv: Convocatoria, current_user: User) -> None:
+    """Mismos filtros que listar_convocatorias aplicados al detalle:
+    profesor solo las suyas, jefe solo su programa, estudiante nunca ve borradores."""
+    if current_user.rol == RolEnum.profesor and conv.profesor_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Solo puede acceder a sus propias convocatorias")
+    if (
+        current_user.rol == RolEnum.jefe_programa
+        and current_user.programa
+        and conv.asignatura
+        and conv.asignatura.programa != current_user.programa
+    ):
+        raise HTTPException(status_code=403, detail="Solo puede acceder a convocatorias de su programa")
+    if current_user.rol == RolEnum.estudiante and conv.estado == EstadoConvocatoriaEnum.borrador:
+        # 404 para no revelar la existencia del borrador
+        raise HTTPException(status_code=404, detail="Convocatoria no encontrada")
+
+
+def _verificar_programa_jefe(conv: Convocatoria, current_user: User) -> None:
+    """jefe_programa solo puede mutar convocatorias de su programa."""
+    if (
+        current_user.rol == RolEnum.jefe_programa
+        and current_user.programa
+        and conv.asignatura
+        and conv.asignatura.programa != current_user.programa
+    ):
+        raise HTTPException(status_code=403, detail="Solo puede gestionar convocatorias de su programa")
+
+
 @router.get("/{conv_id}", response_model=ConvocatoriaOut)
 def obtener_convocatoria(
     conv_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
     conv = (
         db.query(Convocatoria)
@@ -413,7 +441,47 @@ def obtener_convocatoria(
     )
     if not conv:
         raise HTTPException(status_code=404, detail="Convocatoria no encontrada")
+    _verificar_lectura_convocatoria(conv, current_user)
     return _enrich(conv, db)
+
+
+def _validar_ventana_postulacion(ini, fin, publicacion, db, validar_pasado: bool = True) -> None:
+    """RF-MON-TIME-02: mismas reglas de ventana de postulación en crear y editar.
+
+    validar_pasado=False en PUT cuando no se toca fecha_inicio (una convocatoria
+    abierta puede tener su apertura en el pasado y seguir editándose).
+    """
+    # Postgres devuelve fechas aware y SQLite/formularios naive (convención
+    # naive=UTC): normalizar a naive-UTC para que las comparaciones no mezclen.
+    def _utc_naive(d):
+        return d.astimezone(timezone.utc).replace(tzinfo=None) if d and d.tzinfo else d
+    ini = _utc_naive(ini)
+    fin = _utc_naive(fin)
+    publicacion = _utc_naive(publicacion)
+    hoy = datetime.now(timezone.utc).replace(tzinfo=None)
+    if fin <= ini:
+        raise HTTPException(status_code=400, detail="La fecha de cierre debe ser posterior a la fecha de apertura de postulación.")
+    delta_dias = (fin.date() - ini.date()).days
+    if delta_dias < DIAS_MINIMOS_POSTULACION and not es_modo_prueba(db):
+        raise HTTPException(
+            status_code=400,
+            detail=f"La ventana de postulación debe ser de al menos {DIAS_MINIMOS_POSTULACION} días (Acuerdo 012/2023 Art.6). Diferencia actual: {delta_dias} día(s).",
+        )
+    if delta_dias > DIAS_MAXIMOS_POSTULACION:
+        raise HTTPException(
+            status_code=400,
+            detail=f"La ventana de postulación no puede superar {DIAS_MAXIMOS_POSTULACION} días. Diferencia actual: {delta_dias} día(s).",
+        )
+    if validar_pasado and ini.date() < hoy.date():
+        raise HTTPException(
+            status_code=400,
+            detail="La fecha de inicio de postulación no puede ser en el pasado.",
+        )
+    if publicacion and publicacion <= fin:
+        raise HTTPException(
+            status_code=400,
+            detail="La fecha de publicación de resultados debe ser posterior al cierre de postulaciones (Art.8).",
+        )
 
 
 @router.post("/", response_model=ConvocatoriaOut, status_code=201)
@@ -429,32 +497,12 @@ def crear_convocatoria(
         raise HTTPException(status_code=404, detail="Asignatura no encontrada")
 
     # RF-MON-TIME-02: validar ventana de postulación al crear la convocatoria
-    hoy = datetime.now(timezone.utc)
-    ini = body.fecha_inicio_postulacion
-    fin = body.fecha_fin_postulacion
-    if fin <= ini:
-        raise HTTPException(status_code=400, detail="La fecha de cierre debe ser posterior a la fecha de apertura de postulación.")
-    delta_dias = (fin.date() - ini.date()).days
-    if delta_dias < DIAS_MINIMOS_POSTULACION and not es_modo_prueba(db):
-        raise HTTPException(
-            status_code=400,
-            detail=f"La ventana de postulación debe ser de al menos {DIAS_MINIMOS_POSTULACION} días (Acuerdo 012/2023 Art.6). Diferencia actual: {delta_dias} día(s).",
-        )
-    if delta_dias > DIAS_MAXIMOS_POSTULACION:
-        raise HTTPException(
-            status_code=400,
-            detail=f"La ventana de postulación no puede superar {DIAS_MAXIMOS_POSTULACION} días. Diferencia actual: {delta_dias} día(s).",
-        )
-    if ini.date() < hoy.date():
-        raise HTTPException(
-            status_code=400,
-            detail="La fecha de inicio de postulación no puede ser en el pasado.",
-        )
-    if body.fecha_publicacion_resultados and body.fecha_publicacion_resultados <= fin:
-        raise HTTPException(
-            status_code=400,
-            detail="La fecha de publicación de resultados debe ser posterior al cierre de postulaciones (Art.8).",
-        )
+    _validar_ventana_postulacion(
+        body.fecha_inicio_postulacion,
+        body.fecha_fin_postulacion,
+        body.fecha_publicacion_resultados,
+        db,
+    )
 
     if current_user.rol in (RolEnum.jefe_programa, RolEnum.decano):
         if not body.profesor_id:
@@ -463,6 +511,12 @@ def crear_convocatoria(
         if not prof:
             raise HTTPException(status_code=404, detail="Profesor no encontrado")
         profesor_id = body.profesor_id
+        if (
+            current_user.rol == RolEnum.jefe_programa
+            and current_user.programa
+            and asig.programa != current_user.programa
+        ):
+            raise HTTPException(status_code=403, detail="Solo puede crear convocatorias para asignaturas de su programa")
     else:
         profesor_id = current_user.id
         if asig.profesor_id != current_user.id:
@@ -532,20 +586,54 @@ def actualizar_convocatoria(
 
     if current_user.rol == RolEnum.profesor and conv.profesor_id != current_user.id:
         raise HTTPException(status_code=403, detail="Solo puede editar sus propias convocatorias")
+    _verificar_programa_jefe(conv, current_user)
 
     if conv.estado not in [EstadoConvocatoriaEnum.borrador, EstadoConvocatoriaEnum.abierta]:
         raise HTTPException(status_code=400, detail="Solo se pueden editar convocatorias en borrador o abiertas")
 
     updates = body.model_dump(exclude_unset=True)
-    if current_user.rol == RolEnum.profesor and "asignatura_id" in updates:
+    if "asignatura_id" in updates:
         nueva_asig = db.query(Asignatura).filter(Asignatura.id == updates["asignatura_id"]).first()
-        if not nueva_asig or nueva_asig.profesor_id != current_user.id:
+        if not nueva_asig:
+            raise HTTPException(status_code=404, detail="Asignatura no encontrada")
+        if current_user.rol == RolEnum.profesor and nueva_asig.profesor_id != current_user.id:
             raise HTTPException(
                 status_code=403,
                 detail="Solo puede asignar asignaturas que usted dicta.",
             )
+        # La verificación del programa cubre la asignatura ORIGEN; la nueva
+        # también debe ser del programa del jefe (si no, la reasigna fuera).
+        if (
+            current_user.rol == RolEnum.jefe_programa
+            and current_user.programa
+            and nueva_asig.programa != current_user.programa
+        ):
+            raise HTTPException(
+                status_code=403,
+                detail="Solo puede asignar asignaturas de su programa",
+            )
+    # El formulario siempre reenvía fecha_inicio_postulacion; solo se exige que
+    # no sea pasado cuando el instante realmente cambia (una convocatoria abierta
+    # conserva su apertura ya pasada y sigue editable).
+    ini_nuevo = updates.get("fecha_inicio_postulacion")
+    ini_cambio = False
+    if ini_nuevo is not None:
+        prev = conv.fecha_inicio_postulacion
+        prev_utc = prev if prev.tzinfo else prev.replace(tzinfo=timezone.utc)
+        nuevo_utc = ini_nuevo if ini_nuevo.tzinfo else ini_nuevo.replace(tzinfo=timezone.utc)
+        ini_cambio = nuevo_utc != prev_utc
     for field, value in updates.items():
         setattr(conv, field, value)
+
+    # Revalidar la ventana resultante con las mismas reglas que en POST: una
+    # edición puede dejar fechas invertidas o fuera del rango 5-20 días.
+    _validar_ventana_postulacion(
+        conv.fecha_inicio_postulacion,
+        conv.fecha_fin_postulacion,
+        conv.fecha_publicacion_resultados,
+        db,
+        validar_pasado=ini_cambio,
+    )
 
     db.commit()
     db.refresh(conv)
@@ -570,6 +658,7 @@ def cambiar_estado(
     conv = db.query(Convocatoria).filter(Convocatoria.id == conv_id).first()
     if not conv:
         raise HTTPException(status_code=404, detail="Convocatoria no encontrada")
+    _verificar_programa_jefe(conv, current_user)
 
     permitidos = TRANSICIONES_VALIDAS.get(conv.estado, [])
     if body.estado not in permitidos:
@@ -679,9 +768,18 @@ def cambiar_estado(
 def historial_convocatoria(
     conv_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
     from app.models.historial_estado import HistorialEstado
+    conv = (
+        db.query(Convocatoria)
+        .options(joinedload(Convocatoria.asignatura))
+        .filter(Convocatoria.id == conv_id)
+        .first()
+    )
+    if not conv:
+        raise HTTPException(status_code=404, detail="Convocatoria no encontrada")
+    _verificar_lectura_convocatoria(conv, current_user)
     registros = (
         db.query(HistorialEstado)
         .filter(HistorialEstado.entidad == "convocatoria", HistorialEstado.entidad_id == conv_id)

@@ -392,11 +392,22 @@ def datos_asignatura(
     return result
 
 
+def _verificar_programa_jefe(p: Practica, current_user: User) -> None:
+    """jefe_programa solo gestiona prácticas de su programa académico."""
+    if (
+        current_user.rol == RolEnum.jefe_programa
+        and current_user.programa
+        and p.asignatura
+        and p.asignatura.programa != current_user.programa
+    ):
+        raise HTTPException(status_code=403, detail="Solo puede gestionar prácticas de su programa")
+
+
 @router.get("/{practica_id}", response_model=PracticaOut)
 def obtener_practica(
     practica_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
     p = (
         db.query(Practica)
@@ -410,6 +421,39 @@ def obtener_practica(
     )
     if not p:
         raise HTTPException(status_code=404, detail="Práctica no encontrada")
+    if current_user.rol == RolEnum.profesor and p.profesor_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Solo puede acceder a sus propias prácticas")
+    _verificar_programa_jefe(p, current_user)
+    if current_user.rol == RolEnum.estudiante:
+        # Mismos estados que expone el listado: borradores y rechazadas no se
+        # muestran aunque el estudiante esté matriculado en la asignatura.
+        ESTADOS_VISIBLES = [
+            EstadoPracticaEnum.solicitada,
+            EstadoPracticaEnum.pendiente_quorum,
+            EstadoPracticaEnum.aprobada_curriculo,
+            EstadoPracticaEnum.aprobada_facultad,
+            EstadoPracticaEnum.aprobado_transporte,
+            EstadoPracticaEnum.en_ejecucion,
+            EstadoPracticaEnum.finalizada,
+        ]
+        if p.estado not in ESTADOS_VISIBLES:
+            raise HTTPException(status_code=404, detail="Práctica no encontrada")
+        participa = (
+            db.query(AsignaturaEstudiante)
+            .filter(
+                AsignaturaEstudiante.asignatura_id == p.asignatura_id,
+                AsignaturaEstudiante.estudiante_id == current_user.id,
+            )
+            .first()
+            or db.query(FirmaConsentimiento)
+            .filter(
+                FirmaConsentimiento.practica_id == practica_id,
+                FirmaConsentimiento.estudiante_id == current_user.id,
+            )
+            .first()
+        )
+        if not participa:
+            raise HTTPException(status_code=403, detail="No participas en esta práctica")
     return _enrich(p, testing_mode=es_modo_prueba(db))
 
 
@@ -579,6 +623,7 @@ def actualizar_practica(
         if p.estado not in [EstadoPracticaEnum.borrador, EstadoPracticaEnum.solicitada]:
             raise HTTPException(status_code=400, detail="Solo se pueden editar prácticas en borrador o solicitadas")
     elif current_user.rol in (RolEnum.jefe_programa, RolEnum.decano):
+        _verificar_programa_jefe(p, current_user)
         if p.estado in ESTADOS_NO_EDITABLES:
             raise HTTPException(status_code=400, detail="No se pueden editar prácticas finalizadas o rechazadas")
 
@@ -600,6 +645,15 @@ def actualizar_practica(
         setattr(p, field, value)
 
     if p.fecha_inicio and p.fecha_fin:
+        # Postgres devuelve aware y el formulario envía naive: normalizar a UTC
+        # (convención naive=UTC de crear_practica) para poder compararlos.
+        ini_cmp = p.fecha_inicio if p.fecha_inicio.tzinfo else p.fecha_inicio.replace(tzinfo=timezone.utc)
+        fin_cmp = p.fecha_fin if p.fecha_fin.tzinfo else p.fecha_fin.replace(tzinfo=timezone.utc)
+        if fin_cmp < ini_cmp:
+            raise HTTPException(
+                status_code=400,
+                detail="fecha_fin debe ser igual o posterior a fecha_inicio",
+            )
         p.duracion_dias = max(1, (p.fecha_fin.date() - p.fecha_inicio.date()).days + 1)
         if not es_modo_prueba(db):
             dias_viaje_check = (p.fecha_fin.date() - p.fecha_inicio.date()).days
@@ -800,9 +854,20 @@ def aprobar_practica(
         RolEnum.jefe_programa, RolEnum.decano, RolEnum.admin,
     )),
 ):
-    p = db.query(Practica).options(joinedload(Practica.viaticos)).filter(Practica.id == practica_id).first()
+    # Lock de fila: dos aprobaciones concurrentes serializan la transición de
+    # estado — sin el lock ambas leerían 'aprobada_facultad' y comprometerían
+    # los viáticos dos veces.
+    # joinedload queda fuera: en PostgreSQL FOR UPDATE rechaza el outer join
+    # a colecciones. Los viáticos se cargan lazy una vez tomado el lock.
+    p = (
+        db.query(Practica)
+        .filter(Practica.id == practica_id)
+        .with_for_update()
+        .first()
+    )
     if not p:
         raise HTTPException(status_code=404, detail="Práctica no encontrada")
+    _verificar_programa_jefe(p, current_user)
 
     # ── Etapa 1: jefe_programa — Comité de Currículo ────────────────────────────────────
     if current_user.rol == RolEnum.jefe_programa:
@@ -866,13 +931,52 @@ def aprobar_practica(
         registrar_historial(db, "practica", practica_id, p.estado, EstadoPracticaEnum.aprobado_transporte, current_user.id)
         p.estado = EstadoPracticaEnum.aprobado_transporte
 
-        total_viaticos = sum(v.valor_calculado for v in p.viaticos) if p.viaticos else 0.0
+        # Persistir los viáticos calculados si aún no existen filas: ningún
+        # flujo los creaba, y el compromiso presupuestal depende de ellos.
+        if not p.viaticos:
+            for v in _viaticos_calculados(p, db):
+                db.add(Viatico(
+                    practica_id=p.id, tarifa_id=v["tarifa_id"],
+                    num_dias=v["num_dias"], num_personas=v["num_personas"],
+                    valor_calculado=v["subtotal"], descripcion=v["descripcion"],
+                ))
+            db.flush()
+            db.refresh(p, attribute_names=["viaticos"])
+        total_viaticos = sum(float(v.valor_calculado) for v in p.viaticos) if p.viaticos else 0.0
         if total_viaticos > 0:
             presupuesto = db.query(Presupuesto).filter(
                 Presupuesto.periodo_academico == p.periodo_academico
             ).first()
-            if presupuesto:
-                presupuesto.monto_comprometido += total_viaticos
+            if not presupuesto:
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        f"La práctica tiene viáticos por ${total_viaticos:,.0f} COP pero no "
+                        f"existe presupuesto para el período {p.periodo_academico}. Cree el "
+                        "presupuesto del período antes de dar aprobación final."
+                    ),
+                )
+            else:
+                # UPDATE atómico con guard de disponible: evita la condición de
+                # carrera read-modify-write y el compromiso por encima del saldo.
+                result = db.execute(
+                    update(Presupuesto)
+                    .where(
+                        Presupuesto.id == presupuesto.id,
+                        Presupuesto.monto_total_asignado
+                        - Presupuesto.monto_ejecutado
+                        - Presupuesto.monto_comprometido >= total_viaticos,
+                    )
+                    .values(monto_comprometido=Presupuesto.monto_comprometido + total_viaticos)
+                )
+                if result.rowcount == 0:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=(
+                            f"Presupuesto insuficiente para comprometer los viáticos "
+                            f"(${total_viaticos:,.0f} COP) del periodo {p.periodo_academico}."
+                        ),
+                    )
                 db.add(MovimientoPresupuestal(
                     presupuesto_id=presupuesto.id,
                     tipo=TipoMovimientoEnum.comprometido,
@@ -902,7 +1006,9 @@ def firmar_consentimiento(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_roles(RolEnum.estudiante)),
 ):
-    p = db.query(Practica).filter(Practica.id == practica_id).first()
+    # Lock de fila: dos firmas concurrentes serializan el count()+1 del
+    # quórum (la UniqueConstraint ya impide la doble firma del estudiante).
+    p = db.query(Practica).filter(Practica.id == practica_id).with_for_update().first()
     if not p:
         raise HTTPException(status_code=404, detail="Práctica no encontrada")
     ESTADOS_FIRMA = [
@@ -1023,7 +1129,7 @@ class RechazoPracticaBody(BaseModel):
 class TarifaCreate(BaseModel):
     descripcion: str
     valor_dia: float
-    aplica_desde: str
+    aplica_desde: date
     is_active: bool = True
 
 
@@ -1045,6 +1151,7 @@ def rechazar_practica(
     p = db.query(Practica).filter(Practica.id == practica_id).first()
     if not p:
         raise HTTPException(status_code=404, detail="Práctica no encontrada")
+    _verificar_programa_jefe(p, current_user)
 
     # Cualquier etapa del flujo puede ser rechazada por la instancia correspondiente
     RECHAZABLES = [
@@ -1217,14 +1324,12 @@ def crear_tarifa(
     db: Session = Depends(get_db),
     _: User = Depends(require_roles(RolEnum.admin)),
 ):
-    from datetime import date as date_type
-    aplica = date_type.fromisoformat(body.aplica_desde) if isinstance(body.aplica_desde, str) else body.aplica_desde
     if body.valor_dia <= 0:
         raise HTTPException(status_code=400, detail="El valor por día debe ser mayor a 0")
     tarifa = TarifaViatico(
         descripcion=body.descripcion,
         valor_dia=body.valor_dia,
-        aplica_desde=aplica,
+        aplica_desde=body.aplica_desde,
         is_active=body.is_active,
     )
     db.add(tarifa)
@@ -1298,6 +1403,7 @@ def registrar_pago_viatico(
     p = db.query(Practica).filter(Practica.id == practica_id).first()
     if not p:
         raise HTTPException(status_code=404, detail="Práctica no encontrada")
+    _verificar_programa_jefe(p, current_user)
     if p.estado not in (EstadoPracticaEnum.finalizada, EstadoPracticaEnum.en_ejecucion, EstadoPracticaEnum.aprobado_transporte):
         raise HTTPException(status_code=400, detail="Solo se pueden registrar pagos en prácticas aprobadas o finalizadas")
     if body.monto_pagado <= 0:
@@ -1307,6 +1413,83 @@ def registrar_pago_viatico(
         fecha = datetime.fromisoformat(body.fecha_pago)
     except ValueError:
         raise HTTPException(status_code=400, detail="Formato de fecha inválido (use ISO 8601)")
+
+    # El pago mueve comprometido→ejecutado: exige compromiso previo y no permite
+    # pagar más de lo comprometido. El presupuesto se resuelve desde el
+    # movimiento de compromiso — si el período de la práctica cambió tras la
+    # aprobación, el dinero sigue debitándose del presupuesto que lo respalda.
+    from sqlalchemy import func as sa_func
+    compromiso_row = (
+        db.query(
+            sa_func.coalesce(sa_func.sum(MovimientoPresupuestal.monto), 0),
+            MovimientoPresupuestal.presupuesto_id,
+        )
+        .filter(
+            MovimientoPresupuestal.practica_id == practica_id,
+            MovimientoPresupuestal.tipo == TipoMovimientoEnum.comprometido,
+        )
+        .group_by(MovimientoPresupuestal.presupuesto_id)
+        .first()
+    )
+    compromiso_practica = float(compromiso_row[0]) if compromiso_row else 0
+    presupuesto = None
+    if compromiso_row:
+        presupuesto = db.query(Presupuesto).filter(
+            Presupuesto.id == compromiso_row[1]
+        ).with_for_update().first()
+    pagado_prev = (
+        db.query(sa_func.coalesce(sa_func.sum(PagoViatico.monto_pagado), 0))
+        .filter(PagoViatico.practica_id == practica_id)
+        .scalar()
+    ) or 0
+    if float(compromiso_practica) <= 0:
+        raise HTTPException(
+            status_code=400,
+            detail="La práctica no tiene compromiso presupuestal de viáticos registrado",
+        )
+    if float(pagado_prev) + float(body.monto_pagado) > float(compromiso_practica):
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"El pago excede el compromiso de viáticos "
+                f"(${float(compromiso_practica) - float(pagado_prev):,.0f} COP pendientes)"
+            ),
+        )
+
+    if presupuesto:
+        # Lo que ya se transfirió a ejecutado por esta práctica (movimientos
+        # tipo ejecucion). Pago anterior→comprometido residual se reconcilia
+        # aquí: se mueve el total pagado, no solo el pago nuevo.
+        ejecutado_prev = (
+            db.query(sa_func.coalesce(sa_func.sum(MovimientoPresupuestal.monto), 0))
+            .filter(
+                MovimientoPresupuestal.practica_id == practica_id,
+                MovimientoPresupuestal.tipo == TipoMovimientoEnum.ejecucion,
+            )
+            .scalar()
+        ) or 0
+        mover = min(float(pagado_prev) + float(body.monto_pagado), float(compromiso_practica)) - float(ejecutado_prev)
+        if mover > 0:
+            db.execute(
+                update(Presupuesto)
+                .where(Presupuesto.id == presupuesto.id)
+                .values(
+                    monto_comprometido=case(
+                        (Presupuesto.monto_comprometido - mover > 0,
+                         Presupuesto.monto_comprometido - mover),
+                        else_=0,
+                    ),
+                    monto_ejecutado=Presupuesto.monto_ejecutado + mover,
+                )
+            )
+            db.add(MovimientoPresupuestal(
+                presupuesto_id=presupuesto.id,
+                tipo=TipoMovimientoEnum.ejecucion,
+                monto=mover,
+                concepto=f"Pago viáticos: {p.nombre_practica}",
+                practica_id=p.id,
+                responsable_id=current_user.id,
+            ))
 
     pago = PagoViatico(
         practica_id=practica_id,
@@ -1347,8 +1530,14 @@ def registrar_pago_viatico(
 def listar_pagos_viatico(
     practica_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles(RolEnum.admin, RolEnum.jefe_programa, RolEnum.decano, RolEnum.profesor)),
+    current_user: User = Depends(require_roles(RolEnum.admin, RolEnum.jefe_programa, RolEnum.decano, RolEnum.profesor)),
 ):
+    p = db.query(Practica).options(joinedload(Practica.asignatura)).filter(Practica.id == practica_id).first()
+    if not p:
+        raise HTTPException(status_code=404, detail="Práctica no encontrada")
+    if current_user.rol == RolEnum.profesor and p.profesor_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Solo puede consultar pagos de sus propias prácticas")
+    _verificar_programa_jefe(p, current_user)
     pagos = db.query(PagoViatico).filter(PagoViatico.practica_id == practica_id).order_by(PagoViatico.fecha_pago.desc()).all()
     return [
         {
@@ -1363,35 +1552,85 @@ def listar_pagos_viatico(
     ]
 
 
+def _viaticos_calculados(p: Practica, db: Session) -> list[dict]:
+    """Proyección de viáticos: tarifas vigentes a fecha_inicio × días × 1 docente
+    (Acuerdo 003/2012). Usada para la vista previa y para persistir los
+    viáticos al aprobar la práctica."""
+    if not p.fecha_inicio or not p.duracion_dias:
+        return []
+    tarifas = db.query(TarifaViatico).filter(
+        TarifaViatico.is_active == True,
+        TarifaViatico.aplica_desde <= p.fecha_inicio.date(),
+    ).all()
+    # Zona del itinerario: rural > interdepartamental > municipal. Las tarifas
+    # que declaran zona se filtran a la aplicable; las que no declaran ninguna
+    # (Desayuno/Almuerzo/Cena/Alojamiento del Decreto USCO) aplican a toda zona,
+    # salvo el "transporte interno" que solo tiene sentido en prácticas locales.
+    ZONAS = ("rural", "interdepartamental", "municipal")
+    if any(getattr(r, "es_rural", False) for r in p.rutas):
+        zona = "rural"
+    elif _es_fuera_del_huila(p.rutas):
+        zona = "interdepartamental"
+    else:
+        zona = "municipal"
+    tarifas = [
+        t for t in tarifas
+        if not [z for z in ZONAS if z in (t.descripcion or "").lower()]  # sin zona: aplica a toda
+        and not ("transporte" in (t.descripcion or "").lower() and zona != "municipal")
+        or zona in (t.descripcion or "").lower()                          # zona específica aplicable
+    ]
+    NUM_DOCENTES = 1
+    return [
+        {
+            "tarifa_id": t.id,
+            "descripcion": t.descripcion,
+            "valor_dia": float(t.valor_dia),
+            "num_dias": p.duracion_dias,
+            "num_personas": NUM_DOCENTES,
+            "subtotal": float(t.valor_dia) * p.duracion_dias * NUM_DOCENTES,
+        }
+        for t in tarifas
+    ]
+
+
 @router.get("/{practica_id}/viaticos", response_model=list[ViaticosCalculadoOut])
 def calcular_viaticos(
     practica_id: int,
     db: Session = Depends(get_db),
     _: User = Depends(require_roles(RolEnum.profesor, RolEnum.jefe_programa, RolEnum.decano, RolEnum.admin)),
 ):
-    """RF-PRA-02/03 — Calcula viáticos cruzando días de práctica con tarifas vigentes."""
-    p = db.query(Practica).filter(Practica.id == practica_id).first()
+    """RF-PRA-02/03 — Calcula viáticos cruzando días de práctica con tarifas vigentes.
+
+    Si la práctica ya tiene viáticos persistidos (p. ej. tras la aprobación
+    final), devuelve esos importes; si no, proyecta desde las tarifas.
+    """
+    p = db.query(Practica).options(joinedload(Practica.viaticos)).filter(Practica.id == practica_id).first()
     if not p:
         raise HTTPException(status_code=404, detail="Práctica no encontrada")
 
-    tarifas = db.query(TarifaViatico).filter(
-        TarifaViatico.is_active == True,
-        TarifaViatico.aplica_desde <= p.fecha_inicio.date(),
-    ).all()
-
-    NUM_DOCENTES = 1  # Viáticos para el docente responsable (Acuerdo 003/2012)
-    resultado = []
-    for tarifa in tarifas:
-        subtotal = tarifa.valor_dia * p.duracion_dias * NUM_DOCENTES
-        resultado.append(ViaticosCalculadoOut(
-            tarifa_id=tarifa.id,
-            descripcion=tarifa.descripcion,
-            valor_dia=tarifa.valor_dia,
-            num_dias=p.duracion_dias,
-            num_personas=NUM_DOCENTES,
-            subtotal=subtotal,
-        ))
-    return resultado
+    if p.viaticos:
+        return [
+            ViaticosCalculadoOut(
+                tarifa_id=v.tarifa_id,
+                descripcion=v.descripcion or "",
+                valor_dia=round(float(v.valor_calculado) / max(v.num_dias * v.num_personas, 1), 2),
+                num_dias=v.num_dias,
+                num_personas=v.num_personas,
+                subtotal=float(v.valor_calculado),
+            )
+            for v in p.viaticos
+        ]
+    return [
+        ViaticosCalculadoOut(
+            tarifa_id=r["tarifa_id"],
+            descripcion=r["descripcion"],
+            valor_dia=r["valor_dia"],
+            num_dias=r["num_dias"],
+            num_personas=r["num_personas"],
+            subtotal=r["subtotal"],
+        )
+        for r in _viaticos_calculados(p, db)
+    ]
 
 
 

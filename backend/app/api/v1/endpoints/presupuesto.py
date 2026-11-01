@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from fastapi.responses import FileResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.db.database import get_db
@@ -22,14 +22,14 @@ ALLOWED_DOC_EXTS = [".pdf", ".png", ".jpg", ".jpeg", ".docx", ".xlsx"]
 
 class PresupuestoCreate(BaseModel):
     periodo_academico: str
-    monto_total_asignado: float
+    monto_total_asignado: float = Field(gt=0, le=10_000_000_000)
     descripcion: Optional[str] = None
 
 
 class CalendarioCreate(BaseModel):
     periodo_academico: str
-    semana_inicio_solicitudes: int = 3
-    semana_fin_solicitudes: int = 14
+    semana_inicio_solicitudes: int = Field(default=3, ge=1, le=30)
+    semana_fin_solicitudes: int = Field(default=14, ge=1, le=30)
     fecha_inicio_semestre: datetime
     fecha_fin_semestre: datetime
     is_active: bool = True
@@ -167,7 +167,7 @@ class DecisionBody(BaseModel):
 
 
 class PresupuestoUpdate(BaseModel):
-    monto_total_asignado: Optional[float] = None
+    monto_total_asignado: Optional[float] = Field(default=None, gt=0, le=10_000_000_000)
     descripcion: Optional[str] = None
 
 
@@ -240,7 +240,10 @@ def editar_presupuesto(
     _: User = Depends(require_roles(RolEnum.jefe_programa, RolEnum.decano)),
 ):
     """Jefe de Programa edita monto/descripcion del presupuesto (solo en borrador, modificacion o rechazado)."""
-    p = db.query(Presupuesto).filter(Presupuesto.periodo_academico == periodo).first()
+    # FOR UPDATE: serializa contra aprobar_practica — sin lock, un compromiso
+    # en vuelo puede comprometer después de leer ocupado y quedar por encima
+    # del nuevo monto.
+    p = db.query(Presupuesto).filter(Presupuesto.periodo_academico == periodo).with_for_update().first()
     if not p:
         raise HTTPException(status_code=404, detail="Presupuesto no encontrado")
     if p.estado not in [
@@ -253,6 +256,15 @@ def editar_presupuesto(
             detail=f"No se puede editar un presupuesto en estado '{p.estado.value}'. Solo en borrador, pendiente de modificación o rechazado.",
         )
     if body.monto_total_asignado is not None:
+        ocupado = float(p.monto_comprometido or 0) + float(p.monto_ejecutado or 0)
+        if float(body.monto_total_asignado) < ocupado:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"El monto no puede quedar por debajo de lo ya comprometido/ejecutado "
+                    f"(${ocupado:,.0f} COP en uso)."
+                ),
+            )
         p.monto_total_asignado = body.monto_total_asignado
     if body.descripcion is not None:
         p.descripcion = body.descripcion
@@ -698,10 +710,29 @@ def eliminar_presupuesto(
     db: Session = Depends(get_db),
     _: User = Depends(require_roles(RolEnum.admin)),
 ):
-    """Admin: elimina un presupuesto y todos sus movimientos (acción irreversible)."""
-    p = db.query(Presupuesto).filter(Presupuesto.periodo_academico == periodo).first()
+    """Admin: elimina un presupuesto y todos sus movimientos (acción irreversible).
+
+    Bloquea si hay fondos comprometidos o ejecutados — borrar el presupuesto
+    dejaría compromisos fantasma en las prácticas que lo referencian.
+    """
+    # FOR UPDATE: serializa contra aprobar_practica, que compromete fondos con
+    # un UPDATE atómico sobre la misma fila — sin el lock, una aprobación en
+    # vuelo podría comprometer un presupuesto que acabamos de leer en cero.
+    p = db.query(Presupuesto).filter(Presupuesto.periodo_academico == periodo).with_for_update().first()
     if not p:
         raise HTTPException(status_code=404, detail="Presupuesto no encontrado")
+    if p.monto_comprometido > 0 or p.monto_ejecutado > 0:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "No se puede eliminar: el presupuesto tiene fondos comprometidos "
+                f"(${float(p.monto_comprometido):,.0f}) o ejecutados "
+                f"(${float(p.monto_ejecutado):,.0f})."
+            ),
+        )
+    db.query(MovimientoPresupuestal).filter(
+        MovimientoPresupuestal.presupuesto_id == p.id
+    ).delete(synchronize_session=False)
     db.delete(p)
     db.commit()
 

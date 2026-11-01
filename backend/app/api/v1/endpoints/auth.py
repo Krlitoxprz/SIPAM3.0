@@ -237,6 +237,19 @@ def listar_usuarios(
     return query.order_by(User.rol, User.apellidos).all()
 
 
+def _verificar_jerarquia_usuario(current_user: User, target: User) -> None:
+    """jefe_programa/decano solo gestionan cuentas de estudiantes y profesores.
+
+    Sin este límite, un jefe podría desactivar o restablecer la contraseña de
+    un administrador, un decano u otro jefe (escalación de privilegios).
+    """
+    if current_user.rol != RolEnum.admin and target.rol not in (RolEnum.estudiante, RolEnum.profesor):
+        raise HTTPException(
+            status_code=403,
+            detail="Solo el administrador puede gestionar cuentas de roles administrativos",
+        )
+
+
 @router.patch("/usuarios/{user_id}/toggle-activo", response_model=UserOut)
 def toggle_activo(
     user_id: int,
@@ -246,6 +259,7 @@ def toggle_activo(
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    _verificar_jerarquia_usuario(current_user, user)
     if user.id == current_user.id:
         raise HTTPException(status_code=400, detail="No puedes desactivar tu propia cuenta")
     user.is_active = not user.is_active
@@ -329,6 +343,7 @@ def reset_password(
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    _verificar_jerarquia_usuario(current_user, user)
     auto_generada = not bool(body.nueva_password)
     if body.nueva_password:
         if len(body.nueva_password) < PASSWORD_MIN_LEN:

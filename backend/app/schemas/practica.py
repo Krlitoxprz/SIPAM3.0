@@ -1,6 +1,6 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, model_validator
 from typing import Optional
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from app.models.practica import EstadoPracticaEnum, TipoDocenteEnum, CaracterCursoEnum, CaracteristicaCursoEnum, ModalidadDocenteEnum
 from app.schemas.user import UserOut
 from app.schemas.convocatoria import AsignaturaOut
@@ -37,7 +37,7 @@ class PracticaCreate(BaseModel):
     periodo_academico: str
     fecha_inicio: datetime
     fecha_fin: datetime
-    num_alumnos: int
+    num_alumnos: int = Field(ge=1, le=200)
     tipo_docente: Optional[TipoDocenteEnum] = None
     observaciones: Optional[str] = None
     rutas: list[RutaPracticaCreate] = []
@@ -59,12 +59,26 @@ class PracticaCreate(BaseModel):
     conductor_nombre: Optional[str] = None
     sede: Optional[str] = None
 
+    @model_validator(mode="after")
+    def _fecha_fin_posterior(self):
+        # Naive se interpreta como UTC (convención de crear_practica); sin esto,
+        # comparar aware vs naive lanza TypeError -> 500 en vez de 422.
+        ini = self.fecha_inicio
+        fin = self.fecha_fin
+        if ini.tzinfo is None:
+            ini = ini.replace(tzinfo=timezone.utc)
+        if fin.tzinfo is None:
+            fin = fin.replace(tzinfo=timezone.utc)
+        if fin < ini:
+            raise ValueError("fecha_fin debe ser igual o posterior a fecha_inicio")
+        return self
+
 
 class PracticaUpdate(BaseModel):
     nombre_practica: Optional[str] = None
     fecha_inicio: Optional[datetime] = None
     fecha_fin: Optional[datetime] = None
-    num_alumnos: Optional[int] = None
+    num_alumnos: Optional[int] = Field(default=None, ge=1, le=200)
     tipo_docente: Optional[TipoDocenteEnum] = None
     observaciones: Optional[str] = None
     rutas: Optional[list[RutaPracticaCreate]] = None

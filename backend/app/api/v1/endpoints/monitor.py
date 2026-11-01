@@ -110,12 +110,35 @@ def mis_horas(
 
 # ── Profesor: ver y aprobar horas de sus monitores ───────────────────────────
 
+def _verificar_acceso_convocatoria(db: Session, conv_id: int, current_user: User) -> Convocatoria:
+    """IDOR guard: profesor solo su convocatoria; jefe solo las de su programa."""
+    conv = (
+        db.query(Convocatoria)
+        .options(joinedload(Convocatoria.asignatura))
+        .filter(Convocatoria.id == conv_id)
+        .first()
+    )
+    if not conv:
+        raise HTTPException(status_code=404, detail="Convocatoria no encontrada")
+    if current_user.rol == RolEnum.profesor and conv.profesor_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Solo puede acceder a sus propias convocatorias")
+    if (
+        current_user.rol == RolEnum.jefe_programa
+        and current_user.programa
+        and conv.asignatura
+        and conv.asignatura.programa != current_user.programa
+    ):
+        raise HTTPException(status_code=403, detail="Solo puede acceder a convocatorias de su programa")
+    return conv
+
+
 @router.get("/convocatoria/{conv_id}")
 def horas_por_convocatoria(
     conv_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_roles(RolEnum.profesor, RolEnum.jefe_programa, RolEnum.decano)),
 ):
+    _verificar_acceso_convocatoria(db, conv_id, current_user)
     posts = (
         db.query(Postulacion)
         .options(joinedload(Postulacion.estudiante))
@@ -290,6 +313,15 @@ def get_evaluacion(
         ).first()
         if not post:
             raise HTTPException(status_code=403, detail="No tienes acceso a esta evaluación")
+    elif current_user.rol == RolEnum.profesor:
+        post = (
+            db.query(Postulacion)
+            .options(joinedload(Postulacion.convocatoria))
+            .filter(Postulacion.id == post_id)
+            .first()
+        )
+        if not post or not post.convocatoria or post.convocatoria.profesor_id != current_user.id:
+            raise HTTPException(status_code=403, detail="Solo puede consultar evaluaciones de sus propias convocatorias")
     return {
         "id": ev.id,
         "postulacion_id": ev.postulacion_id,
@@ -376,6 +408,7 @@ def exportar_horas_csv(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_roles(RolEnum.profesor, RolEnum.jefe_programa, RolEnum.decano)),
 ):
+    _verificar_acceso_convocatoria(db, conv_id, current_user)
     posts = (
         db.query(Postulacion)
         .options(joinedload(Postulacion.estudiante))
