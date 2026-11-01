@@ -6,6 +6,7 @@ from pydantic import ConfigDict, model_validator
 from typing import List
 
 DEFAULT_INSECURE_SECRET = "sipam-usco-super-secret-key-2024-change-in-production"
+DEFAULT_IOT_API_KEY = "iot_device_key_12345"  # clave pública de ejemplo; inaceptable en producción
 
 
 def parse_cors_origins() -> List[str]:
@@ -62,7 +63,7 @@ class Settings(BaseSettings):
     SMTP_TLS: bool = True
 
     # API key compartida para dispositivos IoT (ESP32 / simulador GPS)
-    IOT_API_KEY: str = "iot_device_key_12345"
+    IOT_API_KEY: str = DEFAULT_IOT_API_KEY
 
     # URL del microservicio de IA (OCR/NLP)
     AI_SERVICE_URL: str = "http://localhost:5001"
@@ -95,6 +96,19 @@ class Settings(BaseSettings):
                 "Define SECRET_KEY en backend/.env para mantener sesiones entre reinicios."
             )
             self.SECRET_KEY = secrets.token_urlsafe(32)
+        return self
+
+    @model_validator(mode="after")
+    def _ensure_iot_api_key(self):
+        """La clave IoT de ejemplo es pública: en producción debe reemplazarse
+        por una secreta o cualquiera puede inyectar puntos GPS falsos.
+        En desarrollo se permite el default para que el simulador funcione."""
+        if self.ENVIRONMENT == "production" or not self.DEBUG:
+            if not self.IOT_API_KEY or self.IOT_API_KEY == DEFAULT_IOT_API_KEY:
+                raise ValueError(
+                    "IOT_API_KEY debe configurarse en .env con una clave secreta "
+                    "antes de arrancar en producción (la de ejemplo es pública)."
+                )
         return self
 
     model_config = ConfigDict(env_file=".env", case_sensitive=True)
