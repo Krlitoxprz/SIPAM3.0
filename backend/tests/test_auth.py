@@ -212,3 +212,36 @@ def test_crear_usuario_admin_prohibido(client: TestClient, usuario_admin):
         "rol": "admin",
     })
     assert r.status_code == 403
+
+
+# ── PA-017: jefe/decano no gestionan cuentas de roles administrativos ─────────
+@pytest.mark.parametrize("accion", ["reset-password", "toggle-activo"])
+@pytest.mark.parametrize("actor", ["usuario_jefe", "usuario_decano"])
+@pytest.mark.parametrize("objetivo", ["usuario_admin", "usuario_jefe", "usuario_decano"])
+def test_gestion_usuario_fuera_de_alcance(client: TestClient, request, accion, actor, objetivo):
+    actor_u = request.getfixturevalue(actor)
+    objetivo_u = request.getfixturevalue(objetivo)
+    if actor_u.id == objetivo_u.id and accion == "toggle-activo":
+        pytest.skip("auto-desactivación cubierta por otra regla")
+    token = get_token(client, actor_u.codigo)
+    r = client.patch(f"/api/v1/auth/usuarios/{objetivo_u.id}/{accion}", json={}, headers=auth(token))
+    assert r.status_code == 403
+    assert "nueva_password" not in r.json()
+    # La cuenta objetivo sigue activa y con su contraseña original
+    assert get_token(client, objetivo_u.codigo)
+
+
+def test_reset_password_jefe_sobre_estudiante(client: TestClient, usuario_jefe, session_db):
+    from app.models.user import User, RolEnum
+    from app.core.security import get_password_hash
+    est = User(
+        codigo="TEST_EST_RESET", nombres="Est", apellidos="Reset",
+        email="est.reset@usco.edu.co", cedula="30000099",
+        hashed_password=get_password_hash(PASSWORD), rol=RolEnum.estudiante, is_active=True,
+        programa=usuario_jefe.programa,
+    )
+    session_db.add(est); session_db.commit(); session_db.refresh(est)
+    token = get_token(client, usuario_jefe.codigo)
+    r = client.patch(f"/api/v1/auth/usuarios/{est.id}/reset-password", json={}, headers=auth(token))
+    assert r.status_code == 200
+    assert get_token(client, est.codigo, r.json()["nueva_password"])
