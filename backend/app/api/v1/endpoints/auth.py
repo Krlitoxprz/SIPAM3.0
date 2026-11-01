@@ -162,12 +162,20 @@ def refresh(request: Request, response: Response, db: Session = Depends(get_db))
 
 
 @router.post("/logout")
-def logout(request: Request, response: Response, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    """Logout: revoca el refresh token y borra ambas cookies HttpOnly."""
+def logout(request: Request, response: Response, db: Session = Depends(get_db)):
+    """Logout: revoca el refresh token y borra ambas cookies HttpOnly.
+
+    No exige access token válido: el caso típico es que expire primero (30 min),
+    y el usuario identificado por la cookie refresh basta para auditar y revocar."""
     raw = request.cookies.get("refresh_token")
+    user = None
     if raw:
+        user_id = verify_token(raw, token_type="refresh")
+        if user_id:
+            user = db.query(User).filter(User.id == int(user_id)).first()
         db.query(RefreshToken).filter(RefreshToken.token_hash == hash_refresh_token(raw)).update({"revoked": True})
-    db.add(AuditLog(usuario_id=current_user.id, accion="logout", entidad="auth", detalle=f"Logout de {current_user.codigo}"))
+    if user:
+        db.add(AuditLog(usuario_id=user.id, accion="logout", entidad="auth", detalle=f"Logout de {user.codigo}"))
     db.commit()
 
     opts = _cookie_opts()
