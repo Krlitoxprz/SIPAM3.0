@@ -3,6 +3,8 @@ import logging
 import warnings
 from contextlib import asynccontextmanager
 from datetime import date, datetime, timedelta, timezone
+from typing import Optional
+from urllib.parse import urlparse
 
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -250,16 +252,40 @@ app.add_middleware(
 )
 
 
+def _allowed_origin(origin: Optional[str]) -> bool:
+    """Compara scheme+host+port del Origin/Referer contra CORS_ORIGINS.
+    Nunca usar startswith: 'https://app.com.evil.com' empieza por 'https://app.com'."""
+    if not origin:
+        return False
+    try:
+        parsed = urlparse(origin)
+        parsed.port  # fuerza validación del puerto
+    except ValueError:
+        return False
+    for allowed in settings.cors_origin_list:
+        try:
+            a = urlparse(allowed)
+        except ValueError:
+            continue
+        if (parsed.scheme, parsed.hostname, parsed.port) == (a.scheme, a.hostname, a.port):
+            return True
+    return False
+
+
 @app.middleware("http")
 async def csrf_origin_check(request: Request, call_next):
-    """Protección CSRF para auth por cookie: peticiones que mutan estado deben
-    venir con un Origin/Referer permitido o con header Authorization explícito
-    (las cookies viajan automáticamente; un formulario cross-site no puede
-    forjar ni Origin ni Authorization)."""
+    """Protección CSRF para auth por cookie.
+
+    Solo aplica cuando la petición trae credenciales ambientales (cookie de
+    sesión): un cliente sin cookie no es CSRF-able porque el navegador no
+    adjunta Authorization automáticamente. Con cookie presente se exige un
+    Origin/Referer de origen permitido — un formulario cross-site no puede
+    forjarlo ni suprimirlo junto con la cookie SameSite."""
     if request.method in ("POST", "PUT", "PATCH", "DELETE"):
-        if "authorization" not in request.headers:
+        tiene_sesion_cookie = "access_token" in request.cookies or "refresh_token" in request.cookies
+        if tiene_sesion_cookie:
             origin = request.headers.get("origin") or request.headers.get("referer")
-            if origin and not any(origin.startswith(o) for o in settings.cors_origin_list):
+            if not _allowed_origin(origin):
                 from fastapi.responses import JSONResponse
                 return JSONResponse(status_code=403, content={"detail": "Origen no permitido (CSRF)"})
     return await call_next(request)
