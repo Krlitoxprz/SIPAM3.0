@@ -178,3 +178,17 @@ def test_estudiante_ajeno_403(client: TestClient, usuario_estudiante, archivo_po
     token = get_token(client, "TEST_EST")
     r = client.get(endpoint.format(id=archivo_postulacion.id), headers=auth(token))
     assert r.status_code == 403
+
+
+def test_metadata_profesor_titular(client: TestClient, usuario_profesor, archivo_postulacion):
+    """GET /archivos/metadata/{id}: mismo acceso que la descarga — el titular
+    de la convocatoria consulta metadatos del documento de su postulante."""
+    token = get_token(client, "TEST_PROF")
+    r = client.get(f"/api/v1/archivos/metadata/{archivo_postulacion.id}", headers=auth(token))
+    assert r.status_code == 200
+
+
+def test_metadata_profesor_no_titular_403(client: TestClient, profesor_otro, archivo_postulacion):
+    token = get_token(client, "TEST_PROF2")
+    r = client.get(f"/api/v1/archivos/metadata/{archivo_postulacion.id}", headers=auth(token))
+    assert r.status_code == 403
