@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { Users, Plus, Search, ToggleLeft, ToggleRight, Loader2, X, ChevronDown, KeyRound, Copy, CheckCircle, ShieldAlert, ShieldCheck, FlaskConical } from 'lucide-react';
 import { usuariosService, adminService } from '../services/api';
 import { useSystemContext } from '../hooks/useSystemContext';
-import { useAuthContext } from '../hooks/useAuthContext';
 import type { User, Rol } from '../types';
 
 const ROL_LABEL: Record<Rol, string> = {
@@ -52,9 +51,6 @@ const FORM_INICIAL: NuevoUsuarioForm = {
 
 export function Usuarios() {
   const { testingMode, refreshMode } = useSystemContext();
-  const { user: currentUser } = useAuthContext();
-  const puedeGestionar = (u: User) =>
-    currentUser?.rol === 'admin' || u.rol === 'estudiante' || u.rol === 'profesor';
   const [usuarios, setUsuarios] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -357,25 +353,23 @@ export function Usuarios() {
                       ) : '—'}
                     </td>
                     <td className="px-4 py-3 text-center">
-                      {puedeGestionar(u) ? (
-                        <button
-                          onClick={() => handleToggle(u)}
-                          disabled={toggling === u.id}
-                          title={u.is_active ? 'Desactivar' : 'Activar'}
-                          className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40 hover:bg-gray-100"
-                        >
-                          {toggling === u.id ? (
-                            <Loader2 size={15} className="animate-spin text-gray-400" />
-                          ) : u.is_active ? (
-                            <ToggleRight size={20} className="text-emerald-500" />
-                          ) : (
-                            <ToggleLeft size={20} className="text-gray-400" />
-                          )}
-                          <span className={u.is_active ? 'text-emerald-600' : 'text-gray-400'}>
-                            {u.is_active ? 'Activo' : 'Inactivo'}
-                          </span>
-                        </button>
-                      ) : <span className="text-xs text-gray-300">—</span>}
+                      <button
+                        onClick={() => handleToggle(u)}
+                        disabled={toggling === u.id}
+                        title={u.is_active ? 'Desactivar' : 'Activar'}
+                        className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40 hover:bg-gray-100"
+                      >
+                        {toggling === u.id ? (
+                          <Loader2 size={15} className="animate-spin text-gray-400" />
+                        ) : u.is_active ? (
+                          <ToggleRight size={20} className="text-emerald-500" />
+                        ) : (
+                          <ToggleLeft size={20} className="text-gray-400" />
+                        )}
+                        <span className={u.is_active ? 'text-emerald-600' : 'text-gray-400'}>
+                          {u.is_active ? 'Activo' : 'Inactivo'}
+                        </span>
+                      </button>
                     </td>
                     <td className="px-4 py-3 text-center">
                       {u.rol === 'estudiante' ? (
@@ -399,17 +393,15 @@ export function Usuarios() {
                       ) : <span className="text-xs text-gray-300">—</span>}
                     </td>
                     <td className="px-4 py-3 text-center">
-                      {puedeGestionar(u) ? (
-                        <button
-                          onClick={() => handleReset(u)}
-                          disabled={resetting === u.id}
-                          title="Restablecer contraseña"
-                          className="inline-flex items-center gap-1 text-xs font-medium text-gray-400 hover:text-amber-600 px-2 py-1.5 rounded-lg hover:bg-amber-50 transition-colors disabled:opacity-40"
-                        >
-                          {resetting === u.id ? <Loader2 size={14} className="animate-spin" /> : <KeyRound size={14} />}
-                          Reset
-                        </button>
-                      ) : <span className="text-xs text-gray-300">—</span>}
+                      <button
+                        onClick={() => handleReset(u)}
+                        disabled={resetting === u.id}
+                        title="Restablecer contraseña"
+                        className="inline-flex items-center gap-1 text-xs font-medium text-gray-400 hover:text-amber-600 px-2 py-1.5 rounded-lg hover:bg-amber-50 transition-colors disabled:opacity-40"
+                      >
+                        {resetting === u.id ? <Loader2 size={14} className="animate-spin" /> : <KeyRound size={14} />}
+                        Reset
+                      </button>
                     </td>
                   </tr>
                 ))}
