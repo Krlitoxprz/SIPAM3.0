@@ -27,6 +27,7 @@ from app.models.convocatoria import Convocatoria, Asignatura
 from app.models.postulacion import Postulacion, EstadoPostulacionEnum
 from app.models.practica import Practica
 from app.api.deps import get_current_user, require_roles
+from app.api.v1.endpoints.reportes import _verificar_acceso_formulario
 
 router = APIRouter()
 
@@ -135,15 +136,6 @@ def _ascii_filename(name: str) -> str:
     return "".join(c for c in normalized if ord(c) < 128).replace('"', "")
 
 
-def _verificar_propietario(profesor_id: int | None, current_user: User) -> None:
-    """Un profesor solo genera PDFs oficiales de sus propias convocatorias/prácticas."""
-    if current_user.rol == RolEnum.profesor and profesor_id != current_user.id:
-        raise HTTPException(
-            status_code=403,
-            detail="Solo puede generar documentos de sus propias convocatorias o prácticas",
-        )
-
-
 # ── FO-14 ─────────────────────────────────────────────────────────────────────
 
 @router.get(
@@ -154,7 +146,7 @@ def _verificar_propietario(profesor_id: int | None, current_user: User) -> None:
 def pdf_fo14(
     convocatoria_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles(RolEnum.jefe_programa, RolEnum.decano, RolEnum.admin, RolEnum.profesor)),
+    current_user: User = Depends(require_roles(RolEnum.jefe_programa, RolEnum.decano, RolEnum.admin, RolEnum.profesor)),
 ):
     conv = (
         db.query(Convocatoria)
@@ -164,7 +156,7 @@ def pdf_fo14(
     )
     if not conv:
         raise HTTPException(status_code=404, detail="Convocatoria no encontrada")
-    _verificar_propietario(conv.profesor_id, _)
+    _verificar_acceso_formulario(current_user, conv.profesor_id, conv.asignatura)
 
     seleccionado = (
         db.query(Postulacion)
@@ -243,7 +235,7 @@ def pdf_fo14(
 def pdf_fo16(
     practica_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles(RolEnum.jefe_programa, RolEnum.decano, RolEnum.admin, RolEnum.profesor)),
+    current_user: User = Depends(require_roles(RolEnum.jefe_programa, RolEnum.decano, RolEnum.admin, RolEnum.profesor)),
 ):
     pr = (
         db.query(Practica)
@@ -253,7 +245,7 @@ def pdf_fo16(
     )
     if not pr:
         raise HTTPException(status_code=404, detail="Práctica no encontrada")
-    _verificar_propietario(pr.profesor_id, _)
+    _verificar_acceso_formulario(current_user, pr.profesor_id, pr.asignatura)
 
     rutas = sorted(pr.rutas, key=lambda r: r.orden)
     origen = next((r for r in rutas if r.tipo_punto == "origen"), rutas[0] if rutas else None)
@@ -340,7 +332,7 @@ def pdf_fo16(
 def pdf_fo15(
     practica_id: int,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles(RolEnum.jefe_programa, RolEnum.decano, RolEnum.admin, RolEnum.profesor)),
+    current_user: User = Depends(require_roles(RolEnum.jefe_programa, RolEnum.decano, RolEnum.admin, RolEnum.profesor)),
 ):
     from app.models.practica import FirmaConsentimiento, Viatico
     pr = (
@@ -356,7 +348,7 @@ def pdf_fo15(
     )
     if not pr:
         raise HTTPException(status_code=404, detail="Práctica no encontrada")
-    _verificar_propietario(pr.profesor_id, _)
+    _verificar_acceso_formulario(current_user, pr.profesor_id, pr.asignatura)
 
     rutas = sorted(pr.rutas, key=lambda r: r.orden)
     destino = next((r for r in rutas if r.tipo_punto == "destino"), rutas[-1] if rutas else None)

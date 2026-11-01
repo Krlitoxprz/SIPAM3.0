@@ -2,7 +2,8 @@
 Tests de control de propiedad en los datos de formularios FO-* (/api/v1/reportes).
 
 Un profesor solo puede obtener los datos (con PII de docentes y estudiantes)
-de prácticas/convocatorias de las que es titular; admin/jefe/decano sin cambios.
+de prácticas/convocatorias de las que es titular; un jefe_programa solo las de
+su propio programa; admin/decano sin cambios.
 
 Usa su propia convocatoria (estado cerrada) y práctica para no interferir con
 otros tests que comparten la BD de sesión.
@@ -31,6 +32,29 @@ def profesor_ajeno(db):
     )
     db.add(u); db.commit(); db.refresh(u)
     return u
+
+
+def _jefe(db, codigo, cedula, programa):
+    u = db.query(User).filter(User.codigo == codigo).first()
+    if u:
+        return u
+    u = User(
+        codigo=codigo, nombres="Jefe", apellidos=codigo, email=f"{codigo.lower()}@usco.edu.co",
+        cedula=cedula, rol=RolEnum.jefe_programa, programa=programa,
+        hashed_password=get_password_hash(PASSWORD), is_active=True,
+    )
+    db.add(u); db.commit(); db.refresh(u)
+    return u
+
+
+@pytest.fixture(scope="function")
+def jefe_otro_programa(db):
+    return _jefe(db, "TEST_JEFE_REP_OTRO", "40000020", "Medicina")
+
+
+@pytest.fixture(scope="function")
+def jefe_sin_programa(db):
+    return _jefe(db, "TEST_JEFE_REP_NULO", "40000021", None)
 
 
 @pytest.fixture(scope="function")
@@ -109,5 +133,51 @@ def test_fo_practica_titular_y_admin_200(client: TestClient, usuario_profesor, u
 def test_pdf_helpers_profesor_ajeno_403(client: TestClient, profesor_ajeno, request, ruta, fixture):
     obj = request.getfixturevalue(fixture)
     token = get_token(client, profesor_ajeno.codigo)
+    r = client.get(f"/api/v1/pdf/{ruta}/{obj.id}", headers=auth(token))
+    assert r.status_code == 403
+
+
+@pytest.mark.parametrize("ruta,fixture", [
+    ("fo14", "convocatoria_rep"), ("fo15", "practica_rep"), ("fo16", "practica_rep"),
+])
+def test_pdf_propios_profesor_ajeno_403(client: TestClient, profesor_ajeno, request, ruta, fixture):
+    obj = request.getfixturevalue(fixture)
+    token = get_token(client, profesor_ajeno.codigo)
+    r = client.get(f"/api/v1/pdf/{ruta}/{obj.id}", headers=auth(token))
+    assert r.status_code == 403
+
+
+# ── jefe_programa: solo su propio programa ────────────────────────────────────
+
+FO_TODOS = [(fo, "convocatoria_rep") for fo in FO_CONVOCATORIA] + [(fo, "practica_rep") for fo in FO_PRACTICA]
+PDF_TODOS = [
+    ("fo14", "convocatoria_rep"), ("fo46", "convocatoria_rep"),
+    ("fo15", "practica_rep"), ("fo16", "practica_rep"), ("fo05", "practica_rep"),
+]
+
+
+@pytest.mark.parametrize("fo,fixture", FO_TODOS)
+@pytest.mark.parametrize("jefe_fixture", ["jefe_otro_programa", "jefe_sin_programa"])
+def test_fo_jefe_fuera_de_programa_403(client: TestClient, request, fo, fixture, jefe_fixture):
+    obj = request.getfixturevalue(fixture)
+    jefe = request.getfixturevalue(jefe_fixture)
+    token = get_token(client, jefe.codigo)
+    r = client.get(f"/api/v1/reportes/{fo}/{obj.id}", headers=auth(token))
+    assert r.status_code == 403
+    assert "cedula" not in r.text
+
+
+@pytest.mark.parametrize("fo,fixture", FO_TODOS)
+def test_fo_jefe_mismo_programa_200(client: TestClient, usuario_jefe, request, fo, fixture):
+    obj = request.getfixturevalue(fixture)
+    token = get_token(client, usuario_jefe.codigo)
+    r = client.get(f"/api/v1/reportes/{fo}/{obj.id}", headers=auth(token))
+    assert r.status_code == 200, r.text
+
+
+@pytest.mark.parametrize("ruta,fixture", PDF_TODOS)
+def test_pdf_jefe_otro_programa_403(client: TestClient, jefe_otro_programa, request, ruta, fixture):
+    obj = request.getfixturevalue(fixture)
+    token = get_token(client, jefe_otro_programa.codigo)
     r = client.get(f"/api/v1/pdf/{ruta}/{obj.id}", headers=auth(token))
     assert r.status_code == 403
