@@ -25,6 +25,16 @@ def test_csrf_origen_sufijo_evil_403(client: TestClient, usuario_estudiante):
     assert r.status_code == 403
 
 
+def test_csrf_origen_con_userinfo_403(client: TestClient, usuario_estudiante):
+    """Un Origin con credenciales incrustadas no es un origen legítimo."""
+    get_token(client, "TEST_EST")
+    r = client.post(
+        "/api/v1/auth/logout",
+        headers={"Origin": "http://evil.com@localhost:5173"},
+    )
+    assert r.status_code == 403
+
+
 def test_csrf_origen_valido_pasa(client: TestClient, usuario_estudiante):
     get_token(client, "TEST_EST")
     r = client.post("/api/v1/auth/logout", headers={"Origin": ORIGIN_OK})

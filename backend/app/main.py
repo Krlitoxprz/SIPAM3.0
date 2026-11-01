@@ -260,6 +260,8 @@ def _allowed_origin(origin: Optional[str]) -> bool:
     try:
         parsed = urlparse(origin)
         parsed.port  # fuerza validación del puerto
+        if parsed.username or parsed.password:
+            return False  # userinfo jamás pertenece a un origen legítimo
     except ValueError:
         return False
     for allowed in settings.cors_origin_list:
