@@ -6,7 +6,7 @@ from datetime import date
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session, joinedload
 
 from app.db.database import get_db
@@ -210,8 +210,8 @@ class CalcularRutaRequest(BaseModel):
     origen: str
     destino: str
     tipo_vehiculo: str = "bus"       # bus | camioneta | moto
-    num_vehiculos: int = 1
-    categoria_peaje: int = 3          # 1-5
+    num_vehiculos: int = Field(default=1, ge=1, le=20)
+    categoria_peaje: int = Field(default=3, ge=1, le=5)
     tipo_combustible: str = "diesel"  # diesel | gasolina_corriente
 
 

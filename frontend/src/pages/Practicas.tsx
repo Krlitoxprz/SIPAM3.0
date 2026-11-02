@@ -1274,8 +1274,8 @@ function TransporteModal({ practicaId, onClose }: { practicaId: number; onClose:
           </div>
           <div>
             <label className="block text-xs font-semibold text-gray-600 mb-1">N° vehículos</label>
-            <input type="number" min={1} max={10} value={numVehiculos}
-              onChange={e => setNumVehiculos(parseInt(e.target.value) || 1)}
+            <input type="number" min={1} max={20} value={numVehiculos}
+              onChange={e => setNumVehiculos(Math.min(20, Math.max(1, parseInt(e.target.value) || 1)))}
               className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-usco-vinotinto/30" />
           </div>
         </div>
