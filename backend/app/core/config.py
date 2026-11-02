@@ -8,6 +8,16 @@ from typing import List
 DEFAULT_INSECURE_SECRET = "sipam-usco-super-secret-key-2024-change-in-production"
 DEFAULT_IOT_API_KEY = "iot_device_key_12345"  # clave pública de ejemplo; inaceptable en producción
 
+# Marcadores típicos de plantillas .env.example que indican "reemplazar aquí".
+_PLACEHOLDER_MARKERS = ("GENERA", "CAMBIA", "CHANGE_ME", "TU_IP", "REPLACE")
+
+
+def _es_placeholder(valor: str) -> bool:
+    """True si el valor parece un marcador de plantilla que el operador olvidó
+    reemplazar (p. ej. 'GENERA_UNA_CLAVE_SECRETA_CON_openssl_rand_-hex_24')."""
+    v = (valor or "").upper()
+    return any(m in v for m in _PLACEHOLDER_MARKERS)
+
 
 def parse_cors_origins() -> List[str]:
     """Parse CORS_ORIGINS from env var (comma-separated) or return defaults."""
@@ -84,7 +94,7 @@ class Settings(BaseSettings):
         aleatoria por proceso (las sesiones no sobreviven reinicios, que es
         aceptable en dev y evita firmar JWTs con una clave conocida/vacía).
         """
-        if not self.SECRET_KEY or self.SECRET_KEY == DEFAULT_INSECURE_SECRET:
+        if not self.SECRET_KEY or self.SECRET_KEY == DEFAULT_INSECURE_SECRET or _es_placeholder(self.SECRET_KEY):
             if self.ENVIRONMENT == "production" or not self.DEBUG:
                 raise ValueError(
                     "SECRET_KEY debe configurarse en .env con una clave segura (mín. 32 caracteres) "
@@ -104,7 +114,7 @@ class Settings(BaseSettings):
         por una secreta o cualquiera puede inyectar puntos GPS falsos.
         En desarrollo se permite el default para que el simulador funcione."""
         if self.ENVIRONMENT == "production" or not self.DEBUG:
-            if not self.IOT_API_KEY or self.IOT_API_KEY == DEFAULT_IOT_API_KEY:
+            if not self.IOT_API_KEY or self.IOT_API_KEY == DEFAULT_IOT_API_KEY or _es_placeholder(self.IOT_API_KEY):
                 raise ValueError(
                     "IOT_API_KEY debe configurarse en .env con una clave secreta "
                     "antes de arrancar en producción (la de ejemplo es pública)."

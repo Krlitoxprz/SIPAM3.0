@@ -130,6 +130,31 @@ def test_iot_get_profesor_403_jefe_200(client: TestClient, usuario_profesor, usu
     assert isinstance(r.json(), list)
 
 
+def test_iot_key_placeholder_falla_en_produccion():
+    """Copiar la plantilla sin reemplazar el marcador tampoco vale en prod."""
+    from app.core.config import Settings
+    with pytest.raises(Exception):
+        Settings(
+            ENVIRONMENT="production",
+            DEBUG=False,
+            SECRET_KEY="x" * 40,
+            IOT_API_KEY="GENERA_UNA_CLAVE_SECRETA_CON_openssl_rand_-hex_24",
+            _env_file=None,
+        )
+
+
+def test_secret_key_placeholder_falla_en_produccion():
+    from app.core.config import Settings
+    with pytest.raises(Exception):
+        Settings(
+            ENVIRONMENT="production",
+            DEBUG=False,
+            SECRET_KEY="GENERA_UNA_CLAVE_SEGURA_CON_openssl_rand_-hex_32",
+            IOT_API_KEY="clave-secreta-real-123",
+            _env_file=None,
+        )
+
+
 def test_iot_key_default_falla_en_produccion():
     """El default público de IOT_API_KEY no es aceptable en producción."""
     from app.core.config import Settings, DEFAULT_IOT_API_KEY
