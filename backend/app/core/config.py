@@ -11,14 +11,26 @@ DEFAULT_IOT_API_KEY = "iot_device_key_12345"  # clave pública de ejemplo; inace
 # Prefijos típicos de plantillas .env.example que indican "reemplazar aquí".
 # Se comparan como prefijo (no substring) para no rechazar claves legítimas
 # que casualmente contengan estas palabras (p. ej. 'my-replacement-key').
-_PLACEHOLDER_PREFIXES = ("GENERA_", "CAMBIA_", "CHANGE_ME", "TU_IP_", "REPLACE_")
+_PLACEHOLDER_PREFIXES = (
+    "GENERA_", "GENERA-", "CAMBIA_", "CAMBIA-",
+    "CHANGE_ME", "TU_IP_", "TU_IP-", "REPLACE_", "REPLACE-",
+)
+
+# Valores exactos publicados en .env.example / .env.production.example:
+# copiarlos tal cual también debe fallar en producción.
+_KNOWN_TEMPLATE_VALUES = {
+    "CAMBIA-ESTA-CLAVE-EN-PRODUCCION-MIN-32-CARACTERES",
+    "CAMBIA-ESTA-CLAVE-IOT",
+    "GENERA_UNA_CLAVE_SEGURA_CON_OPENSSL_RAND_-HEX_32",
+    "GENERA_UNA_CLAVE_SECRETA_CON_OPENSSL_RAND_-HEX_24",
+}
 
 
 def _es_placeholder(valor: str) -> bool:
     """True si el valor parece un marcador de plantilla que el operador olvidó
     reemplazar (p. ej. 'GENERA_UNA_CLAVE_SECRETA_CON_openssl_rand_-hex_24')."""
     v = (valor or "").upper()
-    return any(v.startswith(m) for m in _PLACEHOLDER_PREFIXES)
+    return v in _KNOWN_TEMPLATE_VALUES or any(v.startswith(m) for m in _PLACEHOLDER_PREFIXES)
 
 
 def parse_cors_origins() -> List[str]:

@@ -169,6 +169,18 @@ def test_clave_legitima_con_palabra_marker_no_falla():
     assert s.SECRET_KEY == "my-replacement-key-with-40-characters-123456"
 
 
+def test_valores_exactos_de_env_example_fallan_en_produccion():
+    """Copiar los valores publicados de backend/.env.example debe fallar."""
+    from app.core.config import Settings
+    with pytest.raises(Exception):
+        Settings(
+            ENVIRONMENT="production", DEBUG=False,
+            SECRET_KEY="cambia-esta-clave-en-produccion-min-32-caracteres",
+            IOT_API_KEY="cambia-esta-clave-iot",
+            _env_file=None,
+        )
+
+
 def test_iot_key_default_falla_en_produccion():
     """El default público de IOT_API_KEY no es aceptable en producción."""
     from app.core.config import Settings, DEFAULT_IOT_API_KEY
