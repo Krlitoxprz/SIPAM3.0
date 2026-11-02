@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { configuracionService, presupuestoService, asignaturasService, convocatoriasService } from '../services/api';
 import { useAuthContext } from '../hooks/useAuthContext';
+import { parseFechaLocal } from '../utils/fechas';
 
 // ─── tipos locales ──────────────────────────────────────────────────────────
 interface CalendarioConfig {
@@ -618,7 +619,7 @@ export function Configuracion() {
                       }
                     </div>
                     <p className="text-xs text-gray-500">
-                      {CLP(t.valor_dia)}/día · vigente desde {new Date(t.aplica_desde).toLocaleDateString('es-CO')}
+                      {CLP(t.valor_dia)}/día · vigente desde {parseFechaLocal(t.aplica_desde)?.toLocaleDateString('es-CO') ?? '—'}
                     </p>
                   </div>
                   <button onClick={() => setModalTar(t)}
