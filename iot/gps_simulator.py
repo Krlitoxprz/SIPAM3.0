@@ -7,7 +7,7 @@ import random
 import time
 import json
 import argparse
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 class GPSSimulator:
@@ -88,7 +88,7 @@ class GPSSimulator:
             "hdop": round(random.uniform(0.8, 2.5), 1),
             
             # Timestamp
-            "datetime_gps": datetime.utcnow().isoformat() + "Z",
+            "datetime_gps": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
             
             # Device Status
             "battery_voltage": round(self.battery, 2),
@@ -175,7 +175,9 @@ class GPSSimulator:
         print(f"Duration: {duration_minutes} minutes")
         print(f"Data points sent: {sent_count}")
         print(f"Failed sends: {failed_count}")
-        print(f"Success rate: {sent_count/(sent_count+failed_count)*100:.1f}%")
+        total = sent_count + failed_count
+        success_rate = sent_count / total * 100 if total else 0.0
+        print(f"Success rate: {success_rate:.1f}%")
         print()
         print("Course Compliance:")
         print("  ✓ IoT Device simulation (ESP32)")
@@ -212,7 +214,7 @@ def test_backend_connection(api_url):
         if response.status_code == 200:
             print("✓ Backend connection successful")
             return True
-    except:
+    except requests.exceptions.RequestException:
         pass
     
     print("✗ Backend not available")
