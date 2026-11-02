@@ -10,6 +10,7 @@ const rolLabels: Record<string, string> = {
   profesor: 'Profesor',
   jefe_programa: 'Jefe de Programa',
   decano: 'Decano de Facultad',
+  admin: 'Administrador',
 };
 
 interface BusqResultados {
@@ -162,7 +163,7 @@ export function Header({ onMenuToggle }: { onMenuToggle?: () => void }) {
             </div>
             <div className="flex flex-col text-right">
               <span className="text-sm font-semibold leading-tight">{user?.nombres} {user?.apellidos}</span>
-              <span className="text-xs text-usco-ocre leading-tight">{user ? rolLabels[user.rol] : ''} · {user?.codigo}</span>
+              <span className="text-xs text-usco-ocre leading-tight">{user ? (rolLabels[user.rol] ?? user.rol) : ''} · {user?.codigo}</span>
             </div>
           </Link>
           <button onClick={logout} className="p-2 rounded-full hover:bg-usco-vinotinto-dark transition-colors" title="Cerrar sesión">
