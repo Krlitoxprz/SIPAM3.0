@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ClipboardList, FileText, Upload, CheckCircle, XCircle, Clock, AlertTriangle, Loader2, MessageSquare, LogOut, QrCode, Download } from 'lucide-react';
-import type { Postulacion, EstadoPostulacion } from '../types';
+import type { Postulacion, EstadoPostulacion, EstadoConvocatoria } from '../types';
 import { postulacionesService, qrService, downloadBlob } from '../services/api';
 import { useAuthContext } from '../hooks/useAuthContext';
 
@@ -117,6 +117,12 @@ function UploadDocumentoModal({
 }
 
 const ESTADOS_RETIRABLES: EstadoPostulacion[] = ['pendiente', 'documentos_incompletos', 'en_revision', 'preseleccionado'];
+const ESTADOS_CONVOCATORIA_RETIRABLES: EstadoConvocatoria[] = ['abierta', 'cerrada'];
+
+const puedeRetirar = (post: Postulacion) =>
+  ESTADOS_RETIRABLES.includes(post.estado)
+  && !!post.convocatoria
+  && ESTADOS_CONVOCATORIA_RETIRABLES.includes(post.convocatoria.estado);
 
 export function Postulaciones() {
   const { user } = useAuthContext();
@@ -315,7 +321,7 @@ export function Postulaciones() {
                       <QrCode size={13} /> Descargar QR de verificación
                     </button>
                   )}
-                  {user?.rol === 'estudiante' && ESTADOS_RETIRABLES.includes(post.estado) && (
+                  {user?.rol === 'estudiante' && puedeRetirar(post) && (
                     <button
                       onClick={() => handleDesistir(post)}
                       disabled={desistiendo === post.id}
