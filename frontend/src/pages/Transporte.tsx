@@ -234,7 +234,7 @@ export function Transporte() {
                   min={1}
                   max={20}
                   value={numVehiculos}
-                  onChange={e => setNumVehiculos(Math.max(1, parseInt(e.target.value) || 1))}
+                  onChange={e => setNumVehiculos(Math.min(20, Math.max(1, parseInt(e.target.value) || 1)))}
                   className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-usco-vinotinto/30"
                 />
               </div>
