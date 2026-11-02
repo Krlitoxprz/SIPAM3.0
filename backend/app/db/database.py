@@ -148,6 +148,8 @@ def _run_cross_migrations():
         # ── NOT NULL en columnas de estado con default (solo PostgreSQL) ───────
         "UPDATE practicas SET estado = 'borrador' WHERE estado IS NULL",
         "UPDATE postulaciones SET estado = 'pendiente' WHERE estado IS NULL",
+        # ── Integer → BIGINT en timestamp IoT (epoch en ms > int32) ──────────
+        "ALTER TABLE iot_tracking_points ALTER COLUMN device_timestamp TYPE BIGINT",
         # ── Float → NUMERIC en campos monetarios (exactitud financiera) ────────
         "ALTER TABLE presupuestos ALTER COLUMN monto_total_asignado TYPE NUMERIC(14,2) USING monto_total_asignado::NUMERIC(14,2)",
         "ALTER TABLE presupuestos ALTER COLUMN monto_solicitado TYPE NUMERIC(14,2) USING monto_solicitado::NUMERIC(14,2)",

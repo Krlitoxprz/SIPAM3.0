@@ -83,8 +83,11 @@ def db():
 
 @pytest.fixture(scope="function")
 def client():
-    """TestClient de FastAPI."""
+    """TestClient de FastAPI. Origin preconfigurado: el middleware CSRF exige
+    un origen permitido en mutaciones que traen cookie de sesión (los tests
+    conservan la cookie del login en el jar)."""
     with TestClient(app) as c:
+        c.headers["Origin"] = "http://localhost:5173"
         yield c
 
 

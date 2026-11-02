@@ -87,6 +87,11 @@ info "Backend listo."
 
 # ── 8. Migraciones de BD (siempre — son idempotentes) ───────────────────────
 info "Ejecutando migraciones de BD..."
+# Alembic: cubre las revisiones nuevas (p. ej. device_timestamp BIGINT). En una
+# BD preexistente sin alembic_version puede fallar por tablas ya creadas; las
+# migraciones incrementales de init_db (y los scripts manuales) cubren ese caso.
+docker compose exec -T backend alembic upgrade head \
+    || warn "alembic upgrade head falló; init_db aplica los ALTERs incrementales en el arranque."
 docker compose exec -T backend python migrate_rename_observaciones.py \
     || warn "migrate_rename_observaciones.py: sin cambios o ya aplicado."
 

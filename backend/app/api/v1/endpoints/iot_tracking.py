@@ -216,13 +216,14 @@ def get_tracking_points(
     practice_id: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_roles(
-        RolEnum.admin, RolEnum.profesor,
-        RolEnum.jefe_programa, RolEnum.decano
+        RolEnum.admin, RolEnum.jefe_programa, RolEnum.decano
     ))
 ):
     """
     Get all tracking points for a practice excursion.
-    Requires authentication (Professor, Jefe Programa, Admin, or Decano).
+    Solo Admin, Jefe de Programa y Decano: `practice_id` es un identificador
+    libre del dispositivo que no se puede mapear a un profesor titular, así
+    que el rol profesor queda fuera para no exponer recorridos ajenos.
     """
     points = (
         db.query(IoTTrackingPoint)
@@ -238,8 +239,7 @@ def get_tracking_map(
     practice_id: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_roles(
-        RolEnum.admin, RolEnum.profesor,
-        RolEnum.jefe_programa, RolEnum.decano
+        RolEnum.admin, RolEnum.jefe_programa, RolEnum.decano
     ))
 ):
     """

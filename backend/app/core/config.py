@@ -6,6 +6,31 @@ from pydantic import ConfigDict, model_validator
 from typing import List
 
 DEFAULT_INSECURE_SECRET = "sipam-usco-super-secret-key-2024-change-in-production"
+DEFAULT_IOT_API_KEY = "iot_device_key_12345"  # clave pública de ejemplo; inaceptable en producción
+
+# Prefijos típicos de plantillas .env.example que indican "reemplazar aquí".
+# Se comparan como prefijo (no substring) para no rechazar claves legítimas
+# que casualmente contengan estas palabras (p. ej. 'my-replacement-key').
+_PLACEHOLDER_PREFIXES = (
+    "GENERA_", "GENERA-", "CAMBIA_", "CAMBIA-",
+    "CHANGE_ME", "TU_IP_", "TU_IP-", "REPLACE_", "REPLACE-",
+)
+
+# Valores exactos publicados en .env.example / .env.production.example:
+# copiarlos tal cual también debe fallar en producción.
+_KNOWN_TEMPLATE_VALUES = {
+    "CAMBIA-ESTA-CLAVE-EN-PRODUCCION-MIN-32-CARACTERES",
+    "CAMBIA-ESTA-CLAVE-IOT",
+    "GENERA_UNA_CLAVE_SEGURA_CON_OPENSSL_RAND_-HEX_32",
+    "GENERA_UNA_CLAVE_SECRETA_CON_OPENSSL_RAND_-HEX_24",
+}
+
+
+def _es_placeholder(valor: str) -> bool:
+    """True si el valor parece un marcador de plantilla que el operador olvidó
+    reemplazar (p. ej. 'GENERA_UNA_CLAVE_SECRETA_CON_openssl_rand_-hex_24')."""
+    v = (valor or "").upper()
+    return v in _KNOWN_TEMPLATE_VALUES or any(v.startswith(m) for m in _PLACEHOLDER_PREFIXES)
 
 
 def parse_cors_origins() -> List[str]:
@@ -62,7 +87,7 @@ class Settings(BaseSettings):
     SMTP_TLS: bool = True
 
     # API key compartida para dispositivos IoT (ESP32 / simulador GPS)
-    IOT_API_KEY: str = "iot_device_key_12345"
+    IOT_API_KEY: str = DEFAULT_IOT_API_KEY
 
     # URL del microservicio de IA (OCR/NLP)
     AI_SERVICE_URL: str = "http://localhost:5001"
@@ -83,7 +108,7 @@ class Settings(BaseSettings):
         aleatoria por proceso (las sesiones no sobreviven reinicios, que es
         aceptable en dev y evita firmar JWTs con una clave conocida/vacía).
         """
-        if not self.SECRET_KEY or self.SECRET_KEY == DEFAULT_INSECURE_SECRET:
+        if not self.SECRET_KEY or self.SECRET_KEY == DEFAULT_INSECURE_SECRET or _es_placeholder(self.SECRET_KEY):
             if self.ENVIRONMENT == "production" or not self.DEBUG:
                 raise ValueError(
                     "SECRET_KEY debe configurarse en .env con una clave segura (mín. 32 caracteres) "
@@ -95,6 +120,19 @@ class Settings(BaseSettings):
                 "Define SECRET_KEY en backend/.env para mantener sesiones entre reinicios."
             )
             self.SECRET_KEY = secrets.token_urlsafe(32)
+        return self
+
+    @model_validator(mode="after")
+    def _ensure_iot_api_key(self):
+        """La clave IoT de ejemplo es pública: en producción debe reemplazarse
+        por una secreta o cualquiera puede inyectar puntos GPS falsos.
+        En desarrollo se permite el default para que el simulador funcione."""
+        if self.ENVIRONMENT == "production" or not self.DEBUG:
+            if not self.IOT_API_KEY or self.IOT_API_KEY == DEFAULT_IOT_API_KEY or _es_placeholder(self.IOT_API_KEY):
+                raise ValueError(
+                    "IOT_API_KEY debe configurarse en .env con una clave secreta "
+                    "antes de arrancar en producción (la de ejemplo es pública)."
+                )
         return self
 
     model_config = ConfigDict(env_file=".env", case_sensitive=True)

@@ -1,5 +1,5 @@
 """Puntos GPS recibidos de dispositivos IoT (ESP32 / simulador) durante prácticas."""
-from sqlalchemy import Column, Integer, String, DateTime, Float, Text, Index
+from sqlalchemy import Column, Integer, BigInteger, String, DateTime, Float, Text, Index
 from sqlalchemy.sql import func
 
 from app.db.database import Base
@@ -11,7 +11,7 @@ class IoTTrackingPoint(Base):
     id = Column(Integer, primary_key=True, index=True)
     device_id = Column(String(64), nullable=False)
     practice_id = Column(String(64), nullable=False)
-    device_timestamp = Column(Integer, nullable=True)      # uptime en ms del dispositivo
+    device_timestamp = Column(BigInteger, nullable=True)    # timestamp/uptime en ms (epoch ms > int32)
 
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
