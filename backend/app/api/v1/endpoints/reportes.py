@@ -9,7 +9,7 @@ from app.models.convocatoria import Convocatoria, EstadoConvocatoriaEnum, Asigna
 from app.models.postulacion import Postulacion, EstadoPostulacionEnum
 from app.models.practica import Practica, EstadoPracticaEnum, RutaPractica, FirmaConsentimiento, Viatico, TarifaViatico
 from app.models.presupuesto import Presupuesto
-from app.api.deps import get_current_user, require_roles
+from app.api.deps import get_current_user, require_roles, programa_de_jefe, verificar_programa_jefe
 
 router = APIRouter()
 
@@ -548,7 +548,7 @@ def practicas_por_programa(
         joinedload(Practica.viaticos),
     )
     # jefe_programa sólo ve su propio programa (ignorar parámetro externo)
-    programa_filtro = current_user.programa if current_user.rol == RolEnum.jefe_programa else programa
+    programa_filtro = programa_de_jefe(current_user) if current_user.rol == RolEnum.jefe_programa else programa
     if programa_filtro:
         q = q.join(Practica.asignatura).filter(Asignatura.programa == programa_filtro)
     if periodo:

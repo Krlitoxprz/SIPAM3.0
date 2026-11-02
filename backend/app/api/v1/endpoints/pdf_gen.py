@@ -26,7 +26,7 @@ from app.models.user import User, RolEnum
 from app.models.convocatoria import Convocatoria, Asignatura
 from app.models.postulacion import Postulacion, EstadoPostulacionEnum
 from app.models.practica import Practica
-from app.api.deps import get_current_user, require_roles
+from app.api.deps import get_current_user, require_roles, programa_de_jefe, verificar_programa_jefe
 
 router = APIRouter()
 
@@ -631,8 +631,8 @@ def pdf_fo15_consolidado(
     practicas = practicas_por_programa(programa, periodo, db, current_user)
 
     facultad = practicas[0]["facultad"] if practicas and practicas[0].get("facultad") else "—"
-    if current_user.rol == RolEnum.jefe_programa and current_user.programa:
-        programa_out = current_user.programa
+    if current_user.rol == RolEnum.jefe_programa:
+        programa_out = programa_de_jefe(current_user)
     elif programa:
         programa_out = programa
     else:

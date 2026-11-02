@@ -14,7 +14,7 @@ from app.models.monitor import HorasMonitor, AuditLog
 from app.models.postulacion import Postulacion, EstadoPostulacionEnum
 from app.models.evaluacion_monitor import EvaluacionMonitor
 from app.models.convocatoria import Convocatoria, EstadoConvocatoriaEnum
-from app.api.deps import get_current_user, require_roles
+from app.api.deps import get_current_user, require_roles, programa_de_jefe, verificar_programa_jefe
 
 router = APIRouter()
 
@@ -122,13 +122,11 @@ def _verificar_acceso_convocatoria(db: Session, conv_id: int, current_user: User
         raise HTTPException(status_code=404, detail="Convocatoria no encontrada")
     if current_user.rol == RolEnum.profesor and conv.profesor_id != current_user.id:
         raise HTTPException(status_code=403, detail="Solo puede acceder a sus propias convocatorias")
-    if (
-        current_user.rol == RolEnum.jefe_programa
-        and current_user.programa
-        and conv.asignatura
-        and conv.asignatura.programa != current_user.programa
-    ):
-        raise HTTPException(status_code=403, detail="Solo puede acceder a convocatorias de su programa")
+    verificar_programa_jefe(
+        current_user,
+        conv.asignatura.programa if conv.asignatura else None,
+        "Solo puede acceder a convocatorias de su programa",
+    )
     return conv
 
 

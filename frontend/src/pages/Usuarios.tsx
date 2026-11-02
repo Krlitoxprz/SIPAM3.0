@@ -488,8 +488,8 @@ export function Usuarios() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-gray-600 mb-1">Programa</label>
-                  <select value={form.programa} onChange={(e) => setForm({ ...form, programa: e.target.value })}
+                  <label className="block text-xs font-semibold text-gray-600 mb-1">Programa{form.rol === 'jefe_programa' ? ' *' : ''}</label>
+                  <select required={form.rol === 'jefe_programa'} value={form.programa} onChange={(e) => setForm({ ...form, programa: e.target.value })}
                     className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-usco-vinotinto/30 bg-white">
                     <option value="">Seleccione...</option>
                     <option value="Ingeniería Agroindustrial">Ingeniería Agroindustrial</option>

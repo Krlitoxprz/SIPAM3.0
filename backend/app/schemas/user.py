@@ -1,5 +1,5 @@
 import re
-from pydantic import BaseModel, EmailStr, field_validator, HttpUrl
+from pydantic import BaseModel, EmailStr, field_validator, model_validator, HttpUrl
 from typing import Optional
 from datetime import datetime, date
 from app.models.user import RolEnum
@@ -123,6 +123,19 @@ class UserCreate(BaseModel):
         if v is not None and not (0.0 <= v <= 100.0):
             raise ValueError("El porcentaje de créditos debe estar entre 0 y 100.")
         return v
+
+    @field_validator("programa", "sede")
+    @classmethod
+    def vacio_a_none(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None:
+            v = v.strip()
+        return v or None
+
+    @model_validator(mode="after")
+    def jefe_requiere_programa(self) -> "UserCreate":
+        if self.rol == RolEnum.jefe_programa and not self.programa:
+            raise ValueError("El jefe de programa debe tener un programa asignado.")
+        return self
 
 
 class LoginRequest(BaseModel):
