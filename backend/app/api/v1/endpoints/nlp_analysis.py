@@ -141,9 +141,16 @@ async def batch_analyze(
         raise HTTPException(400, "Maximum 50 texts per batch")
     
     async with httpx.AsyncClient() as client:
-        response = await client.post(
-            f"{AI_SERVICE_URL}/batch_analyze",
-            json={"texts": texts},
-            timeout=60.0
-        )
-        return response.json()
+        try:
+            response = await client.post(
+                f"{AI_SERVICE_URL}/batch_analyze",
+                json={"texts": texts},
+                timeout=60.0
+            )
+        except httpx.RequestError as e:
+            raise HTTPException(503, f"AI service unavailable: {str(e)}")
+
+    if response.status_code != 200:
+        raise HTTPException(500, f"NLP service error: {response.text}")
+
+    return response.json()
