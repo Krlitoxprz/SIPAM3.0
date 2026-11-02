@@ -14,10 +14,16 @@ from app.api.deps import get_current_user, require_roles, programa_de_jefe, veri
 router = APIRouter()
 
 
-def _verificar_titular(current_user: User, profesor_id: Optional[int]) -> None:
-    """Un profesor solo puede consultar formularios de prácticas/convocatorias propias."""
+def _verificar_titular(current_user: User, profesor_id: Optional[int], asignatura=None) -> None:
+    """Profesor: solo formularios de prácticas/convocatorias propias.
+    jefe_programa: solo las de su programa."""
     if current_user.rol == RolEnum.profesor and profesor_id != current_user.id:
         raise HTTPException(status_code=403, detail="No eres el docente titular de este recurso")
+    verificar_programa_jefe(
+        current_user,
+        asignatura.programa if asignatura else None,
+        "Solo puede consultar formularios de su programa",
+    )
 
 
 @router.get("/resumen")
@@ -138,7 +144,7 @@ def datos_fo14(
     ).filter(Convocatoria.id == convocatoria_id).first()
     if not conv:
         raise HTTPException(status_code=404, detail="Convocatoria no encontrada")
-    _verificar_titular(current_user, conv.profesor_id)
+    _verificar_titular(current_user, conv.profesor_id, conv.asignatura)
 
     monitor = next(
         (p for p in conv.postulaciones if p.estado == EstadoPostulacionEnum.seleccionado), None
@@ -201,7 +207,7 @@ def datos_fo15(
     ).filter(Practica.id == practica_id).first()
     if not pr:
         raise HTTPException(status_code=404, detail="Práctica no encontrada")
-    _verificar_titular(current_user, pr.profesor_id)
+    _verificar_titular(current_user, pr.profesor_id, pr.asignatura)
 
     rutas = sorted(pr.rutas, key=lambda r: r.orden)
     firmas = sorted(pr.firmas, key=lambda f: f.signed_at or f.id)
@@ -284,7 +290,7 @@ def datos_fo16(
     ).filter(Practica.id == practica_id).first()
     if not pr:
         raise HTTPException(status_code=404, detail="Práctica no encontrada")
-    _verificar_titular(current_user, pr.profesor_id)
+    _verificar_titular(current_user, pr.profesor_id, pr.asignatura)
 
     rutas = sorted(pr.rutas, key=lambda r: r.orden)
 
@@ -421,7 +427,7 @@ def datos_fo46(
     ).filter(Convocatoria.id == convocatoria_id).first()
     if not conv:
         raise HTTPException(status_code=404, detail="Convocatoria no encontrada")
-    _verificar_titular(current_user, conv.profesor_id)
+    _verificar_titular(current_user, conv.profesor_id, conv.asignatura)
 
     return {
         "convocatoria": {
@@ -472,7 +478,7 @@ def datos_fo05(
     ).filter(Practica.id == practica_id).first()
     if not pr:
         raise HTTPException(status_code=404, detail="Práctica no encontrada")
-    _verificar_titular(current_user, pr.profesor_id)
+    _verificar_titular(current_user, pr.profesor_id, pr.asignatura)
 
     rutas = sorted(pr.rutas, key=lambda r: r.orden)
     participantes = [

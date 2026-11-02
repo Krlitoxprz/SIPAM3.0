@@ -143,8 +143,9 @@ class AsignaturaCreate(BaseModel):
 def crear_asignatura(
     body: AsignaturaCreate,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles(RolEnum.jefe_programa, RolEnum.admin)),
+    current_user: User = Depends(require_roles(RolEnum.jefe_programa, RolEnum.admin)),
 ):
+    verificar_programa_jefe(current_user, body.programa, "Solo puede crear asignaturas de su programa")
     if db.query(Asignatura).filter(Asignatura.codigo == body.codigo).first():
         raise HTTPException(status_code=400, detail="Ya existe una asignatura con ese código")
     a = Asignatura(**body.model_dump())
@@ -159,12 +160,17 @@ def actualizar_asignatura(
     asig_id: int,
     body: AsignaturaCreate,
     db: Session = Depends(get_db),
-    _: User = Depends(require_roles(RolEnum.jefe_programa, RolEnum.admin)),
+    current_user: User = Depends(require_roles(RolEnum.jefe_programa, RolEnum.admin)),
 ):
     a = db.query(Asignatura).filter(Asignatura.id == asig_id).first()
     if not a:
         raise HTTPException(status_code=404, detail="Asignatura no encontrada")
-    for k, v in body.model_dump(exclude_unset=True).items():
+    cambios = body.model_dump(exclude_unset=True)
+    verificar_programa_jefe(current_user, a.programa, "Solo puede editar asignaturas de su programa")
+    verificar_programa_jefe(
+        current_user, cambios.get("programa", a.programa), "Solo puede asignar asignaturas a su programa",
+    )
+    for k, v in cambios.items():
         setattr(a, k, v)
     db.commit()
     db.refresh(a)

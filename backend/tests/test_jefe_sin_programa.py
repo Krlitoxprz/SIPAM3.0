@@ -102,3 +102,23 @@ def test_crear_jefe_sin_programa_rechazado(client: TestClient, usuario_admin):
         "password": "sipam2025x", "rol": "jefe_programa", "programa": "  ",
     })
     assert r.status_code == 422
+
+
+def test_jefe_sin_programa_no_lee_formularios(client: TestClient, jefe_sin_programa, practica_null, convocatoria):
+    h = _token(client, jefe_sin_programa)
+    assert client.get(f"/api/v1/reportes/fo15/{practica_null.id}", headers=h).status_code == 403
+    assert client.get(f"/api/v1/reportes/fo14/{convocatoria.id}", headers=h).status_code == 403
+
+
+def test_jefe_no_edita_asignatura_de_otro_programa(client: TestClient, usuario_jefe, db):
+    from app.models.convocatoria import Asignatura
+    a = db.query(Asignatura).filter(Asignatura.codigo == "IC-NULL-1").first()
+    if not a:
+        a = Asignatura(codigo="IC-NULL-1", nombre="Civil test", programa="Ingeniería Civil",
+                       creditos=3, semestre=2, is_active=True)
+        db.add(a); db.commit(); db.refresh(a)
+    h = _token(client, usuario_jefe)
+    body = {"codigo": a.codigo, "nombre": "hack", "creditos": 3, "programa": "Ingeniería Civil", "semestre": 2}
+    assert client.patch(f"/api/v1/convocatorias/asignaturas/{a.id}", headers=h, json=body).status_code == 403
+    body["codigo"] = "IC-NULL-2"
+    assert client.post("/api/v1/convocatorias/asignaturas/", headers=h, json=body).status_code == 403

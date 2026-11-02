@@ -13,7 +13,7 @@ from app.db.database import get_db
 from app.models.user import User, RolEnum
 from app.models.practica import Practica
 from app.models.transporte import PrecioCombustible, PeajeNacional
-from app.api.deps import get_current_user, require_roles, programa_de_jefe, verificar_programa_jefe
+from app.api.deps import get_current_user, require_roles, verificar_programa_jefe
 from app.services.ors_client import calcular_ruta, distancia_punto_a_ruta
 from app.services.geocoder_co import distancia_entre_municipios, geocode_local, haversine_km
 from app.services.colombia_geo import get_departamentos, get_municipios
