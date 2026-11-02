@@ -13,7 +13,7 @@ from app.db.database import get_db
 from app.models.user import User, RolEnum
 from app.models.practica import Practica
 from app.models.transporte import PrecioCombustible, PeajeNacional
-from app.api.deps import get_current_user, require_roles
+from app.api.deps import get_current_user, require_roles, verificar_programa_jefe
 from app.services.ors_client import calcular_ruta, distancia_punto_a_ruta
 from app.services.geocoder_co import distancia_entre_municipios, geocode_local, haversine_km
 from app.services.colombia_geo import get_departamentos, get_municipios
@@ -313,13 +313,11 @@ def _verificar_practica_transporte(db: Session, practica_id: int, current_user: 
         raise HTTPException(status_code=404, detail="Práctica no encontrada")
     if current_user.rol == RolEnum.profesor and pr.profesor_id != current_user.id:
         raise HTTPException(status_code=403, detail="Solo puede calcular datos de sus propias prácticas")
-    if (
-        current_user.rol == RolEnum.jefe_programa
-        and current_user.programa
-        and pr.asignatura
-        and pr.asignatura.programa != current_user.programa
-    ):
-        raise HTTPException(status_code=403, detail="Solo puede gestionar prácticas de su programa")
+    verificar_programa_jefe(
+        current_user,
+        pr.asignatura.programa if pr.asignatura else None,
+        "Solo puede gestionar prácticas de su programa",
+    )
     return pr
 
 

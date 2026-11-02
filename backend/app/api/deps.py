@@ -60,3 +60,26 @@ def require_roles(*roles: RolEnum):
             )
         return current_user
     return checker
+
+
+def programa_de_jefe(current_user: User) -> str:
+    """Programa del jefe_programa; falla cerrado si no tiene uno asignado
+    (NULL no puede significar 'sin restricción')."""
+    if not current_user.programa:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Configuración incompleta: su usuario de jefe de programa no tiene un programa asignado. Contacte al administrador.",
+        )
+    return current_user.programa
+
+
+def verificar_programa_jefe(
+    current_user: User,
+    programa: str | None,
+    detail: str = "Solo puede gestionar recursos de su programa",
+) -> None:
+    """Si el usuario es jefe_programa, exige que `programa` sea el suyo."""
+    if current_user.rol != RolEnum.jefe_programa:
+        return
+    if programa != programa_de_jefe(current_user):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=detail)

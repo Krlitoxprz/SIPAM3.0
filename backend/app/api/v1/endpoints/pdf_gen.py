@@ -26,7 +26,7 @@ from app.models.user import User, RolEnum
 from app.models.convocatoria import Convocatoria, Asignatura
 from app.models.postulacion import Postulacion, EstadoPostulacionEnum
 from app.models.practica import Practica
-from app.api.deps import get_current_user, require_roles
+from app.api.deps import get_current_user, require_roles, programa_de_jefe, verificar_programa_jefe
 
 router = APIRouter()
 
@@ -135,13 +135,18 @@ def _ascii_filename(name: str) -> str:
     return "".join(c for c in normalized if ord(c) < 128).replace('"', "")
 
 
-def _verificar_propietario(profesor_id: int | None, current_user: User) -> None:
-    """Un profesor solo genera PDFs oficiales de sus propias convocatorias/prácticas."""
+def _verificar_propietario(profesor_id: int | None, current_user: User, asignatura=None) -> None:
+    """Profesor: solo PDFs de sus convocatorias/prácticas; jefe_programa: solo de su programa."""
     if current_user.rol == RolEnum.profesor and profesor_id != current_user.id:
         raise HTTPException(
             status_code=403,
             detail="Solo puede generar documentos de sus propias convocatorias o prácticas",
         )
+    verificar_programa_jefe(
+        current_user,
+        asignatura.programa if asignatura else None,
+        "Solo puede generar documentos de su programa",
+    )
 
 
 # ── FO-14 ─────────────────────────────────────────────────────────────────────
@@ -164,7 +169,7 @@ def pdf_fo14(
     )
     if not conv:
         raise HTTPException(status_code=404, detail="Convocatoria no encontrada")
-    _verificar_propietario(conv.profesor_id, _)
+    _verificar_propietario(conv.profesor_id, _, conv.asignatura)
 
     seleccionado = (
         db.query(Postulacion)
@@ -253,7 +258,7 @@ def pdf_fo16(
     )
     if not pr:
         raise HTTPException(status_code=404, detail="Práctica no encontrada")
-    _verificar_propietario(pr.profesor_id, _)
+    _verificar_propietario(pr.profesor_id, _, pr.asignatura)
 
     rutas = sorted(pr.rutas, key=lambda r: r.orden)
     origen = next((r for r in rutas if r.tipo_punto == "origen"), rutas[0] if rutas else None)
@@ -356,7 +361,7 @@ def pdf_fo15(
     )
     if not pr:
         raise HTTPException(status_code=404, detail="Práctica no encontrada")
-    _verificar_propietario(pr.profesor_id, _)
+    _verificar_propietario(pr.profesor_id, _, pr.asignatura)
 
     rutas = sorted(pr.rutas, key=lambda r: r.orden)
     destino = next((r for r in rutas if r.tipo_punto == "destino"), rutas[-1] if rutas else None)
@@ -631,8 +636,8 @@ def pdf_fo15_consolidado(
     practicas = practicas_por_programa(programa, periodo, db, current_user)
 
     facultad = practicas[0]["facultad"] if practicas and practicas[0].get("facultad") else "—"
-    if current_user.rol == RolEnum.jefe_programa and current_user.programa:
-        programa_out = current_user.programa
+    if current_user.rol == RolEnum.jefe_programa:
+        programa_out = programa_de_jefe(current_user)
     elif programa:
         programa_out = programa
     else:

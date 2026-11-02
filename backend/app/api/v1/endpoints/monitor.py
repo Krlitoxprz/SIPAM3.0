@@ -14,7 +14,7 @@ from app.models.monitor import HorasMonitor, AuditLog
 from app.models.postulacion import Postulacion, EstadoPostulacionEnum
 from app.models.evaluacion_monitor import EvaluacionMonitor
 from app.models.convocatoria import Convocatoria, EstadoConvocatoriaEnum
-from app.api.deps import get_current_user, require_roles
+from app.api.deps import get_current_user, require_roles, verificar_programa_jefe
 
 router = APIRouter()
 
@@ -122,13 +122,11 @@ def _verificar_acceso_convocatoria(db: Session, conv_id: int, current_user: User
         raise HTTPException(status_code=404, detail="Convocatoria no encontrada")
     if current_user.rol == RolEnum.profesor and conv.profesor_id != current_user.id:
         raise HTTPException(status_code=403, detail="Solo puede acceder a sus propias convocatorias")
-    if (
-        current_user.rol == RolEnum.jefe_programa
-        and current_user.programa
-        and conv.asignatura
-        and conv.asignatura.programa != current_user.programa
-    ):
-        raise HTTPException(status_code=403, detail="Solo puede acceder a convocatorias de su programa")
+    verificar_programa_jefe(
+        current_user,
+        conv.asignatura.programa if conv.asignatura else None,
+        "Solo puede acceder a convocatorias de su programa",
+    )
     return conv
 
 
@@ -179,12 +177,16 @@ def corregir_horas(
     if not h:
         raise HTTPException(status_code=404, detail="Registro no encontrado")
 
-    if current_user.rol == RolEnum.profesor:
-        post = db.query(Postulacion).options(joinedload(Postulacion.convocatoria)).filter(
-            Postulacion.id == h.postulacion_id
-        ).first()
-        if not post or post.convocatoria.profesor_id != current_user.id:
-            raise HTTPException(status_code=403, detail="Solo puede corregir horas de sus propios monitores")
+    post = db.query(Postulacion).options(
+        joinedload(Postulacion.convocatoria).joinedload(Convocatoria.asignatura)
+    ).filter(Postulacion.id == h.postulacion_id).first()
+    if current_user.rol == RolEnum.profesor and (not post or post.convocatoria.profesor_id != current_user.id):
+        raise HTTPException(status_code=403, detail="Solo puede corregir horas de sus propios monitores")
+    verificar_programa_jefe(
+        current_user,
+        post.convocatoria.asignatura.programa if post and post.convocatoria.asignatura else None,
+        "Solo puede corregir horas de monitores de su programa",
+    )
 
     if body.horas is not None:
         if body.horas <= 0 or body.horas > 40:
@@ -210,12 +212,16 @@ def aprobar_horas(
     if not h:
         raise HTTPException(status_code=404, detail="Registro no encontrado")
 
-    if current_user.rol == RolEnum.profesor:
-        post = db.query(Postulacion).options(joinedload(Postulacion.convocatoria)).filter(
-            Postulacion.id == h.postulacion_id
-        ).first()
-        if not post or post.convocatoria.profesor_id != current_user.id:
-            raise HTTPException(status_code=403, detail="Solo puede aprobar horas de sus propios monitores")
+    post = db.query(Postulacion).options(
+        joinedload(Postulacion.convocatoria).joinedload(Convocatoria.asignatura)
+    ).filter(Postulacion.id == h.postulacion_id).first()
+    if current_user.rol == RolEnum.profesor and (not post or post.convocatoria.profesor_id != current_user.id):
+        raise HTTPException(status_code=403, detail="Solo puede aprobar horas de sus propios monitores")
+    verificar_programa_jefe(
+        current_user,
+        post.convocatoria.asignatura.programa if post and post.convocatoria.asignatura else None,
+        "Solo puede aprobar horas de monitores de su programa",
+    )
 
     h.aprobado_por_id = current_user.id
     _log(db, current_user.id, "aprobar_horas", "horas_monitor", hora_id)
@@ -242,6 +248,11 @@ def crear_evaluacion(
         raise HTTPException(status_code=404, detail="Postulación no encontrada")
     if current_user.rol == RolEnum.profesor and post.convocatoria.profesor_id != current_user.id:
         raise HTTPException(status_code=403, detail="Solo puede evaluar monitores de sus propias convocatorias")
+    verificar_programa_jefe(
+        current_user,
+        post.convocatoria.asignatura.programa if post.convocatoria.asignatura else None,
+        "Solo puede evaluar monitores de su programa",
+    )
     if post.convocatoria.estado != EstadoConvocatoriaEnum.finalizada:
         raise HTTPException(status_code=400, detail="Solo se puede evaluar cuando la convocatoria está finalizada")
     if post.estado != EstadoPostulacionEnum.seleccionado:

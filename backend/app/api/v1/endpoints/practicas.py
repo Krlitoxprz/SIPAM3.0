@@ -22,7 +22,7 @@ from app.schemas.practica import (
     PracticaCreate, PracticaUpdate, PracticaOut,
     FirmaConsentimientoOut, TarifaViaticoOut, ViaticosCalculadoOut,
 )
-from app.api.deps import get_current_user, require_roles
+from app.api.deps import get_current_user, require_roles, programa_de_jefe, verificar_programa_jefe
 from app.utils.notificaciones import crear_notificacion
 from app.models.historial_estado import HistorialEstado
 from app.utils.historial import registrar_historial
@@ -182,8 +182,8 @@ def listar_practicas(
 
     if current_user.rol == RolEnum.profesor:
         q = q.filter(Practica.profesor_id == current_user.id)
-    elif current_user.rol == RolEnum.jefe_programa and current_user.programa:
-        q = q.filter(Practica.asignatura.has(Asignatura.programa == current_user.programa))
+    elif current_user.rol == RolEnum.jefe_programa:
+        q = q.filter(Practica.asignatura.has(Asignatura.programa == programa_de_jefe(current_user)))
     elif current_user.rol == RolEnum.estudiante:
         enrolled_ids = (
             db.query(AsignaturaEstudiante.asignatura_id)
@@ -394,13 +394,11 @@ def datos_asignatura(
 
 def _verificar_programa_jefe(p: Practica, current_user: User) -> None:
     """jefe_programa solo gestiona prácticas de su programa académico."""
-    if (
-        current_user.rol == RolEnum.jefe_programa
-        and current_user.programa
-        and p.asignatura
-        and p.asignatura.programa != current_user.programa
-    ):
-        raise HTTPException(status_code=403, detail="Solo puede gestionar prácticas de su programa")
+    verificar_programa_jefe(
+        current_user,
+        p.asignatura.programa if p.asignatura else None,
+        "Solo puede gestionar prácticas de su programa",
+    )
 
 
 @router.get("/{practica_id}", response_model=PracticaOut)
