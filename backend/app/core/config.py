@@ -8,15 +8,17 @@ from typing import List
 DEFAULT_INSECURE_SECRET = "sipam-usco-super-secret-key-2024-change-in-production"
 DEFAULT_IOT_API_KEY = "iot_device_key_12345"  # clave pública de ejemplo; inaceptable en producción
 
-# Marcadores típicos de plantillas .env.example que indican "reemplazar aquí".
-_PLACEHOLDER_MARKERS = ("GENERA", "CAMBIA", "CHANGE_ME", "TU_IP", "REPLACE")
+# Prefijos típicos de plantillas .env.example que indican "reemplazar aquí".
+# Se comparan como prefijo (no substring) para no rechazar claves legítimas
+# que casualmente contengan estas palabras (p. ej. 'my-replacement-key').
+_PLACEHOLDER_PREFIXES = ("GENERA_", "CAMBIA_", "CHANGE_ME", "TU_IP_", "REPLACE_")
 
 
 def _es_placeholder(valor: str) -> bool:
     """True si el valor parece un marcador de plantilla que el operador olvidó
     reemplazar (p. ej. 'GENERA_UNA_CLAVE_SECRETA_CON_openssl_rand_-hex_24')."""
     v = (valor or "").upper()
-    return any(m in v for m in _PLACEHOLDER_MARKERS)
+    return any(v.startswith(m) for m in _PLACEHOLDER_PREFIXES)
 
 
 def parse_cors_origins() -> List[str]:
